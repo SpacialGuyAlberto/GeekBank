@@ -4,6 +4,7 @@ import com.geekbank.bank.models.User;
 import com.geekbank.bank.services.UserService;
 import com.geekbank.bank.util.JwtTokenUtil;
 import com.geekbank.bank.models.UserDetailsImpl;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,13 +16,11 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.view.RedirectView;
 
+import java.io.IOException;
 import java.util.Optional;
 
 @Order(1)
@@ -43,9 +42,48 @@ public class RegisterController {
         this.jwtTokenUtil = jwtTokenUtil;
     }
 
+//    @PostMapping("/registerUser")
+//    public ResponseEntity<String> register(@RequestBody RegisterRequest registerRequest) {
+//        logger.info("Iniciando registro para: {}", registerRequest.getEmail());
+//
+//        if (registerRequest.getEmail() == null || registerRequest.getPassword() == null) {
+//            logger.error("Email o contraseña no proporcionados");
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email y contraseña son requeridos");
+//        }
+//
+//        Optional<User> existingUser = userService.findByEmail(registerRequest.getEmail());
+//        if (existingUser.isPresent()) {
+//            logger.error("El usuario ya existe: {}", registerRequest.getEmail());
+//            throw new ResponseStatusException(HttpStatus.CONFLICT, "El usuario ya existe");
+//        }
+//
+//        User newUser = new User();
+//        newUser.setEmail(registerRequest.getEmail());
+//        newUser.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+//        newUser.setName(registerRequest.getName());
+//        newUser.setRole("USER");
+//
+//        userService.registerUser(newUser); // use registerUser method
+//        logger.info("Usuario creado: {}", newUser.getEmail());
+//
+//        Authentication authenticationRequest =
+//                new UsernamePasswordAuthenticationToken(newUser.getEmail(), registerRequest.getPassword());
+//        try {
+//            logger.info("Autenticando usuario: {}", newUser.getEmail());
+//            Authentication authenticationResponse = authenticationManager.authenticate(authenticationRequest);
+//            String jwtToken = jwtTokenUtil.generateToken(new UserDetailsImpl(newUser));
+//            logger.info("Usuario autenticado: {}", newUser.getEmail());
+//            return ResponseEntity.ok("Usuario registrado correctamente. Token JWT: " + jwtToken);
+//        } catch (BadCredentialsException e) {
+//            logger.error("Error al autenticar al usuario después del registro", e);
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al autenticar al usuario después del registro");
+//        }
+//    }
+
     @PostMapping("/registerUser")
     public ResponseEntity<String> register(@RequestBody RegisterRequest registerRequest) {
         logger.info("Iniciando registro para: {}", registerRequest.getEmail());
+        logger.info("Contrasena proveida : {}", registerRequest.getPassword());
 
         if (registerRequest.getEmail() == null || registerRequest.getPassword() == null) {
             logger.error("Email o contraseña no proporcionados");
@@ -63,22 +101,23 @@ public class RegisterController {
         newUser.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         newUser.setName(registerRequest.getName());
         newUser.setRole("USER");
-        newUser.setEnabled(true);
 
-        User createdUser = userService.createUser(newUser);
-        logger.info("Usuario creado: {}", createdUser.getEmail());
+        userService.registerUser(newUser);
+        logger.info("Usuario creado: {}", newUser.getEmail());
+        logger.info("Contrasena asignada: {}", newUser.getPassword());
 
-        Authentication authenticationRequest =
-                new UsernamePasswordAuthenticationToken(createdUser.getEmail(), registerRequest.getPassword());
-        try {
-            logger.info("Autenticando usuario: {}", createdUser.getEmail());
-            Authentication authenticationResponse = authenticationManager.authenticate(authenticationRequest);
-            String jwtToken = jwtTokenUtil.generateToken(new UserDetailsImpl(createdUser));
-            logger.info("Usuario autenticado: {}", createdUser.getEmail());
-            return ResponseEntity.ok("Usuario registrado correctamente. Token JWT: " + jwtToken);
-        } catch (BadCredentialsException e) {
-            logger.error("Error al autenticar al usuario después del registro", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al autenticar al usuario después del registro");
+        return ResponseEntity.ok("Usuario registrado correctamente. Por favor, revisa tu email para activar la cuenta.");
+    }
+
+
+    @GetMapping("/activate")
+    public ResponseEntity<String> activateUser(@RequestParam("token") String token) {
+        logger.info("Activating user with token: {}", token);
+        boolean isActivated = userService.activateUser(token);
+        if (isActivated) {
+            return ResponseEntity.ok("User activated successfully.");
+        } else {
+            return ResponseEntity.badRequest().body("Invalid activation token.");
         }
     }
 
@@ -110,6 +149,7 @@ public class RegisterController {
         }
 
         public String getPassword() {
+            logger.info(password);
             return password;
         }
 

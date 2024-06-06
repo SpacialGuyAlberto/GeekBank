@@ -1,12 +1,10 @@
 package com.geekbank.bank.models;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Column;
+import jakarta.persistence.*;
 import org.hibernate.annotations.NaturalId;
+import jakarta.persistence.PrePersist;
+import java.security.SecureRandom;
+import java.util.Base64;
 
 @Entity
 @Table(name = "users")
@@ -31,6 +29,26 @@ public class User {
 
     @Column(name = "is_enabled", nullable = false)
     private boolean isEnabled = false;
+
+    @Column(nullable = true)
+    private String activationToken;
+
+    private static final SecureRandom secureRandom = new SecureRandom();
+    private static final Base64.Encoder base64Encoder = Base64.getUrlEncoder().withoutPadding();
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.activationToken == null) {
+            this.activationToken = generateActivationToken();
+        }
+    }
+
+    private String generateActivationToken() {
+        byte[] randomBytes = new byte[24];
+        secureRandom.nextBytes(randomBytes);
+        return base64Encoder.encodeToString(randomBytes);
+    }
+
 
     // Getters and setters
     public Long getId() {
@@ -79,5 +97,12 @@ public class User {
 
     public void setEnabled(boolean isEnabled) {
         this.isEnabled = isEnabled;
+    }
+    public String getActivationToken() {
+        return activationToken;
+    }
+
+    public void setActivationToken(String activationToken) {
+        this.activationToken = activationToken;
     }
 }

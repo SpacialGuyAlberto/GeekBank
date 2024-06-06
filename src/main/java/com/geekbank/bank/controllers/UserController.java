@@ -14,21 +14,17 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
+    private final UserService userService;
+
     @Autowired
-    private UserService userService;
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping("/{userId}")
     public ResponseEntity<Optional<User>> getUserById(@PathVariable long userId) {
         Optional<User> user = userService.getUserById(userId);
-        if (user != null) {
-            return ResponseEntity.ok(user);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-    @Autowired
-    public UserController(UserService userService) {
-        this.userService = userService;
+        return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
 
     @GetMapping
@@ -37,10 +33,9 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
-
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-        User createdUser = userService.createUser(user);
-        return ResponseEntity.created(URI.create("/api/users/" + createdUser.getId())).body(createdUser);
+    public ResponseEntity<User> registerUser(@RequestBody User user) {
+        userService.registerUser(user);
+        return ResponseEntity.created(URI.create("/api/users/" + user.getId())).body(user);
     }
 }
