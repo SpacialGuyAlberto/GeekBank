@@ -12,16 +12,6 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
-//    @PostMapping("/login")
-//    public String login(@RequestBody LoginRequest request) {
-//
-//        boolean isAuthenticated = authService.authenticate(request.getUsername(), request.getPassword());
-//        if (isAuthenticated) {
-//            return "Login exitoso";
-//        } else {
-//            return "Credenciales inválidas";
-//        }
-//    }
 
     static class LoginRequest {
         private String username;
