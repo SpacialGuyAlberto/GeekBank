@@ -5,7 +5,7 @@ import com.geekbank.bank.models.GiftCard;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GiftCardService {
+public class FreeFireGiftCardService {
     private final List<GiftCard> giftCards = new ArrayList<>();
 
     public void addGiftCard(GiftCard giftCard) {

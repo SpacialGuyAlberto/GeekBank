@@ -27,7 +27,8 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/auth")
 public class RegisterController {
-    private static final Logger logger = LoggerFactory.getLogger(RegisterController.class);
+    private static final Logger logger = LoggerFactory
+            .getLogger(RegisterController.class);
 
     private final AuthenticationManager authenticationManager;
     private final UserService userService;

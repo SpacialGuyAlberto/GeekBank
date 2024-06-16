@@ -53,7 +53,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/auth/registerUser", "/api/auth/login", "/api/auth/google-login", "/api/auth/logout", "/api/home", "/oauth2/authorization/google", "/api/gift-cards/free-fire").permitAll()
+                        .requestMatchers("/api/auth/registerUser", "/api/auth/login", "/api/auth/google-login", "/api/auth/logout", "/api/home", "/oauth2/authorization/google", "/api/gift-cards/free-fire", "/api/gift-cards/call-of-duty").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2Login -> oauth2Login
