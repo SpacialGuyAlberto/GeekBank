@@ -9,19 +9,26 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Order(1)
 @Controller
 @RequestMapping("/api/home")
 public class HomeController {
 
     @GetMapping
-    public ResponseEntity<String> home(@AuthenticationPrincipal OidcUser oidcUser, Authentication authentication) {
+    public ResponseEntity<?> home(@AuthenticationPrincipal OidcUser oidcUser, Authentication authentication) {
+        Map<String, String> response = new HashMap<>();
         if (oidcUser != null) {
-            return ResponseEntity.ok("Welcome to the home page, " + oidcUser.getEmail() + "!");
+            response.put("message", "Welcome to the home page, " + oidcUser.getEmail() + "!");
+            return ResponseEntity.ok(response);
         } else if (authentication != null && authentication.isAuthenticated()) {
-            return ResponseEntity.ok("Welcome to the home page, " + authentication.getName() + "!");
+            response.put("message", "Welcome to the home page, " + authentication.getName() + "!");
+            return ResponseEntity.ok(response);
         } else {
-            return ResponseEntity.status(401).body("Unauthorized access");
+            response.put("error", "Unauthorized access");
+            return ResponseEntity.status(401).body(response);
         }
     }
 }

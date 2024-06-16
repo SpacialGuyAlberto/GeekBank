@@ -38,16 +38,18 @@ public class LoginController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequest loginRequest) {
         Authentication authenticationRequest =
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword());
         try {
             Authentication authenticationResponse = authenticationManager.authenticate(authenticationRequest);
             UserDetails userDetails = (UserDetails) authenticationResponse.getPrincipal();
             String jwtToken = jwtTokenUtil.generateToken(userDetails);
-            return ResponseEntity.ok("Usuario autenticado correctamente. Token JWT: " + jwtToken);
+            Map<String, String> response = new HashMap<>();
+            response.put("token", jwtToken);
+            return (ResponseEntity<Map<String, String>>) ResponseEntity.ok(response);
         } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales inválidas");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Credenciales invalidas"));
         }
     }
 
