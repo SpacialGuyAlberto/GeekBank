@@ -24,4 +24,9 @@ public class KinguinController {
     public KinguinGiftCard getGiftCardById(@PathVariable String id) {
         return kinguinService.fetchGiftCardById(id);
     }
+
+    @GetMapping("/gift-cards/search")
+    public List<KinguinGiftCard> searchGiftCards(@RequestParam(value = "name") String name) {
+        return kinguinService.searchGiftCardsByName(name);
+    }
 }

@@ -38,6 +38,26 @@ public class KinguinService {
         return giftCards;
     }
 
+    public List<KinguinGiftCard> searchGiftCardsByName(String name) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Api-Key", apiKey);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        String searchUrl = apiUrl + "?name=" + name;
+        ResponseEntity<JsonNode> response = restTemplate.exchange(searchUrl, HttpMethod.GET, entity, JsonNode.class);
+        JsonNode products = response.getBody();
+
+        List<KinguinGiftCard> giftCards = new ArrayList<>();
+        if (products != null) {
+            JsonNode productsSection = products.path("results");
+            for (JsonNode product : productsSection) {
+                giftCards.add(mapJsonToGiftCard(product));
+            }
+        }
+
+        return giftCards;
+    }
+
     public KinguinGiftCard fetchGiftCardById(String id) {
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Api-Key", apiKey);
@@ -59,6 +79,7 @@ public class KinguinService {
         giftCard.setDescription(product.path("description").asText());
         giftCard.setCoverImage(product.path("coverImage").asText());
         giftCard.setCoverImageOriginal(product.path("coverImageOriginal").asText());
+        System.out.println(product.path("CoverImageOriginal"));
         giftCard.setDevelopers(convertJsonNodeToList(product.path("developers")));
         giftCard.setPublishers(convertJsonNodeToList(product.path("publishers")));
         giftCard.setGenres(convertJsonNodeToList(product.path("genres")));
@@ -86,6 +107,7 @@ public class KinguinService {
         giftCard.setMerchantName(convertJsonNodeToList(product.path("merchantName")));
         giftCard.setAgeRating(product.path("ageRating").asText());
         giftCard.setImages(convertJsonNodeToImages(product.path("images")));
+        System.out.println(product.path("images"));
 
         return giftCard;
     }
