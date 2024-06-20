@@ -1,12 +1,12 @@
 package com.geekbank.bank.models;
 
-public class FreeFireGiftCard implements GiftCard {
+public class GeneralGiftCard implements GiftCard {
     private String cardNumber;
     private String product;
     private double price;
     private String expirationDate;
 
-    public FreeFireGiftCard(String cardNumber, String product, double price, String expirationDate) {
+    public GeneralGiftCard(String cardNumber, String product, double price, String expirationDate) {
         this.cardNumber = cardNumber;
         this.product = product;
         this.price = price;
