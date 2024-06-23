@@ -45,8 +45,12 @@ public class LoginController {
             Authentication authenticationResponse = authenticationManager.authenticate(authenticationRequest);
             UserDetails userDetails = (UserDetails) authenticationResponse.getPrincipal();
             String jwtToken = jwtTokenUtil.generateToken(userDetails);
+
+            User user = userService.findByEmail(loginRequest.getEmail()).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
             Map<String, String> response = new HashMap<>();
             response.put("token", jwtToken);
+            response.put("userId", String.valueOf(user.getId()));
             return (ResponseEntity<Map<String, String>>) ResponseEntity.ok(response);
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Credenciales invalidas"));
@@ -77,6 +81,7 @@ public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> tokenData)
     String jwtToken = jwtTokenUtil.generateToken(userDetails);
     Map<String, Object> response = new HashMap<>();
     response.put("token", jwtToken);
+    response.put("userId", user.getId());
     return ResponseEntity.ok(response);
     }
 

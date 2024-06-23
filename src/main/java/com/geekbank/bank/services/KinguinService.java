@@ -73,6 +73,7 @@ public class KinguinService {
         return null;
     }
 
+    
     private KinguinGiftCard mapJsonToGiftCard(JsonNode product) {
         KinguinGiftCard giftCard = new KinguinGiftCard();
         giftCard.setName(product.path("name").asText());
