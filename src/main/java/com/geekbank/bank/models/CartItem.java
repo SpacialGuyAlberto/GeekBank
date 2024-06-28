@@ -1,38 +1,50 @@
 package com.geekbank.bank.models;
+
 import jakarta.persistence.*;
+
 @Entity
 public class CartItem {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "user_id")
     private User user;
 
     private Long productId;
     private int quantity;
 
-    public Long getId(){
-        return this.id;
+    // Getters and setters
+    public Long getId() {
+        return id;
     }
-    public void setId(Long id){
+
+    public void setId(Long id) {
         this.id = id;
+    }
+
+    public User getUser() {
+        return user;
     }
 
     public void setUser(User user) {
         this.user = user;
     }
 
+    public Long getProductId() {
+        return productId;
+    }
+
     public void setProductId(Long productId) {
         this.productId = productId;
+    }
+
+    public int getQuantity() {
+        return quantity;
     }
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
-
-
-    // Getters and Setters
-
 }

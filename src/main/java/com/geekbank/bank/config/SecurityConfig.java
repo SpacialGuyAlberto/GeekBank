@@ -85,7 +85,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/auth/registerUser", "/api/auth/login", "/api/auth/google-login", "/api/auth/logout", "/api/home", "/api/gift-cards/**", "/api/kinguin/gift-cards/**", "/api/users/**", "/api/public/**", "/api/cart", "/api/cart/**").permitAll()
+                        .requestMatchers("/api/auth/registerUser", "/api/auth/login", "/api/auth/google-login", "/api/auth/logout", "/api/home", "/api/gift-cards/**", "/api/kinguin/gift-cards/**", "/api/users/**", "/api/public/**", "/api/cart", "/api/cart/{id}").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2Login -> oauth2Login

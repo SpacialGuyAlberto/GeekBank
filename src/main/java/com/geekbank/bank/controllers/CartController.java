@@ -1,4 +1,3 @@
-// src/main/java/com/geekbank/bank/controllers/CartController.java
 package com.geekbank.bank.controllers;
 
 import com.geekbank.bank.models.CartItem;
@@ -43,18 +42,39 @@ public class CartController {
         return ResponseEntity.ok(cartService.addCartItem(user, request.getProductId(), request.getQuantity()));
     }
 
+    @PutMapping()
+    public ResponseEntity<Void> updateCartItemQuantity(Authentication authentication, @RequestBody UpdateCartItemQuantityRequest request) {
+        User user = userService.findByEmail(authentication.getName()).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(401).build();
+        }
+        cartService.updateCartItemQuantity(request.getProductId(), request.getQuantity(), user);
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/{cartItemId}")
     public ResponseEntity<Void> removeCartItem(@PathVariable Long cartItemId) {
         cartService.removeCartItem(cartItemId);
         return ResponseEntity.ok().build();
     }
 
+    @DeleteMapping
+    public ResponseEntity<Void> removeAllCartItems(Authentication authentication) {
+        User user = userService.findByEmail(authentication.getName()).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(401).build();
+        }
+        cartService.removeAllCartItems(user);
+        return ResponseEntity.ok().build();
+    }
+
+
     public static class AddCartItemRequest {
         private Long productId;
         private int quantity;
 
         public Long getProductId() {
-            return  this.productId;
+            return this.productId;
         }
 
         public int getQuantity() {
@@ -63,4 +83,27 @@ public class CartController {
 
         // Getters and Setters
     }
+
+    public static class UpdateCartItemQuantityRequest {
+        private Long productId;
+        private int quantity;
+
+        public Long getProductId() {
+            return productId;
+        }
+
+        public void setProductId(Long productId) {
+            this.productId = productId;
+        }
+
+        public int getQuantity() {
+            return quantity;
+        }
+
+        public void setQuantity(int quantity) {
+            this.quantity = quantity;
+        }
+    }
+
+
 }
