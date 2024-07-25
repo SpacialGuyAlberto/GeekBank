@@ -95,6 +95,9 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.telegram:telegrambots-spring-boot-starter:6.0.1'
+    implementation 'com.github.pengrad:java-telegram-bot-api:7.7.0'
 }
 
 dependencyManagement {
