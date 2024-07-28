@@ -97,7 +97,7 @@ public class TelegramListener {
                             String phoneNumber = matcher.group(2);
 
                             System.out.println("Amount: " + amount);
-                            System.out.println("Phone Number: " + phoneNumber);
+
 
                             System.out.println("MESSAGE SENT");
 
