@@ -54,50 +54,20 @@ dependencies {
     //Mail service
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-    implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.security:spring-security-oauth2-jose'
     implementation 'com.sendgrid:sendgrid-java:4.10.1'
-    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-    implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'com.nimbusds:oauth2-oidc-sdk:9.19'
     implementation 'com.nimbusds:nimbus-jose-jwt:9.19'
-    implementation 'com.paypal.sdk:rest-api-sdk:1.14.0'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation 'com.twilio.sdk:twilio:10.4.0'
     implementation 'com.twilio.sdk:twilio:10.4.0'
 
-// This dependency is used internally, and not exposed to co
-    implementation 'com.google.guava:guava:21.0'
+    // Dependencias adicionales
+    implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
+    implementation 'javax.xml.bind:jaxb-api:2.3.1'
+    implementation 'javax.activation:activation:1.1.1'
 
-    //dependencias a arreglar
-    implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'com.google.guava:guava:30.1.1-jre'
-    implementation 'com.h2database:h2'
-    implementation 'org.springframework.boot:spring-boot-starter-mail'
-    implementation 'org.springframework.security:spring-security-config'
-    implementation 'org.springframework.security:spring-security-web'
-    implementation 'org.springframework.security:spring-security-core'
-    implementation 'io.jsonwebtoken:jjwt-api:0.11.2'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.2'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.2'
-    compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
-    implementation 'io.jsonwebtoken:jjwt:0.9.1'
-    implementation 'jakarta.servlet:jakarta.servlet-api:5.0.0'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.security:spring-security-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.telegram:telegrambots-spring-boot-starter:6.0.1'
-    implementation 'com.github.pengrad:java-telegram-bot-api:7.7.0'
+    // Dependencias duplicadas eliminadas para evitar conflictos
 }
 
 dependencyManagement {
@@ -132,4 +102,3 @@ hibernate {
 test {
     enabled = false
 }
-

@@ -1,13 +1,17 @@
 package com.geekbank.bank;
 
+//import com.geekbank.bank.services.TelegramListener;
 import com.geekbank.bank.services.TelegramListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+
 
 @SpringBootApplication
-public class GeekBankApplication implements CommandLineRunner {
+@EnableJpaRepositories(basePackages = "com.geekbank.bank.repositories")
+public class GeekBankApplication implements CommandLineRunner{
 
     @Autowired
     private TelegramListener telegramListener;
