@@ -67,6 +67,8 @@ dependencies {
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
     implementation 'javax.activation:activation:1.1.1'
 
+    implementation 'org.json:json:20210307'
+
     // Dependencias duplicadas eliminadas para evitar conflictos
 }
 
