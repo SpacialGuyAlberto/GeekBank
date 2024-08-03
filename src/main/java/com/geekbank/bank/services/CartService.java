@@ -26,7 +26,7 @@ public class CartService {
         return cartItemRepository.findByUser(user);
     }
 
-    public CartItem addCartItem(User user, Long productId, int quantity) {
+    public CartItem addCartItem(User user, Long productId, int quantity, double price) {
         CartItem existingCartItem = cartItemRepository.findByUserAndProductId(user, productId);
         if (existingCartItem != null) {
             existingCartItem.setQuantity(existingCartItem.getQuantity() + quantity);
@@ -35,6 +35,7 @@ public class CartService {
             existingCartItem.setUser(user);
             existingCartItem.setProductId(productId);
             existingCartItem.setQuantity(quantity);
+            existingCartItem.setPrice(price);
         }
         return cartItemRepository.save(existingCartItem);
     }

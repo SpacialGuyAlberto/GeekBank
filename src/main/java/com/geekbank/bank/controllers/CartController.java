@@ -39,7 +39,7 @@ public class CartController {
         if (user == null) {
             return ResponseEntity.status(401).build();
         }
-        return ResponseEntity.ok(cartService.addCartItem(user, request.getProductId(), request.getQuantity()));
+        return ResponseEntity.ok(cartService.addCartItem(user, request.getProductId(), request.getQuantity(), request.getPrice()));
     }
 
     @PutMapping()
@@ -72,6 +72,7 @@ public class CartController {
     public static class AddCartItemRequest {
         private Long productId;
         private int quantity;
+        private double price;
 
         public Long getProductId() {
             return this.productId;
@@ -80,6 +81,8 @@ public class CartController {
         public int getQuantity() {
             return this.quantity;
         }
+        public double getPrice(){ return this.price; }
+
 
         // Getters and Setters
     }

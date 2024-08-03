@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-public class GeekBankApplication implements CommandLineRunner {
+public class GeekBankApplication  {
 
     @Autowired
     private TelegramListener telegramListener;
@@ -18,19 +18,19 @@ public class GeekBankApplication implements CommandLineRunner {
         SpringApplication.run(GeekBankApplication.class, args);
     }
 
-    @Override
-    public void run(String... args) {
-        System.out.println("Starting Telegram Listener in a new thread...");
-        Thread telegramThread = new Thread(() -> {
-            try {
-                telegramListener.listenForMessages();
-            } catch (Exception e) {
-                System.out.println("Exception in telegramThread: " + e.getMessage());
-                e.printStackTrace();
-            }
-        });
-        telegramThread.setDaemon(true); // Optional: Make this a daemon thread
-        telegramThread.start();
-        System.out.println("Telegram Listener started.");
-    }
+//    @Override
+//    public void run(String... args) {
+//        System.out.println("Starting Telegram Listener in a new thread...");
+//        Thread telegramThread = new Thread(() -> {
+//            try {
+//                telegramListener.listenForMessages();
+//            } catch (Exception e) {
+//                System.out.println("Exception in telegramThread: " + e.getMessage());
+//                e.printStackTrace();
+//            }
+//        });
+//        telegramThread.setDaemon(true); // Optional: Make this a daemon thread
+//        telegramThread.start();
+//        System.out.println("Telegram Listener started.");
+//    }
 }
