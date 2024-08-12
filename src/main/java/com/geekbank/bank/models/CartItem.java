@@ -12,6 +12,7 @@ public class CartItem {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Column(name = "product_id")
     private Long productId;
     private int quantity;
     private double price;

@@ -18,10 +18,8 @@ public class CustomerService {
     }
 
     public Customer createCustomer(Customer customer) {
-        // Perform validation, business logic, etc. before saving the customer
         return customerRepository.save(customer);
     }
-
 
 }
 

@@ -28,7 +28,7 @@ public class UserController {
     @GetMapping("/{userId}")
     public ResponseEntity<Optional<User>> getUserById(@PathVariable long userId) {
         Optional<User> user = userService.getUserById(userId);
-        return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
+        return user.isPresent() ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
 
     @GetMapping
@@ -52,6 +52,4 @@ public class UserController {
         Optional<User> user = userService.findByEmail(email);
         return user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
-
-
 }

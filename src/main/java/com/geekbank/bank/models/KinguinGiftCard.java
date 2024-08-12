@@ -230,6 +230,10 @@ public class KinguinGiftCard implements GiftCard {
         this.updatedAt = updatedAt;
     }
 
+    public KinguinGiftCard orElse(KinguinGiftCard other) {
+        return this != null ? this : other;
+    }
+
 
     // Getters and Setters...
 

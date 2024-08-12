@@ -12,6 +12,8 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+
 @Service
 public class TelegramListener {
 
@@ -23,6 +25,13 @@ public class TelegramListener {
 
     public TelegramListener(SmsService smsService) {
         this.smsService = smsService;
+    }
+
+    @PostConstruct
+    public void startListener(){
+        Thread listenerThread = new Thread(this::listenForMessages);
+        listenerThread.setDaemon(true);  // Daemon thread para que no bloquee la finalización de la aplicación
+        listenerThread.start();
     }
 
 
@@ -81,28 +90,27 @@ public class TelegramListener {
                     if (update.has("channel_post")) { // Check if the update contains a channel post
                         JSONObject message = update.getJSONObject("channel_post");
                         String text = message.getString("text");
-                        String chatId = message.getJSONObject("chat").getString("id");
+
+                        // Cambiar de getString a getLong para los IDs
+                        long chatId = message.getJSONObject("chat").getLong("id");
+                        long senderChatId = message.getJSONObject("sender_chat").getLong("id");
 
                         System.out.println("Message from channel " + chatId + ": " + text);
 
-                        // Update the lastUpdateId to the current message's id
+                        // Actualizar lastUpdateId después de procesar todos los mensajes
                         lastUpdateId = updateId;
 
-                        // Regex to match the required pattern
+                        // Regex para extraer los detalles necesarios
                         Pattern pattern = Pattern.compile("/Message from 555: /Transaccion exitosa\\. /n Monto: L\\. (\\d+\\.\\d+) /n Cargos: L 0\\.00 Nombre Cliente: [A-Z ]+ /n telefono Destino: (\\+\\d+)");
                         Matcher matcher = pattern.matcher(text);
-                        System.out.println("NEW");
                         if (matcher.find()) {
                             String amount = matcher.group(1);
                             String phoneNumber = matcher.group(2);
 
                             System.out.println("Amount: " + amount);
-
-
                             System.out.println("MESSAGE SENT");
 
                             smsService.sendPaymentNotification(phoneNumber);
-
                         }
                     }
                 }
@@ -111,4 +119,6 @@ public class TelegramListener {
             e.printStackTrace();
         }
     }
+
+
 }

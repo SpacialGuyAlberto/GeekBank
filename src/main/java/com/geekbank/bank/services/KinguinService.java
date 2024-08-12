@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class KinguinService {
@@ -57,6 +58,40 @@ public class KinguinService {
 
         return giftCards;
     }
+
+    public List<KinguinGiftCard> fetchFilteredGiftCards(Map<String, String> filters) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Api-Key", apiKey);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        StringBuilder urlBuilder = new StringBuilder(apiUrl);
+        urlBuilder.append("?"); // Empezamos con ?
+
+        for (Map.Entry<String, String> entry : filters.entrySet()) {
+            if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+                urlBuilder.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
+            }
+        }
+
+        String finalUrl = urlBuilder.toString();
+        // Remover el último "&"
+        finalUrl = finalUrl.endsWith("&") ? finalUrl.substring(0, finalUrl.length() - 1) : finalUrl;
+
+        ResponseEntity<JsonNode> response = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, JsonNode.class);
+        JsonNode products = response.getBody();
+
+        List<KinguinGiftCard> giftCards = new ArrayList<>();
+        if (products != null) {
+            JsonNode productsSection = products.path("results");
+            for (JsonNode product : productsSection) {
+                giftCards.add(mapJsonToGiftCard(product));
+            }
+        }
+
+        return giftCards;
+    }
+
+
 
     public KinguinGiftCard fetchGiftCardById(String id) {
         HttpHeaders headers = new HttpHeaders();

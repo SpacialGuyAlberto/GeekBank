@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/kinguin")
@@ -28,5 +29,10 @@ public class KinguinController {
     @GetMapping("/gift-cards/search")
     public List<KinguinGiftCard> searchGiftCards(@RequestParam(value = "name") String name) {
         return kinguinService.searchGiftCardsByName(name);
+    }
+
+    @GetMapping("/gift-cards/filter")
+    public List<KinguinGiftCard> getFilteredGiftCards(@RequestParam Map<String, String> filters) {
+        return kinguinService.fetchFilteredGiftCards(filters);
     }
 }

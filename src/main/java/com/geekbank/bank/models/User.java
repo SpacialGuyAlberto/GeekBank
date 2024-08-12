@@ -25,7 +25,7 @@ public class User {
     private String password;
 
     @Column(nullable = false)
-    private String role;
+    private Roles role;
 
     @Column(name = "is_enabled", nullable = false)
     private boolean isEnabled = false;
@@ -48,8 +48,6 @@ public class User {
         secureRandom.nextBytes(randomBytes);
         return base64Encoder.encodeToString(randomBytes);
     }
-
-
     // Getters and setters
     public Long getId() {
         return id;
@@ -83,11 +81,11 @@ public class User {
         this.password = password;
     }
 
-    public String getRole() {
+    public Roles getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(Roles role) {
         this.role = role;
     }
 

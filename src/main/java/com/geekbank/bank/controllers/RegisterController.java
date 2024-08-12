@@ -1,5 +1,6 @@
 package com.geekbank.bank.controllers;
 
+import com.geekbank.bank.models.Roles;
 import com.geekbank.bank.models.User;
 import com.geekbank.bank.services.UserService;
 import com.geekbank.bank.util.JwtTokenUtil;
@@ -32,6 +33,7 @@ public class RegisterController {
 
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
+    private  Roles roles;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenUtil jwtTokenUtil;
 
@@ -42,44 +44,6 @@ public class RegisterController {
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenUtil = jwtTokenUtil;
     }
-
-//    @PostMapping("/registerUser")
-//    public ResponseEntity<String> register(@RequestBody RegisterRequest registerRequest) {
-//        logger.info("Iniciando registro para: {}", registerRequest.getEmail());
-//
-//        if (registerRequest.getEmail() == null || registerRequest.getPassword() == null) {
-//            logger.error("Email o contraseña no proporcionados");
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email y contraseña son requeridos");
-//        }
-//
-//        Optional<User> existingUser = userService.findByEmail(registerRequest.getEmail());
-//        if (existingUser.isPresent()) {
-//            logger.error("El usuario ya existe: {}", registerRequest.getEmail());
-//            throw new ResponseStatusException(HttpStatus.CONFLICT, "El usuario ya existe");
-//        }
-//
-//        User newUser = new User();
-//        newUser.setEmail(registerRequest.getEmail());
-//        newUser.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-//        newUser.setName(registerRequest.getName());
-//        newUser.setRole("USER");
-//
-//        userService.registerUser(newUser); // use registerUser method
-//        logger.info("Usuario creado: {}", newUser.getEmail());
-//
-//        Authentication authenticationRequest =
-//                new UsernamePasswordAuthenticationToken(newUser.getEmail(), registerRequest.getPassword());
-//        try {
-//            logger.info("Autenticando usuario: {}", newUser.getEmail());
-//            Authentication authenticationResponse = authenticationManager.authenticate(authenticationRequest);
-//            String jwtToken = jwtTokenUtil.generateToken(new UserDetailsImpl(newUser));
-//            logger.info("Usuario autenticado: {}", newUser.getEmail());
-//            return ResponseEntity.ok("Usuario registrado correctamente. Token JWT: " + jwtToken);
-//        } catch (BadCredentialsException e) {
-//            logger.error("Error al autenticar al usuario después del registro", e);
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al autenticar al usuario después del registro");
-//        }
-//    }
 
     @PostMapping("/registerUser")
     public ResponseEntity<String> register(@RequestBody RegisterRequest registerRequest) {
@@ -101,7 +65,7 @@ public class RegisterController {
         newUser.setEmail(registerRequest.getEmail());
         newUser.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         newUser.setName(registerRequest.getName());
-        newUser.setRole("USER");
+        newUser.setRole(Roles.CUSTOMER);
 
         userService.registerUser(newUser);
         logger.info("Usuario creado: {}", newUser.getEmail());
@@ -109,7 +73,6 @@ public class RegisterController {
 
         return ResponseEntity.ok("Usuario registrado correctamente. Por favor, revisa tu email para activar la cuenta.");
     }
-
 
     @GetMapping("/activate")
     public ResponseEntity<String> activateUser(@RequestParam("token") String token) {

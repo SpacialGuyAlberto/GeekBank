@@ -1,6 +1,7 @@
 package com.geekbank.bank.controllers;
 
 import com.geekbank.bank.models.CartItem;
+import com.geekbank.bank.models.CartItemWithGiftcardDTO;
 import com.geekbank.bank.models.User;
 import com.geekbank.bank.services.CartService;
 import com.geekbank.bank.services.UserService;
@@ -25,7 +26,7 @@ public class CartController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CartItem>> getCartItems(Authentication authentication) {
+    public ResponseEntity<List<CartItemWithGiftcardDTO>> getCartItems(Authentication authentication) {
         User user = userService.findByEmail(authentication.getName()).orElse(null);
         if (user == null) {
             return ResponseEntity.status(401).build();
@@ -39,7 +40,7 @@ public class CartController {
         if (user == null) {
             return ResponseEntity.status(401).build();
         }
-        return ResponseEntity.ok(cartService.addCartItem(user, request.getProductId(), request.getQuantity(), request.getPrice()));
+        return ResponseEntity.ok(cartService.addCartItem(user, request.getProductId(), request.getQuantity()));
     }
 
     @PutMapping()
