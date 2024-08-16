@@ -58,14 +58,13 @@ public class KinguinService {
 
         return giftCards;
     }
-
     public List<KinguinGiftCard> fetchFilteredGiftCards(Map<String, String> filters) {
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Api-Key", apiKey);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
         StringBuilder urlBuilder = new StringBuilder(apiUrl);
-        urlBuilder.append("?"); // Empezamos con ?
+        urlBuilder.append("?");
 
         for (Map.Entry<String, String> entry : filters.entrySet()) {
             if (entry.getValue() != null && !entry.getValue().isEmpty()) {
@@ -76,6 +75,7 @@ public class KinguinService {
         String finalUrl = urlBuilder.toString();
         // Remover el último "&"
         finalUrl = finalUrl.endsWith("&") ? finalUrl.substring(0, finalUrl.length() - 1) : finalUrl;
+        System.out.print(" final url : " + finalUrl);
 
         ResponseEntity<JsonNode> response = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, JsonNode.class);
         JsonNode products = response.getBody();
@@ -90,7 +90,6 @@ public class KinguinService {
 
         return giftCards;
     }
-
 
 
     public KinguinGiftCard fetchGiftCardById(String id) {

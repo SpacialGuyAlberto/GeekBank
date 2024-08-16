@@ -173,6 +173,7 @@ public class KinguinGiftCard implements GiftCard {
     public void setKinguinId(int kinguinId) {
         this.kinguinId = kinguinId;
     }
+    public int getKinguinId(){ return this.kinguinId; }
 
     public void setProductId(String productId) {
         this.productId = productId;
@@ -232,6 +233,11 @@ public class KinguinGiftCard implements GiftCard {
 
     public KinguinGiftCard orElse(KinguinGiftCard other) {
         return this != null ? this : other;
+    }
+
+    public int getQty() {
+
+        return this.qty;
     }
 
 
@@ -384,10 +390,6 @@ public class KinguinGiftCard implements GiftCard {
             this.price = price;
         }
 
-        public int getQty() {
-            return qty;
-        }
-
         public void setQty(int qty) {
             this.qty = qty;
         }
@@ -439,6 +441,11 @@ public class KinguinGiftCard implements GiftCard {
         public void setReleaseDate(String releaseDate) {
             this.releaseDate = releaseDate;
         }
+
+        public int getQty() {
+            return this.qty;
+        }
+
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

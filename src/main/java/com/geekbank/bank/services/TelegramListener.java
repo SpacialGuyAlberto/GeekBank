@@ -7,11 +7,12 @@ import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.geekbank.bank.models.OrderRequest;
+import com.geekbank.bank.models.OrderResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import javax.annotation.PostConstruct;
 
 @Service
@@ -20,8 +21,16 @@ public class TelegramListener {
     private static final String TELEGRAM_BOT_TOKEN = "7022402011:AAHf6k0ZolFa9hwiZMu1srj868j5-eqUecU";
     private static final String BASE_URL = "https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN + "/getUpdates";
     private int lastUpdateId = 0;
+    private String orderRequestPhoneNumber;
 
-    private final SmsService smsService;
+    @Autowired
+    private SmsService smsService;
+
+    @Autowired
+    private OrderService orderService;
+
+    @Autowired
+    private OrderRequestStorageService orderRequestStorageService;
 
     public TelegramListener(SmsService smsService) {
         this.smsService = smsService;
@@ -30,10 +39,9 @@ public class TelegramListener {
     @PostConstruct
     public void startListener(){
         Thread listenerThread = new Thread(this::listenForMessages);
-        listenerThread.setDaemon(true);  // Daemon thread para que no bloquee la finalización de la aplicación
+        listenerThread.setDaemon(true);  // Daemon thread so it doesn't block application termination
         listenerThread.start();
     }
-
 
     public void listenForMessages() {
         while (true) {
@@ -54,10 +62,8 @@ public class TelegramListener {
                     }
                     in.close();
 
-                    // Print the response to the console
-                    System.out.println("Response: " + response.toString());
+//                    System.out.println("Response: " + response.toString());
 
-                    // Process the response to extract and handle messages
                     processResponse(response.toString());
                 } else {
                     System.out.println("GET request failed. Response Code: " + responseCode);
@@ -66,9 +72,8 @@ public class TelegramListener {
                 e.printStackTrace();
             }
 
-            // Sleep to avoid hitting API rate limits
             try {
-                Thread.sleep(1000);
+                Thread.sleep(1000);  // Sleep to avoid hitting API rate limits
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -87,30 +92,55 @@ public class TelegramListener {
                     JSONObject update = resultArray.getJSONObject(i);
                     int updateId = update.getInt("update_id");
 
-                    if (update.has("channel_post")) { // Check if the update contains a channel post
+                    if (update.has("channel_post")) {
                         JSONObject message = update.getJSONObject("channel_post");
                         String text = message.getString("text");
 
-                        // Cambiar de getString a getLong para los IDs
                         long chatId = message.getJSONObject("chat").getLong("id");
-                        long senderChatId = message.getJSONObject("sender_chat").getLong("id");
 
                         System.out.println("Message from channel " + chatId + ": " + text);
 
-                        // Actualizar lastUpdateId después de procesar todos los mensajes
                         lastUpdateId = updateId;
 
-                        // Regex para extraer los detalles necesarios
-                        Pattern pattern = Pattern.compile("/Message from 555: /Transaccion exitosa\\. /n Monto: L\\. (\\d+\\.\\d+) /n Cargos: L 0\\.00 Nombre Cliente: [A-Z ]+ /n telefono Destino: (\\+\\d+)");
+                        Pattern pattern = Pattern.compile("/Message from 555: /Transaccion exitosa\\. /n Monto: L\\. (\\d+\\.\\d+) /n Cargos: L 0\\.00 Nombre Cliente: [A-Z ]+ /n Ref: (\\+\\d+)");
                         Matcher matcher = pattern.matcher(text);
                         if (matcher.find()) {
-                            String amount = matcher.group(1);
                             String phoneNumber = matcher.group(2);
 
-                            System.out.println("Amount: " + amount);
-                            System.out.println("MESSAGE SENT");
+                            System.out.println("Received Phone Number: " + phoneNumber);
 
-                            smsService.sendPaymentNotification(phoneNumber);
+                            // Verificar si existe una orden previa para el número de teléfono
+                            OrderRequest orderRequest = orderRequestStorageService.getOrderRequestByPhoneNumber(phoneNumber);
+
+                            if (orderRequest != null) {
+                                System.out.println("Matching Order Request found for this phone number. Processing the order...");
+
+                                // Solo se ejecuta la orden si existe una solicitud previa
+                                OrderResponse orderResponse = orderService.placeOrder(orderRequest);
+                                System.out.println("Order placed with ID: " + orderResponse.getOrderId());
+
+                                // Enviar confirmación SMS en un bloque try-catch
+                                try {
+                                    smsService.sendPaymentNotification(phoneNumber);
+                                } catch (Exception e) {
+                                    System.err.println("Failed to send payment notification: " + e.getMessage());
+                                    e.printStackTrace();
+                                } finally {
+                                    // Asegurarse de que la orden se elimina, incluso si Twilio falla
+                                    orderRequestStorageService.removeOrderRequest(phoneNumber);
+
+                                    // Verificar si la orden fue eliminada correctamente
+                                    if (!orderRequestStorageService.hasOrderForPhoneNumber(phoneNumber)) {
+                                        System.out.println("OrderRequest for phone number [" + phoneNumber + "] was successfully removed.");
+                                    } else {
+                                        System.err.println("Failed to remove OrderRequest for phone number [" + phoneNumber + "].");
+                                    }
+                                }
+
+                            } else {
+                                System.out.println("No matching Order Request found. Ignoring the message.");
+                            }
+
                         }
                     }
                 }
@@ -119,6 +149,5 @@ public class TelegramListener {
             e.printStackTrace();
         }
     }
-
 
 }
