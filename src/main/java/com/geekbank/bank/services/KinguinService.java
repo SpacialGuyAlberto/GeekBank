@@ -1,6 +1,7 @@
 package com.geekbank.bank.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.geekbank.bank.models.GiftCard;
 import com.geekbank.bank.models.KinguinGiftCard;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -19,6 +20,7 @@ public class KinguinService {
     private static final String apiUrl = "https://gateway.kinguin.net/esa/api/v1/products";
     private static final String apiKey = "77d96c852356b1c654a80f424d67048f";
     private final RestTemplate restTemplate = new RestTemplate();
+
 
     public List<KinguinGiftCard> fetchGiftCards(int page) {
         HttpHeaders headers = new HttpHeaders();

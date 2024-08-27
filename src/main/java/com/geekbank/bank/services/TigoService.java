@@ -23,28 +23,28 @@ public class TigoService {
     @Autowired
     private SmsService smsService; // Asume que tienes un servicio para enviar SMS
 
-    public void placeOrderAndSendKeys(String phoneNumber, List<KinguinGiftCard> products) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Api-Key", apiKey);
-        headers.set("Content-Type", "application/json");
-
-        // Construir el cuerpo de la solicitud de la orden
-        String orderRequestBody = buildOrderRequestBody(products);
-        HttpEntity<String> entity = new HttpEntity<>(orderRequestBody, headers);
-
-        // Realizar la solicitud de creación de orden
-        ResponseEntity<JsonNode> response = restTemplate.exchange(apiUrl, HttpMethod.POST, entity, JsonNode.class);
-        JsonNode responseBody = response.getBody();
-
-        if (response.getStatusCode().is2xxSuccessful() && responseBody != null) {
-            // Obtener el orderId de la respuesta
-            String orderId = responseBody.path("orderExternalId").asText();
-            // Descargar las claves
-            List<String> keys = downloadKeys(orderId);
-            // Enviar las claves al número de teléfono
-            smsService.sendKeysToPhoneNumber(phoneNumber, keys);
-        }
-    }
+//    public void placeOrderAndSendKeys(String phoneNumber, List<KinguinGiftCard> products) {
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.set("X-Api-Key", apiKey);
+//        headers.set("Content-Type", "application/json");
+//
+//        // Construir el cuerpo de la solicitud de la orden
+//        String orderRequestBody = buildOrderRequestBody(products);
+//        HttpEntity<String> entity = new HttpEntity<>(orderRequestBody, headers);
+//
+//        // Realizar la solicitud de creación de orden
+//        ResponseEntity<JsonNode> response = restTemplate.exchange(apiUrl, HttpMethod.POST, entity, JsonNode.class);
+//        JsonNode responseBody = response.getBody();
+//
+//        if (response.getStatusCode().is2xxSuccessful() && responseBody != null) {
+//            // Obtener el orderId de la respuesta
+//            String orderId = responseBody.path("orderExternalId").asText();
+//            // Descargar las claves
+//            List<String> keys = downloadKeys(orderId);
+//            // Enviar las claves al número de teléfono
+//            smsService.sendKeysToPhoneNumber(phoneNumber, keys);
+//        }
+//    }
 
     private String buildOrderRequestBody(List<KinguinGiftCard> products) {
         StringBuilder requestBody = new StringBuilder("{ \"products\": [");

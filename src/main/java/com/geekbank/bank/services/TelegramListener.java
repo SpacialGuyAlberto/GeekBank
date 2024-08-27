@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -109,27 +110,27 @@ public class TelegramListener {
 
                             System.out.println("Received Phone Number: " + phoneNumber);
 
-                            // Verificar si existe una orden previa para el número de teléfono
                             OrderRequest orderRequest = orderRequestStorageService.getOrderRequestByPhoneNumber(phoneNumber);
 
                             if (orderRequest != null) {
                                 System.out.println("Matching Order Request found for this phone number. Processing the order...");
 
-                                // Solo se ejecuta la orden si existe una solicitud previa
                                 OrderResponse orderResponse = orderService.placeOrder(orderRequest);
-                                System.out.println("Order placed with ID: " + orderResponse.getOrderId());
+                                List<String> keys = orderService.downloadKeys(orderResponse.getOrderId());
 
-                                // Enviar confirmación SMS en un bloque try-catch
+                                String key = "Prueba";
+                                System.out.println("Order placed with ID: " + orderResponse.getOrderId());
+                                smsService.sendPaymentNotification(phoneNumber);
+
                                 try {
-                                    smsService.sendPaymentNotification(phoneNumber);
+                                    smsService.sendKeysToPhoneNumber(phoneNumber, keys);
+//                                    smsService.sendPaymentNotification(phoneNumber);
                                 } catch (Exception e) {
                                     System.err.println("Failed to send payment notification: " + e.getMessage());
                                     e.printStackTrace();
                                 } finally {
-                                    // Asegurarse de que la orden se elimina, incluso si Twilio falla
                                     orderRequestStorageService.removeOrderRequest(phoneNumber);
 
-                                    // Verificar si la orden fue eliminada correctamente
                                     if (!orderRequestStorageService.hasOrderForPhoneNumber(phoneNumber)) {
                                         System.out.println("OrderRequest for phone number [" + phoneNumber + "] was successfully removed.");
                                     } else {

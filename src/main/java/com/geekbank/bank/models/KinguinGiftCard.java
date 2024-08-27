@@ -6,6 +6,8 @@ import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class KinguinGiftCard implements GiftCard {
+
+    private boolean isHighlight;
     @JsonProperty("name")
     private String name;
 
@@ -105,7 +107,13 @@ public class KinguinGiftCard implements GiftCard {
     public void setName(String name) {
         this.name = name;
     }
+    public void setIsHighlight(Boolean value) {
+        this.isHighlight = value;
+    }
 
+    public boolean getIsHighlight(Boolean value){
+        return this.isHighlight;
+    }
     public void setDescription(String description) {
         this.description = description;
     }

@@ -11,7 +11,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-
+import com.geekbank.bank.services.SmsService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +24,11 @@ public class OrderService {
 
     @Autowired
     private KinguinService kinguinService;
+
+    @Autowired
+    private SmsService smsService;
+
+
 
     public OrderResponse placeOrder(OrderRequest orderRequest) {
         // Calcular el precio total aquí o usar el valor enviado desde el frontend
@@ -43,7 +48,22 @@ public class OrderService {
                 OrderResponse.class
         );
 
-        return response.getBody();
+        OrderResponse orderResponse = response.getBody();
+
+        if (orderResponse != null && orderResponse.getOrderId() != null) {
+            System.out.println("Order placed successfully with ID: " + orderResponse.getOrderId());
+
+            // Descargar las keys si la orden se realizó con éxito
+            List<String> keys = downloadKeys(orderResponse.getOrderId());
+
+            // Enviar las keys al número de teléfono del cliente
+            String phoneNumber = orderRequest.getPhoneNumber();  // Suponiendo que el teléfono viene en OrderRequest
+            smsService.sendKeysToPhoneNumber(phoneNumber, keys);
+        } else {
+            System.err.println("Order failed or did not return a valid Order ID.");
+        }
+
+        return orderResponse;
     }
 
     public List<String> downloadKeys(String orderId) {

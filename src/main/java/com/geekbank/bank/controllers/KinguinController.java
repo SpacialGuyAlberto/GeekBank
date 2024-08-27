@@ -1,8 +1,12 @@
 package com.geekbank.bank.controllers;
 
 import com.geekbank.bank.models.KinguinGiftCard;
+import com.geekbank.bank.models.User;
 import com.geekbank.bank.services.KinguinService;
+import com.sendgrid.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,4 +39,5 @@ public class KinguinController {
     public List<KinguinGiftCard> getFilteredGiftCards(@RequestParam Map<String, String> filters) {
         return kinguinService.fetchFilteredGiftCards(filters);
     }
+
 }

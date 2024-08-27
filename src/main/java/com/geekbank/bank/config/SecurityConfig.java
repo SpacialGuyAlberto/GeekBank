@@ -50,7 +50,9 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/auth/registerUser", "/api/auth/activate", "/api/auth/login", "/api/auth/google-login", "/api/auth/logout",
-                                "/api/home", "/api/gift-cards/**", "/api/kinguin-gift-cards/**", "/api/users/**", "/api/public/**", "/api/cart", "/api/cart/**", "/api/telegram/**", "/api/kinguin/**", "/api/users/user-details", "/api/users/${userId}", "/api/orders", "/api/orders/**").permitAll()
+                                "/api/home", "/api/gift-cards/**", "/api/kinguin-gift-cards/**", "/api/users/**", "/api/public/**", "/api/cart", "/api/cart/**",
+                                "/api/telegram/**", "/api/kinguin/**", "/api/users/user-details", "/api/users/${userId}", "/api/orders", "/api/orders/**",
+                                "/api/highlights/**", "/api/highlights").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2Login -> oauth2Login
