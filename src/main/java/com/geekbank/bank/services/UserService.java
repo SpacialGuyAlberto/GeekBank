@@ -2,6 +2,7 @@ package com.geekbank.bank.services;
 
 import com.geekbank.bank.models.User;
 import com.geekbank.bank.repositories.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -76,6 +77,15 @@ public class UserService {
         } else {
             logger.warn("Invalid activation token: {}", token);
             return false;
+        }
+    }
+
+    @Transactional
+    public User updateUser(User user) {
+        if (userRepository.existsById(user.getId())) {
+            return userRepository.save(user);
+        } else {
+            throw new RuntimeException("Usuario no encontrado");
         }
     }
 }

@@ -20,6 +20,7 @@ import com.geekbank.bank.util.JwtTokenUtil;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @Order(1)
 @RestController
@@ -62,25 +63,39 @@ public class LoginController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody ResetPasswordRequest resetPasswordRequest){
-        Authentication authenticationRequest =
-                new UsernamePasswordAuthenticationToken(resetPasswordRequest.getEmail(), resetPasswordRequest.getOldPassword());
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody ResetPasswordRequest resetPasswordRequest) {
         try {
+            Authentication authenticationRequest =
+                    new UsernamePasswordAuthenticationToken(resetPasswordRequest.getEmail(), resetPasswordRequest.getOldPassword());
             Authentication authenticationResponse = authenticationManager.authenticate(authenticationRequest);
+
             UserDetails userDetails = (UserDetails) authenticationResponse.getPrincipal();
+            User user = userService.findByEmail(resetPasswordRequest.getEmail())
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            if (!user.isEnabled()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Usuario no habilitado"));
+            }
+
+            if (passwordEncoder.matches(resetPasswordRequest.getNewPassword(), user.getPassword())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "La nueva contraseña no puede ser igual a la anterior"));
+            }
+
+            user.setPassword(passwordEncoder.encode(resetPasswordRequest.getNewPassword()));
+            userService.updateUser(user);  // Asegúrate de tener este método implementado en tu UserService
+
             String jwtToken = jwtTokenUtil.generateToken(userDetails);
 
-            User user = userService.findByEmail(resetPasswordRequest.getEmail()).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-            if (user.isEnabled()){
-                user.setPassword(passwordEncoder.encode(resetPasswordRequest.getNewPassword()));
-            }
             Map<String, String> response = new HashMap<>();
             response.put("token", jwtToken);
             response.put("userId", String.valueOf(user.getId()));
-            return (ResponseEntity<Map<String, String>>) ResponseEntity.ok(response);
-        }
-        catch(BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Credenciales invalidas"));
+
+            return ResponseEntity.ok(response);
+
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Credenciales inválidas"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Ocurrió un error al restablecer la contraseña"));
         }
     }
 
