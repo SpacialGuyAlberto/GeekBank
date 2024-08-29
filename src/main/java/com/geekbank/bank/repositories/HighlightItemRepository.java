@@ -15,6 +15,10 @@ public interface HighlightItemRepository extends JpaRepository<HighlightItem, Lo
 
     List<HighlightItem> findByProductIdIn(List<Long> productIds);
 
+    @Override
+    void deleteAll();
+
+
     @NotNull
     @Override
     List<HighlightItem> findAll();

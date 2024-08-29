@@ -55,7 +55,7 @@ public class HighlightService {
     @Transactional
     public void removeHighlightItems(List<Long> productIds) {
         logger.debug("Attempting to delete highlight items with product IDs: {}", productIds);
-        highlightItemRepository.deleteByProductIdIn(productIds);
+        highlightItemRepository.deleteAll();
         List<HighlightItem> remainingItems = highlightItemRepository.findByProductIdIn(productIds);
         if (remainingItems.isEmpty()) {
             logger.debug("Successfully deleted highlight items for product IDs: {}", productIds);

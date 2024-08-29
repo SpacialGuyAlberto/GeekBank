@@ -12,6 +12,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -28,13 +29,15 @@ public class LoginController {
     private final JwtTokenUtil jwtTokenUtil;
     private final UserService userService;
     private final JwtDecoder jwtDecoder;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public LoginController(AuthenticationManager authenticationManager, JwtTokenUtil jwtTokenUtil, UserService userService, JwtDecoder jwtDecoder) {
+    public LoginController(AuthenticationManager authenticationManager, JwtTokenUtil jwtTokenUtil, UserService userService, JwtDecoder jwtDecoder, PasswordEncoder passwordEncoder) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenUtil = jwtTokenUtil;
         this.userService = userService;
         this.jwtDecoder = jwtDecoder;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/login")
@@ -51,8 +54,32 @@ public class LoginController {
             Map<String, String> response = new HashMap<>();
             response.put("token", jwtToken);
             response.put("userId", String.valueOf(user.getId()));
+
             return (ResponseEntity<Map<String, String>>) ResponseEntity.ok(response);
         } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Credenciales invalidas"));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody ResetPasswordRequest resetPasswordRequest){
+        Authentication authenticationRequest =
+                new UsernamePasswordAuthenticationToken(resetPasswordRequest.getEmail(), resetPasswordRequest.getOldPassword());
+        try {
+            Authentication authenticationResponse = authenticationManager.authenticate(authenticationRequest);
+            UserDetails userDetails = (UserDetails) authenticationResponse.getPrincipal();
+            String jwtToken = jwtTokenUtil.generateToken(userDetails);
+
+            User user = userService.findByEmail(resetPasswordRequest.getEmail()).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+            if (user.isEnabled()){
+                user.setPassword(passwordEncoder.encode(resetPasswordRequest.getNewPassword()));
+            }
+            Map<String, String> response = new HashMap<>();
+            response.put("token", jwtToken);
+            response.put("userId", String.valueOf(user.getId()));
+            return (ResponseEntity<Map<String, String>>) ResponseEntity.ok(response);
+        }
+        catch(BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Credenciales invalidas"));
         }
     }
@@ -105,4 +132,26 @@ public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> tokenData)
             this.password = password;
         }
     }
+
+    public static class ResetPasswordRequest {
+        private String email;
+        private String oldPassword;
+        private String newPassword;
+
+        public String getEmail(){ return email; }
+        public String getOldPassword() {return oldPassword; }
+        public String getNewPassword() {return newPassword; }
+
+        public void setEmail( String email){
+            this.email = email;
+        }
+
+        public void setOldPassword(String oldPassword) {
+            this.oldPassword = oldPassword;
+        }
+        public void setNewPassword(String newPassword) {
+            this.newPassword = newPassword;
+        }
+    }
+
 }
