@@ -168,5 +168,4 @@ public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> tokenData)
             this.newPassword = newPassword;
         }
     }
-
 }
