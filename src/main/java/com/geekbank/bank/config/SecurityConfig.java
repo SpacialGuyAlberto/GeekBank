@@ -49,7 +49,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/auth/registerUser", "/api/auth/activate", "/api/auth/login", "/api/auth/google-login", "/api/auth/logout", "/api/auth/reset-password",
+                        .requestMatchers("/api/auth/registerUser", "/api/auth/activate", "/api/auth/validate-password","/api/auth/login", "/api/auth/google-login", "/api/auth/logout", "/api/auth/reset-password",
                                 "/api/home", "/api/gift-cards/**", "/api/kinguin-gift-cards/**", "/api/users/**", "/api/public/**", "/api/cart", "/api/cart/**",
                                 "/api/telegram/**", "/api/kinguin/**", "/api/users/user-details", "/api/users/${userId}", "/api/orders", "/api/orders/**",
                                 "/api/highlights/**", "/api/highlights", "/api/users/update-user-details", "/api/users/**").permitAll()
