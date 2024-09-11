@@ -23,6 +23,8 @@ public class CartService {
     private static final Logger logger = LoggerFactory.getLogger(CartService.class);
 
     @Autowired
+
+
     public CartService(CartItemRepository cartItemRepository, KinguinService kinguinService) {
         this.cartItemRepository = cartItemRepository;
         this.kinguinService = kinguinService;
@@ -39,7 +41,6 @@ public class CartService {
                 })
                 .collect(Collectors.toList());
     }
-
 
     public CartItem addCartItem(User user, Long productId, int quantity) {
         CartItem existingCartItem = cartItemRepository.findByUserAndProductId(user, productId);

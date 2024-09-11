@@ -73,22 +73,18 @@ public class UserController {
     @PostMapping("/update-user-details")
     public ResponseEntity<Map<String, String>> updateUserDetails(@RequestBody userInfoRequest userInfoRequest){
         try {
-            // Autenticar al usuario
             Authentication authenticationRequest =
                     new UsernamePasswordAuthenticationToken(userInfoRequest.getEmail(), userInfoRequest.getPassword());
             Authentication authenticationResponse = authenticationManager.authenticate(authenticationRequest);
 
-            // Obtener los detalles del usuario autenticado
             UserDetails userDetails = (UserDetails) authenticationResponse.getPrincipal();
             User user = userService.findByEmail(userInfoRequest.getEmail())
                     .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-            // Verificar si el usuario está habilitado
             if (!user.isEnabled()) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Usuario no habilitado"));
             }
 
-            // Actualizar los detalles del usuario
             if (!userInfoRequest.getEmail().equals(user.getEmail())) {
                 user.setEmail(userInfoRequest.getEmail());
             }
@@ -103,11 +99,9 @@ public class UserController {
                 return ResponseEntity.badRequest().body(Map.of("error", "El número de teléfono no puede estar vacío"));
             }
 
-            // Guardar los cambios
             userService.updateUser(user);
             String jwtToken = jwtTokenUtil.generateToken(userDetails);
 
-            // Preparar la respuesta
             Map<String, String> response = new HashMap<>();
             response.put("token", jwtToken);
             response.put("userId", String.valueOf(user.getId()));

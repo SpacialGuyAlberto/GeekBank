@@ -10,6 +10,8 @@ import java.util.regex.Pattern;
 
 import com.geekbank.bank.models.OrderRequest;
 import com.geekbank.bank.models.OrderResponse;
+import com.geekbank.bank.models.Transaction;
+import com.geekbank.bank.models.TransactionStatus;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,11 @@ public class TelegramListener {
     @Autowired
     private OrderRequestStorageService orderRequestStorageService;
 
+    @Autowired
+    private TransactionService transactionService;
+    @Autowired
+    private TransactionStorageService transactionStorageService;
+
     public TelegramListener(SmsService smsService) {
         this.smsService = smsService;
     }
@@ -40,7 +47,7 @@ public class TelegramListener {
     @PostConstruct
     public void startListener(){
         Thread listenerThread = new Thread(this::listenForMessages);
-        listenerThread.setDaemon(true);  // Daemon thread so it doesn't block application termination
+        listenerThread.setDaemon(true);
         listenerThread.start();
     }
 
@@ -74,7 +81,7 @@ public class TelegramListener {
             }
 
             try {
-                Thread.sleep(1000);  // Sleep to avoid hitting API rate limits
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -111,33 +118,39 @@ public class TelegramListener {
                             System.out.println("Received Phone Number: " + phoneNumber);
 
                             OrderRequest orderRequest = orderRequestStorageService.getOrderRequestByPhoneNumber(phoneNumber);
+                            Transaction transaction = transactionStorageService.getTransactionByPhoneNumber(phoneNumber);
 
                             if (orderRequest != null) {
                                 System.out.println("Matching Order Request found for this phone number. Processing the order...");
 
                                 OrderResponse orderResponse = orderService.placeOrder(orderRequest);
-                                List<String> keys = orderService.downloadKeys(orderResponse.getOrderId());
+                                ///ACTIVAR ESTA OPCION PARA LUEGO
+//                                List<String> keys = orderService.downloadKeys(orderResponse.getOrderId());
 
                                 String key = "Prueba";
                                 System.out.println("Order placed with ID: " + orderResponse.getOrderId());
                                 smsService.sendPaymentNotification(phoneNumber);
 
                                 try {
-                                    smsService.sendKeysToPhoneNumber(phoneNumber, keys);
-//                                    smsService.sendPaymentNotification(phoneNumber);
+                                    ///ACTIVAR ESTA OPCION LUEGO
+//                                    smsService.sendKeysToPhoneNumber(phoneNumber, keys);
+                                    smsService.sendPaymentNotification(phoneNumber);
+                                    //ACTUALIZAR EL ESTADO DE LA TRANSACCION || BUSCAR TRANSACCION POR ID BUSCANDO EN UN COLA LAS ULTIMAS TRANSACCIONES PENDIENTES DE EL USER; SI ES GÄSTE ENTONCES POR NUMERO DE TELEFONO
+                                    //        savedTransaction.setStatus(TransactionStatus.COMPLETED);
+                                    transaction.setStatus(TransactionStatus.COMPLETED);
                                 } catch (Exception e) {
                                     System.err.println("Failed to send payment notification: " + e.getMessage());
+                                    transaction.setStatus(TransactionStatus.CANCELLED);
                                     e.printStackTrace();
                                 } finally {
                                     orderRequestStorageService.removeOrderRequest(phoneNumber);
-
+                                    transactionStorageService.removeTransaction(phoneNumber);
                                     if (!orderRequestStorageService.hasOrderForPhoneNumber(phoneNumber)) {
                                         System.out.println("OrderRequest for phone number [" + phoneNumber + "] was successfully removed.");
                                     } else {
                                         System.err.println("Failed to remove OrderRequest for phone number [" + phoneNumber + "].");
                                     }
                                 }
-
                             } else {
                                 System.out.println("No matching Order Request found. Ignoring the message.");
                             }

@@ -1,24 +1,35 @@
 package com.geekbank.bank.models;
 
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class OrderRequest {
+
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = true)
+    private User user;
     private String phoneNumber;
     private List<Product> products;
+    private Double amount;
 
-    // Getter for phoneNumber
+
     public String getPhoneNumber() {
         return phoneNumber;
     }
 
-    // Setter for phoneNumber
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
+    public Long getUser(){
+        return this.user.getId();
+    }
+    public Double getAmount(){
+        return this.amount;
+    }
 
-    // Getter for products
-    // Option 1: Convert Product to KinguinGiftCard
     public List<KinguinGiftCard> getProducts() {
         return products.stream().map(product -> {
             KinguinGiftCard giftCard = new KinguinGiftCard();
@@ -29,7 +40,6 @@ public class OrderRequest {
         }).collect(Collectors.toList());
     }
 
-    // Setter for products
     public void setProducts(List<Product> products) {
         this.products = products;
     }
@@ -39,7 +49,6 @@ public class OrderRequest {
         private int qty;
         private double price;
 
-        // Getters and setters for Product
         public int getKinguinId() {
             return kinguinId;
         }

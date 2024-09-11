@@ -10,7 +10,6 @@ import com.geekbank.bank.models.OrderRequest;
 @Service
 public class OrderRequestStorageService {
 
-    // Utilizamos ConcurrentHashMap para manejo seguro en multihilos
     private ConcurrentHashMap<String, OrderRequest> pendingOrders = new ConcurrentHashMap<>();
 
     public void storeOrderRequest(OrderRequest orderRequest) {

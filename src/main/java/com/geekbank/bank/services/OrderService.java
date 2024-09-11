@@ -53,11 +53,9 @@ public class OrderService {
         if (orderResponse != null && orderResponse.getOrderId() != null) {
             System.out.println("Order placed successfully with ID: " + orderResponse.getOrderId());
 
-            // Descargar las keys si la orden se realizó con éxito
             List<String> keys = downloadKeys(orderResponse.getOrderId());
 
-            // Enviar las keys al número de teléfono del cliente
-            String phoneNumber = orderRequest.getPhoneNumber();  // Suponiendo que el teléfono viene en OrderRequest
+            String phoneNumber = orderRequest.getPhoneNumber();
             smsService.sendKeysToPhoneNumber(phoneNumber, keys);
         } else {
             System.err.println("Order failed or did not return a valid Order ID.");
