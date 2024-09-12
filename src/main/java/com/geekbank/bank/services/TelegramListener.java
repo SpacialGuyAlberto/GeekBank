@@ -12,6 +12,7 @@ import com.geekbank.bank.models.OrderRequest;
 import com.geekbank.bank.models.OrderResponse;
 import com.geekbank.bank.models.Transaction;
 import com.geekbank.bank.models.TransactionStatus;
+import com.geekbank.bank.repositories.TransactionRepository;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,8 @@ public class TelegramListener {
 
     @Autowired
     private OrderRequestStorageService orderRequestStorageService;
+    @Autowired
+    private TransactionRepository transactionRepository;
 
     @Autowired
     private TransactionService transactionService;
@@ -119,6 +122,9 @@ public class TelegramListener {
 
                             OrderRequest orderRequest = orderRequestStorageService.getOrderRequestByPhoneNumber(phoneNumber);
                             Transaction transaction = transactionStorageService.getTransactionByPhoneNumber(phoneNumber);
+                            //Verificar si la transaccion es una o varias
+                            Transaction transactionInDB = transactionService.findByTransactionNumber(transaction.getTransactionNumber());
+
 
                             if (orderRequest != null) {
                                 System.out.println("Matching Order Request found for this phone number. Processing the order...");
@@ -135,12 +141,13 @@ public class TelegramListener {
                                     ///ACTIVAR ESTA OPCION LUEGO
 //                                    smsService.sendKeysToPhoneNumber(phoneNumber, keys);
                                     smsService.sendPaymentNotification(phoneNumber);
-                                    //ACTUALIZAR EL ESTADO DE LA TRANSACCION || BUSCAR TRANSACCION POR ID BUSCANDO EN UN COLA LAS ULTIMAS TRANSACCIONES PENDIENTES DE EL USER; SI ES GÄSTE ENTONCES POR NUMERO DE TELEFONO
-                                    //        savedTransaction.setStatus(TransactionStatus.COMPLETED);
-                                    transaction.setStatus(TransactionStatus.COMPLETED);
+                                    transactionService.updateTransactionStatus(transactionInDB.getId(), TransactionStatus.COMPLETED);
+//
+//                                    System.out.println("Transaction status before save: " + transaction.getStatus());
+
                                 } catch (Exception e) {
                                     System.err.println("Failed to send payment notification: " + e.getMessage());
-                                    transaction.setStatus(TransactionStatus.CANCELLED);
+                                    transactionService.updateTransactionStatus(transactionInDB.getId(), TransactionStatus.CANCELLED);
                                     e.printStackTrace();
                                 } finally {
                                     orderRequestStorageService.removeOrderRequest(phoneNumber);

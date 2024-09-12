@@ -1,6 +1,7 @@
 package com.geekbank.bank.services;
 import com.geekbank.bank.models.OrderRequest;
 import com.geekbank.bank.models.Transaction;
+import com.geekbank.bank.models.TransactionStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -8,8 +9,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class TransactionStorageService {
     private ConcurrentHashMap<String, Transaction> pendingTransactions = new ConcurrentHashMap<>();
-    private void storePendingTransaction(Transaction transaction){
+    protected void storePendingTransaction(Transaction transaction){
+
         pendingTransactions.put(transaction.getPhoneNumber(), transaction);
+
         System.out.println("Stored transaction for phone number: " + transaction.getPhoneNumber() + "\n Transaction Id:  " + transaction.getTransactionNumber() );
     }
 

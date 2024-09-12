@@ -8,9 +8,7 @@ import java.util.stream.Collectors;
 
 public class OrderRequest {
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = true)
-    private User user;
+    private Long userId;
     private String phoneNumber;
     private List<Product> products;
     private Double amount;
@@ -23,8 +21,12 @@ public class OrderRequest {
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
-    public Long getUser(){
-        return this.user.getId();
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
     public Double getAmount(){
         return this.amount;

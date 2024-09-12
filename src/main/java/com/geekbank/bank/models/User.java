@@ -27,6 +27,7 @@ public class User {
     @Column(nullable = true)
     private String phoneNumber;
 
+    @Enumerated(EnumType.ORDINAL)
     @Column(nullable = false)
     private Roles role;
 

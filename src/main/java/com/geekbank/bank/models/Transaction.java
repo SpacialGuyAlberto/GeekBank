@@ -1,9 +1,9 @@
 package com.geekbank.bank.models;
 
 import jakarta.persistence.*;
-import org.hibernate.resource.transaction.spi.TransactionStatus;
-
+import com.geekbank.bank.models.TransactionStatus;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Entity
 public class Transaction {
@@ -28,7 +28,7 @@ public class Transaction {
     private LocalDateTime timestamp;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private TransactionStatus status;
 
     private String description;
@@ -98,23 +98,28 @@ public class Transaction {
     public void setDescription(String description) {
         this.description = description;
     }
+//    public User getUser() {
+//        return user;
+//    }
+//
+//    public void setUser(Optional<User> user) {
+//        this.user = user.get();
+//    }
 
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
+//    public Account getAccount() {
+//        return account;
+//    }
+//
+//    public void setAccount(Account account) {
+//        this.account = account;
+//    }
+    public void setUser(User user){
         this.user = user;
     }
 
-    public Account getAccount() {
-        return account;
-    }
-
-    public void setAccount(Account account) {
+    public void setAccount(Account account){
         this.account = account;
     }
 
-    public void setStatus(com.geekbank.bank.models.TransactionStatus transactionStatus) {
-    }
+
 }

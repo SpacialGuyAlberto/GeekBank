@@ -11,37 +11,38 @@ import org.springframework.transaction.annotation.Transactional;
 import com.geekbank.bank.repositories.TransactionRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class TransactionService {
 
     @Autowired
     private TransactionRepository transactionRepository;
-
     @Autowired
-    private UserRepository userRepository;
+    private TransactionStorageService transactionStorageService;
+
 
     @Transactional
-    public Transaction createTransaction(Long userId, double amount, TransactionType type, String description, String phoneNumber) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
+    public Transaction createTransaction(double amount, TransactionType type, String description, String phoneNumber) {
         Transaction transaction = new Transaction();
-        transaction.setUser(user);
+        // Set all necessary fields
         transaction.setAmount(amount);
-
-
+        transaction.setUser(null);
         transaction.setType(type);
         transaction.setTimestamp(LocalDateTime.now());
-        transaction.setTransactionNumber(generateTransactionNumber()); // Lógica para generar un número único
+        transaction.setTransactionNumber(generateTransactionNumber());
         transaction.setDescription(description);
-        transaction.setStatus(TransactionStatus.PENDING);
         transaction.setPhoneNumber(phoneNumber);
+        transaction.setAccount(null);
+        // Ensure the status is set
+        transaction.setStatus(TransactionStatus.PENDING);
 
-        Transaction savedTransaction = transactionRepository.save(transaction);
-
-//        savedTransaction.setStatus(TransactionStatus.COMPLETED);
-        return savedTransaction;
+        // Save the transaction to the database
+        return transactionRepository.save(transaction);
     }
+
+
 
     @Transactional
     public void updateTransactionStatus(Long transactionId, TransactionStatus newStatus) {
@@ -52,21 +53,33 @@ public class TransactionService {
         transactionRepository.save(transaction);
     }
 
-    @Transactional(rollbackFor = Exception.class)
-    public void performTransactionWithRollback(Long userId, double amount, String phoneNumber) throws Exception {
-        try {
-            // Crear la transacción
-            createTransaction(userId, amount, TransactionType.PURCHASE, "Compra de producto", phoneNumber);
-            // Lógica adicional que puede fallar
 
-            // Simulación de error
-            if (amount > 1000) {
-                throw new Exception("Monto de la transacción excede el límite permitido.");
-            }
-        } catch (Exception e) {
-            throw new Exception("Error durante la transacción: " + e.getMessage());
-        }
+    public List<Transaction> findPendingTransactionsByPhoneNumber(String phoneNumber) {
+        return transactionRepository.findByStatusAndPhoneNumber(TransactionStatus.PENDING, phoneNumber);
     }
+    public Transaction findByTransactionNumber(String transactionNumber){
+        return transactionRepository.findByTransactionNumber(transactionNumber);
+    }
+
+    public List<Transaction> getAllTransactions(){
+        return transactionRepository.findAll();
+    }
+
+//    @Transactional(rollbackFor = Exception.class)
+//    public void performTransactionWithRollback(User user, double amount, String phoneNumber) throws Exception {
+//        try {
+//            // Crear la transacción
+//            createTransaction(user, amount, TransactionType.PURCHASE, "Compra de producto", phoneNumber);
+//            // Lógica adicional que puede fallar
+//
+//            // Simulación de error
+//            if (amount > 1000) {
+//                throw new Exception("Monto de la transacción excede el límite permitido.");
+//            }
+//        } catch (Exception e) {
+//            throw new Exception("Error durante la transacción: " + e.getMessage());
+//        }
+//    }
 
     private String generateTransactionNumber() {
         return "TX-" + System.currentTimeMillis();
