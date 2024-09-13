@@ -24,11 +24,11 @@ public class TransactionService {
 
 
     @Transactional
-    public Transaction createTransaction(double amount, TransactionType type, String description, String phoneNumber) {
+    public Transaction createTransaction(User user, double amount, TransactionType type, String description, String phoneNumber) {
         Transaction transaction = new Transaction();
         // Set all necessary fields
         transaction.setAmount(amount);
-        transaction.setUser(null);
+        transaction.setUser(user);
         transaction.setType(type);
         transaction.setTimestamp(LocalDateTime.now());
         transaction.setTransactionNumber(generateTransactionNumber());
