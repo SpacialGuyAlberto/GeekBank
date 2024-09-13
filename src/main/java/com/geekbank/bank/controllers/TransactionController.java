@@ -25,9 +25,8 @@ public class TransactionController {
         return ResponseEntity.ok(transactions);
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<List<Transaction>> getTransactions(@RequestParam String phoneNumber) {
-        List<Transaction> transactions = transactionService.getAllTransactions();
-        return ResponseEntity.ok(transactions);
+    @GetMapping()
+    public List<Transaction> getTransactions() {
+        return transactionService.getAllTransactions();
     }
 }
