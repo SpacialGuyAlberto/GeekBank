@@ -81,6 +81,7 @@ public class TransactionService {
 //        }
 //    }
 
+    public List<Transaction> getTransactionByUserId(Long userId) { return transactionRepository.findByUserId(userId);}
     private String generateTransactionNumber() {
         return "TX-" + System.currentTimeMillis();
     }

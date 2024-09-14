@@ -5,10 +5,7 @@ import com.geekbank.bank.repositories.TransactionRepository;
 import com.geekbank.bank.services.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -28,5 +25,10 @@ public class TransactionController {
     @GetMapping()
     public List<Transaction> getTransactions() {
         return transactionService.getAllTransactions();
+    }
+
+    @GetMapping("/{userId}")
+    public List<Transaction> getTransactionsById(@PathVariable long userId){
+        return transactionService.getTransactionByUserId(userId);
     }
 }
