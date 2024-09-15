@@ -117,38 +117,37 @@ public class TelegramListener {
                         Matcher matcher = pattern.matcher(text);
                         if (matcher.find()) {
                             String phoneNumber = matcher.group(2);
-
                             System.out.println("Received Phone Number: " + phoneNumber);
 
                             OrderRequest orderRequest = orderRequestStorageService.getOrderRequestByPhoneNumber(phoneNumber);
                             Transaction transaction = transactionStorageService.getTransactionByPhoneNumber(phoneNumber);
-                            //Verificar si la transaccion es una o varias
                             Transaction transactionInDB = transactionService.findByTransactionNumber(transaction.getTransactionNumber());
-
 
                             if (orderRequest != null) {
                                 System.out.println("Matching Order Request found for this phone number. Processing the order...");
-
-                                OrderResponse orderResponse = orderService.placeOrder(orderRequest);
                                 ///ACTIVAR ESTA OPCION PARA LUEGO
 //                                List<String> keys = orderService.downloadKeys(orderResponse.getOrderId());
-
-                                String key = "Prueba";
-                                System.out.println("Order placed with ID: " + orderResponse.getOrderId());
-                                smsService.sendPaymentNotification(phoneNumber);
-
+//                                smsService.sendPaymentNotification(phoneNumber);
                                 try {
                                     ///ACTIVAR ESTA OPCION LUEGO
 //                                    smsService.sendKeysToPhoneNumber(phoneNumber, keys);
+                                    OrderResponse orderResponse = orderService.placeOrder(orderRequest);
+                                    String key = "Prueba";
+                                    System.out.println("Order placed with ID: " + orderResponse.getOrderId());
                                     smsService.sendPaymentNotification(phoneNumber);
                                     transactionService.updateTransactionStatus(transactionInDB.getId(), TransactionStatus.COMPLETED);
-//
+                                    ///Hay que borrar las transacciones del ConcurrentHashmap
+                                    transactionStorageService.removeTransaction(transactionInDB.getPhoneNumber());
 //                                    System.out.println("Transaction status before save: " + transaction.getStatus());
 
                                 } catch (Exception e) {
                                     System.err.println("Failed to send payment notification: " + e.getMessage());
-                                    transactionService.updateTransactionStatus(transactionInDB.getId(), TransactionStatus.CANCELLED);
-                                    e.printStackTrace();
+
+
+                                    if (e.getMessage().contains("Unprocessable Entity")) {
+                                        System.out.println("Insufficient balance. Cancelling transaction.");
+                                        transactionService.updateTransactionStatus(transaction.getId(), TransactionStatus.CANCELLED);
+                                    }
                                 } finally {
                                     orderRequestStorageService.removeOrderRequest(phoneNumber);
                                     transactionStorageService.removeTransaction(phoneNumber);

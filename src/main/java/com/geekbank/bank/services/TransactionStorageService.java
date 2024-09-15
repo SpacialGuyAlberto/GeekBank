@@ -37,6 +37,13 @@ public class TransactionStorageService {
         System.out.println("Removal of Transaction: " + (removed ? "succeded" : "failed" + "for phone number: " +  phoneNumber));
     }
 
+    public void removeTransactionById(Long transactionId){
+        System.out.println("Remove transaction by Id");
+
+        boolean removed = false;
+
+    }
+
     public boolean hasTransactionForPhoneNumber(String phoneNumber){
         boolean isTransactionRemovedFromQueue = pendingTransactions.containsKey(phoneNumber);
         System.out.println("Checking if transaction exists for phone number in queue: " +  phoneNumber + " -> " + ( isTransactionRemovedFromQueue ? "Exists" : "Does not exist"));

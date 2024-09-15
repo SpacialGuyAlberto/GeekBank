@@ -1,5 +1,6 @@
 package com.geekbank.bank.services;
 
+import com.geekbank.bank.controllers.WebSocketController;
 import com.geekbank.bank.models.Transaction;
 import com.geekbank.bank.models.TransactionStatus;
 import com.geekbank.bank.models.TransactionType;
@@ -21,6 +22,8 @@ public class TransactionService {
     private TransactionRepository transactionRepository;
     @Autowired
     private TransactionStorageService transactionStorageService;
+    @Autowired
+    private WebSocketController webSocketController;
 
 
     @Transactional
@@ -38,11 +41,11 @@ public class TransactionService {
         // Ensure the status is set
         transaction.setStatus(TransactionStatus.PENDING);
 
+        Transaction savedTransaction = transactionRepository.save(transaction);
         // Save the transaction to the database
-        return transactionRepository.save(transaction);
+        transactionStorageService.storePendingTransaction(savedTransaction);
+        return savedTransaction;
     }
-
-
 
     @Transactional
     public void updateTransactionStatus(Long transactionId, TransactionStatus newStatus) {
@@ -51,8 +54,9 @@ public class TransactionService {
 
         transaction.setStatus(newStatus);
         transactionRepository.save(transaction);
-    }
 
+//        webSocketController.notifyTransactionUpdate(transaction.getPhoneNumber(), newStatus.name());
+    }
 
     public List<Transaction> findPendingTransactionsByPhoneNumber(String phoneNumber) {
         return transactionRepository.findByStatusAndPhoneNumber(TransactionStatus.PENDING, phoneNumber);
