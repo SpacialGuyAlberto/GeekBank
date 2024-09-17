@@ -10,7 +10,6 @@ public class Customer {
     private String lastName;
     private String email;
     private String password;
-
     public Customer(String firstName, String email){
         this.firstName = firstName;
         this.email = email;
@@ -32,12 +31,6 @@ public class Customer {
     public void setFirstName(String firstName){ this.firstName = firstName;}
     public void setPassword(String password){this.password = password; }
 
-
-
-//    @Override
-//    public String toString(){
-//        return "U"
-//    }
 
 
 }
