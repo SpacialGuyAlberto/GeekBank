@@ -46,7 +46,7 @@ public class TelegramListener {
                     in.close();
 
                     // Print the response to the console
-                    System.out.println("Response: " + response.toString());
+                    System.out.println("Response my friend: " + response.toString());
 
                     // Process the response to extract and handle messages
                     processResponse(response.toString());
