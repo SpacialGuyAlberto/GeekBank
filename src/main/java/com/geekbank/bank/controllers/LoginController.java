@@ -12,6 +12,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -19,6 +20,7 @@ import com.geekbank.bank.util.JwtTokenUtil;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @Order(1)
 @RestController
@@ -28,13 +30,15 @@ public class LoginController {
     private final JwtTokenUtil jwtTokenUtil;
     private final UserService userService;
     private final JwtDecoder jwtDecoder;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public LoginController(AuthenticationManager authenticationManager, JwtTokenUtil jwtTokenUtil, UserService userService, JwtDecoder jwtDecoder) {
+    public LoginController(AuthenticationManager authenticationManager, JwtTokenUtil jwtTokenUtil, UserService userService, JwtDecoder jwtDecoder, PasswordEncoder passwordEncoder) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenUtil = jwtTokenUtil;
         this.userService = userService;
         this.jwtDecoder = jwtDecoder;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/login")
@@ -51,9 +55,68 @@ public class LoginController {
             Map<String, String> response = new HashMap<>();
             response.put("token", jwtToken);
             response.put("userId", String.valueOf(user.getId()));
+
             return (ResponseEntity<Map<String, String>>) ResponseEntity.ok(response);
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Credenciales invalidas"));
+        }
+    }
+
+    @PostMapping("/validate-password")
+    public ResponseEntity<Map<String, String>> validatePassword(@RequestBody LoginRequest loginRequest) {
+        Authentication authenticationRequest =
+                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword());
+        try {
+            Authentication authenticationResponse = authenticationManager.authenticate(authenticationRequest);
+            UserDetails userDetails = (UserDetails) authenticationResponse.getPrincipal();
+            String jwtToken = jwtTokenUtil.generateToken(userDetails);
+
+            User user = userService.findByEmail(loginRequest.getEmail()).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            Map<String, String> response = new HashMap<>();
+            response.put("token", jwtToken);
+            response.put("userId", String.valueOf(user.getId()));
+
+            return (ResponseEntity<Map<String, String>>) ResponseEntity.ok(response);
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Credenciales invalidas"));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody ResetPasswordRequest resetPasswordRequest) {
+        try {
+            Authentication authenticationRequest =
+                    new UsernamePasswordAuthenticationToken(resetPasswordRequest.getEmail(), resetPasswordRequest.getOldPassword());
+            Authentication authenticationResponse = authenticationManager.authenticate(authenticationRequest);
+
+            UserDetails userDetails = (UserDetails) authenticationResponse.getPrincipal();
+            User user = userService.findByEmail(resetPasswordRequest.getEmail())
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            if (!user.isEnabled()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Usuario no habilitado"));
+            }
+
+            if (passwordEncoder.matches(resetPasswordRequest.getNewPassword(), user.getPassword())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "La nueva contraseña no puede ser igual a la anterior"));
+            }
+
+            user.setPassword(passwordEncoder.encode(resetPasswordRequest.getNewPassword()));
+            userService.updateUser(user);  // Asegúrate de tener este método implementado en tu UserService
+
+            String jwtToken = jwtTokenUtil.generateToken(userDetails);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("token", jwtToken);
+            response.put("userId", String.valueOf(user.getId()));
+
+            return ResponseEntity.ok(response);
+
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Credenciales inválidas"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Ocurrió un error al restablecer la contraseña"));
         }
     }
 
@@ -103,6 +166,27 @@ public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> tokenData)
 
         public void setPassword(String password) {
             this.password = password;
+        }
+    }
+
+    public static class ResetPasswordRequest {
+        private String email;
+        private String oldPassword;
+        private String newPassword;
+
+        public String getEmail(){ return email; }
+        public String getOldPassword() {return oldPassword; }
+        public String getNewPassword() {return newPassword; }
+
+        public void setEmail( String email){
+            this.email = email;
+        }
+
+        public void setOldPassword(String oldPassword) {
+            this.oldPassword = oldPassword;
+        }
+        public void setNewPassword(String newPassword) {
+            this.newPassword = newPassword;
         }
     }
 }

@@ -12,8 +12,10 @@ public class CartItem {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Column(name = "product_id")
     private Long productId;
     private int quantity;
+    private double price;
 
     // Getters and setters
     public Long getId() {
@@ -46,5 +48,9 @@ public class CartItem {
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+    public double getPrice(){ return price; }
+    public void setPrice(double price){
+        this.price = price;
     }
 }

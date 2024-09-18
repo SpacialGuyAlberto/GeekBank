@@ -28,4 +28,5 @@ public class LogoutController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid token");
         }
     }
+
 }

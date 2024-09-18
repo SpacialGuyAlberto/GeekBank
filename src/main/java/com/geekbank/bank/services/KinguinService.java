@@ -1,6 +1,7 @@
 package com.geekbank.bank.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.geekbank.bank.models.GiftCard;
 import com.geekbank.bank.models.KinguinGiftCard;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class KinguinService {
@@ -18,6 +20,7 @@ public class KinguinService {
     private static final String apiUrl = "https://gateway.kinguin.net/esa/api/v1/products";
     private static final String apiKey = "77d96c852356b1c654a80f424d67048f";
     private final RestTemplate restTemplate = new RestTemplate();
+
 
     public List<KinguinGiftCard> fetchGiftCards(int page) {
         HttpHeaders headers = new HttpHeaders();
@@ -57,6 +60,39 @@ public class KinguinService {
 
         return giftCards;
     }
+    public List<KinguinGiftCard> fetchFilteredGiftCards(Map<String, String> filters) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Api-Key", apiKey);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        StringBuilder urlBuilder = new StringBuilder(apiUrl);
+        urlBuilder.append("?");
+
+        for (Map.Entry<String, String> entry : filters.entrySet()) {
+            if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+                urlBuilder.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
+            }
+        }
+
+        String finalUrl = urlBuilder.toString();
+        // Remover el último "&"
+        finalUrl = finalUrl.endsWith("&") ? finalUrl.substring(0, finalUrl.length() - 1) : finalUrl;
+        System.out.print(" final url : " + finalUrl);
+
+        ResponseEntity<JsonNode> response = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, JsonNode.class);
+        JsonNode products = response.getBody();
+
+        List<KinguinGiftCard> giftCards = new ArrayList<>();
+        if (products != null) {
+            JsonNode productsSection = products.path("results");
+            for (JsonNode product : productsSection) {
+                giftCards.add(mapJsonToGiftCard(product));
+            }
+        }
+
+        return giftCards;
+    }
+
 
     public KinguinGiftCard fetchGiftCardById(String id) {
         HttpHeaders headers = new HttpHeaders();
