@@ -12,7 +12,7 @@ group = 'org.example'
 version = '0.0.1-SNAPSHOT'
 
 java {
-    sourceCompatibility = '21'
+    sourceCompatibility = '17'
 }
 
 repositories {
@@ -44,6 +44,8 @@ dependencies {
     developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
     implementation 'org.apache.commons:commons-lang3:3.12.0'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'io.github.cdimascio:java-dotenv:5.2.2'
+
 
     runtimeOnly 'com.mysql:mysql-connector-j'
     runtimeOnly 'com.oracle.database.jdbc:ojdbc11'
@@ -62,6 +64,8 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.twilio.sdk:twilio:10.4.0'
     implementation 'com.twilio.sdk:twilio:10.4.0'
+    implementation 'io.github.cdimascio:java-dotenv:5.2.2'
+
 
     // Dependencias adicionales
     implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
