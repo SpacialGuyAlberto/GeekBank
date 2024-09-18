@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 @Order(1)
+@CrossOrigin(origins = "${DOMAIN_ORIGIN_URL}")
 @RestController
 @RequestMapping("/api/auth")
 public class RegisterController {
