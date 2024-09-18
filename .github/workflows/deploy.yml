@@ -3,7 +3,7 @@ name: Deploy to server
 on:
   push:
     branches:
-      - main  # O la rama que deseas que dispare la acción
+      - master  # O la rama que deseas que dispare la acción
 
 jobs:
   deploy:
