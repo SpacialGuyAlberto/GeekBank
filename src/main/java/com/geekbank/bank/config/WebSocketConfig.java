@@ -27,7 +27,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOrigins("http://3.76.224.67:3000") // Permitir el origen del frontend
+                .setAllowedOrigins(domainUrl) // Permitir el origen del frontend
                 .withSockJS();
     }
 }
