@@ -77,7 +77,7 @@ public class TelegramListener {
 
                     processResponse(response.toString());
                 } else {
-                    System.out.println("GET request failed . Response Code: " + responseCode);
+                    System.out.println("GET request failed  . Response Code: " + responseCode);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
