@@ -13,20 +13,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Add SSH Key with Passphrase
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          echo "${{ secrets.SSH_PASSPHRASE }}" | ssh-add ~/.ssh/id_rsa
-
       - name: Copy files via SSH
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }}  # Añadir passphrase aquí
           source: "./"
           target: "/home/ubuntu/GeekBank"
 
@@ -36,7 +28,6 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }}  # Añadir passphrase aquí
           script: |
             cd /home/ubuntu/GeekBank
             ./deploy.sh  # Ejecutar el script de despliegue
