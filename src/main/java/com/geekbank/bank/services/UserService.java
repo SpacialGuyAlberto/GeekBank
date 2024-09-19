@@ -56,7 +56,7 @@ public class UserService {
             emailService.sendActivationEmail(user.getEmail(), token);
             logger.info("Sent email to user: {}", user.getEmail());
         } catch (Exception e) {
-            logger.error("Failed to bro send activation email to user: {}", user.getEmail(), e);
+            logger.error("Failed to bro oksend activation email to user: {}", user.getEmail(), e);
         }
     }
 
