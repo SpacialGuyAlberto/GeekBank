@@ -23,7 +23,7 @@ public class SendGridEmailService {
         Email toEmail = new Email(to);
         String subject = "Email de activación";
         String activationLink = domainUrl + "/activate?token=" + token;
-        String body = "Haga clic en el siguiente enlace para activar su cuenta: <a href=\"" + activationLink + "\">Activar Cuenta</a>";
+        String body = "Haga clic en el siguiente enlace para activar su cuenta: " + activationLink;
         Content content = new Content("text/html", body);
         Mail mail = new Mail(from, subject, toEmail, content);
 
