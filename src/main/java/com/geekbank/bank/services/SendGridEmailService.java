@@ -15,11 +15,15 @@ public class SendGridEmailService {
     @Value("${spring.sendgrid.api-key}")
     private String sendGridApiKey;
 
+    @Value("${DOMAIN_ORIGIN_URL}")
+    private String domainUrl;
+
     public void sendActivationEmail(String to, String token) {
         Email from = new Email("lalbertomurillo1996@gmail.com"); // Cambia esto a tu email
         Email toEmail = new Email(to);
         String subject = "Email de activación";
-        String body = "Haga clic en el siguiente enlace para activar su cuenta: http://localhost:4200/activate?token=" + token;
+        String activationLink = domainUrl + "/activate?token=" + token;
+        String body = "Haga clic en el siguiente enlace para activar su cuenta: <a href=\"" + activationLink + "\">Activar Cuenta</a>";
         Content content = new Content("text/html", body);
         Mail mail = new Mail(from, subject, toEmail, content);
 
