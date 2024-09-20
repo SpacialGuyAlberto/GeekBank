@@ -95,12 +95,14 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
+        config.addAllowedOrigin("http://astralisbank.com:3000");
         config.addAllowedOrigin(frontendUrl);
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
     }
