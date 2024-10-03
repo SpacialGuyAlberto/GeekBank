@@ -1,5 +1,9 @@
 package com.geekbank.bank.services;
 
+import com.geekbank.bank.models.Account;
+import com.geekbank.bank.repositories.AccountRepository;
+import com.geekbank.bank.models.AccountStatus;
+import com.geekbank.bank.models.VerificationStatus;
 import com.geekbank.bank.models.User;
 import com.geekbank.bank.repositories.UserRepository;
 import jakarta.transaction.Transactional;
@@ -19,12 +23,16 @@ public class UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
+    private final AccountService accountService;
+    private final AccountRepository accountRepository;
     private final SendGridEmailService emailService;
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserService(UserRepository userRepository, SendGridEmailService emailService, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, AccountService accountService, AccountRepository accountRepository, SendGridEmailService emailService, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.accountService = accountService;
+        this.accountRepository = accountRepository;
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
     }
@@ -52,6 +60,17 @@ public class UserService {
         user.setActivationToken(token);
         userRepository.save(user);
 
+        Account account = new Account();
+        account.setUser(user);
+        account.setCurrency("USD");
+        account.setStatus(AccountStatus.ACTIVE);
+        account.setVerificationStatus(VerificationStatus.UNVERIFIED);
+        account.setBalance(0.0);
+        account.setLoyaltyPoints(0);
+        account.setDailyLimit(1000.0);
+
+        accountService.createAccount(account);
+
         try {
             emailService.sendActivationEmail(user.getEmail(), token);
             logger.info("Sent email to user: {}", user.getEmail());
@@ -63,6 +82,8 @@ public class UserService {
     public boolean activateUser(String token) {
         logger.info("Activating user with token: {}", token);
         Optional<User> userOptional = userRepository.findByActivationToken(token);
+
+
         if (userOptional.isPresent()) {
             User user = userOptional.get();
             if (user.isEnabled()) {
@@ -73,11 +94,40 @@ public class UserService {
             user.setActivationToken(null);
             userRepository.save(user);
             logger.info("User {} activated successfully", user.getEmail());
+            changeAccountStatusToActive(user);
             return true;
         } else {
             logger.warn("Invalid activation token: {}", token);
             return false;
         }
+    }
+
+    private void changeAccountStatusToActiveAllAccounts(User user) {
+        List<Account> accounts = accountService.getAccountsByUserId(user.getId());
+
+        if (accounts.isEmpty()) {
+            logger.warn("No accounts found for user {}", user.getEmail());
+            return;
+        }
+
+        for (Account account : accounts) {
+            account.setStatus(AccountStatus.ACTIVE);
+            accountRepository.save(account);
+            logger.info("Account {} status updated to ACTIVE", account.getAccountNumber());
+        }
+    }
+
+    private void changeAccountStatusToActive(User user) {
+        Account account = accountRepository.findFirstByUserId(user.getId());
+
+        if (account == null) {
+            logger.warn("No account found for user {}", user.getEmail());
+            return;
+        }
+
+        account.setStatus(AccountStatus.ACTIVE);
+        accountRepository.save(account);
+        logger.info("Account {} status updated to ACTIVE", account.getAccountNumber());
     }
 
     @Transactional
