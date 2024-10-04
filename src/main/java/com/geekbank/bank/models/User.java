@@ -1,5 +1,8 @@
 package com.geekbank.bank.models;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import org.hibernate.annotations.NaturalId;
 import jakarta.persistence.PrePersist;
@@ -7,6 +10,7 @@ import java.security.SecureRandom;
 import java.util.Base64;
 
 @Entity
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @Table(name = "users")
 public class User {
 
@@ -20,6 +24,11 @@ public class User {
     @NaturalId(mutable = true)
     @Column(nullable = false, unique = true)
     private String email;
+
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonManagedReference // Para manejar la serialización
+    private Account account;
 
     @Column(nullable = true)
     private String password;

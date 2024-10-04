@@ -1,5 +1,8 @@
 package com.geekbank.bank.controllers;
 
+import com.geekbank.bank.models.Account;
+import com.geekbank.bank.models.VerificationStatus;
+import com.geekbank.bank.repositories.AccountRepository;
 import com.geekbank.bank.util.JwtTokenUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -11,6 +14,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.web.bind.annotation.RestController;
 import com.geekbank.bank.models.User;
 import com.geekbank.bank.services.UserService;
+import com.geekbank.bank.services.AccountService;
 import com.geekbank.bank.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +32,7 @@ import java.util.Optional;
 public class UserController {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
+    private final AccountService accountService;
     private final JwtTokenUtil jwtTokenUtil;
     private final JwtDecoder jwtDecoder;
     private final PasswordEncoder passwordEncoder;
@@ -35,13 +40,14 @@ public class UserController {
 
     @Autowired
     public UserController(UserService userService,
-                          AuthenticationManager authenticationManager,
+                          AuthenticationManager authenticationManager, AccountService accountService,
                           JwtTokenUtil jwtTokenUtil,
                           JwtDecoder jwtDecoder,
                           PasswordEncoder passwordEncoder,
                           UserRepository userRepository) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
+        this.accountService = accountService;
         this.jwtTokenUtil = jwtTokenUtil;
         this.jwtDecoder = jwtDecoder;
         this.passwordEncoder = passwordEncoder;
@@ -130,6 +136,8 @@ public class UserController {
         Optional<User> userOptional = userRepository.findByActivationToken(token);
         if (userOptional.isPresent()) {
             User user = userOptional.get();
+            Account account = accountService.getAccountsByUserId(user.getId());
+            accountService.changeVerificationStatus(account.getId(), VerificationStatus.VERIFIED);
             user.setPassword(passwordEncoder.encode(newPassword));
             user.setEnabled(true);
             user.setActivationToken(null);
@@ -141,7 +149,7 @@ public class UserController {
         }
     }
 
-    public class SetPasswordRequest {
+    public static class SetPasswordRequest {
         public String getToken() {
             return token;
         }
@@ -162,8 +170,6 @@ public class UserController {
 
         private String password;
 
-
-        // Getters y setters
     }
 
 

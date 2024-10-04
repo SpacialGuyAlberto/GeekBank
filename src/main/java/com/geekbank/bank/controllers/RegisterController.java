@@ -98,21 +98,18 @@ public class RegisterController {
         newUser.setEmail(registerRequest.getEmail());
         newUser.setName(registerRequest.getName());
         newUser.setRole(Roles.CUSTOMER);
-        newUser.setEnabled(false); // El usuario estará inactivo hasta que establezca su contraseña
+        newUser.setEnabled(false);
 
-        // Generar token de activación
         String activationToken = UUID.randomUUID().toString();
         newUser.setActivationToken(activationToken);
 
-        userService.registerUser(newUser);
+        userService.registerUserByAdmin(newUser);
         logger.info("Usuario creado por admin: {}", newUser.getEmail());
 
-        // Enviar email al usuario para establecer contraseña
         emailService.sendSetPasswordEmail(newUser);
 
         return ResponseEntity.ok("Usuario registrado correctamente. Se ha enviado un correo electrónico para que el usuario establezca su contraseña.");
     }
-
 
     @GetMapping("/activate")
     public ResponseEntity<String> activateUser(@RequestParam("token") String token) {

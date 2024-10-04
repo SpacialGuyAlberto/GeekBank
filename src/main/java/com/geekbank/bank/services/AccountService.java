@@ -43,7 +43,6 @@ public class AccountService {
         return accountRepository.findByStatus(status);
     }
 
-
     // Obtener una cuenta por ID
     public Optional<Account> getAccountById(Long id) {
         return accountRepository.findById(id);
@@ -54,8 +53,7 @@ public class AccountService {
         return Optional.ofNullable(accountRepository.findByAccountNumber(accountNumber));
     }
 
-    // Obtener todas las cuentas de un usuario específico
-    public List<Account> getAccountsByUserId(Long userId) {
+    public Account getAccountsByUserId(Long userId) {
         return accountRepository.findByUserId(userId);
     }
 

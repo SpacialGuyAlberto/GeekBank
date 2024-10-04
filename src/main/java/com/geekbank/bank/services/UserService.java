@@ -38,16 +38,22 @@ public class UserService {
         return userRepository.save(user);
     }
 
+//    public List<User> findAllUsers() {
+//        return userRepository.findAll();
+//    }
     public List<User> findAllUsers() {
-        return userRepository.findAll();
+        return userRepository.findAllWithAccount();
     }
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 
+//    public Optional<User> getUserById(long userId) {
+//        return userRepository.findById(userId);
+//    }
     public Optional<User> getUserById(long userId) {
-        return userRepository.findById(userId);
+        return userRepository.findByIdWithAccount(userId);
     }
 
     public void registerUser(User user) {
@@ -56,7 +62,6 @@ public class UserService {
         String token = UUID.randomUUID().toString();
         user.setActivationToken(token);
         userRepository.save(user);
-
 
         Account account = new Account();
         account.setUser(user);
@@ -72,6 +77,33 @@ public class UserService {
 
         try {
             emailService.sendActivationEmail(user.getEmail(), token);
+            logger.info("Sent email to user: {}", user.getEmail());
+        } catch (Exception e) {
+            logger.error("Failed to bro oksend activation email to user: {}", user.getEmail(), e);
+        }
+    }
+
+    public void registerUserByAdmin(User user) {
+
+        user.setEnabled(false);
+        String token = UUID.randomUUID().toString();
+        user.setActivationToken(token);
+        userRepository.save(user);
+
+        Account account = new Account();
+        account.setUser(user);
+        account.setCurrency("USD");
+        account.setStatus(AccountStatus.ACTIVE);
+        account.setVerificationStatus(VerificationStatus.UNVERIFIED);
+        account.setBalance(0.0);
+        account.setLoyaltyPoints(0);
+        account.setDailyLimit(1000.0);
+        account.setAccountType(AccountType.SAVINGS);
+
+        accountService.createAccount(account);
+
+        try {
+//            emailService.sendActivationEmail(user.getEmail(), token);
             logger.info("Sent email to user: {}", user.getEmail());
         } catch (Exception e) {
             logger.error("Failed to bro oksend activation email to user: {}", user.getEmail(), e);
@@ -101,20 +133,20 @@ public class UserService {
         }
     }
 
-    private void changeAccountStatusToActiveAllAccounts(User user) {
-        List<Account> accounts = accountService.getAccountsByUserId(user.getId());
-
-        if (accounts.isEmpty()) {
-            logger.warn("No accounts found for user {}", user.getEmail());
-            return;
-        }
-
-        for (Account account : accounts) {
-            account.setStatus(AccountStatus.ACTIVE);
-            accountRepository.save(account);
-            logger.info("Account {} status updated to ACTIVE", account.getAccountNumber());
-        }
-    }
+//    private void changeAccountStatusToActiveAllAccounts(User user) {
+//        List<Account> accounts = accountService.getAccountsByUserId(user.getId());
+//
+//        if (accounts.isEmpty()) {
+//            logger.warn("No accounts found for user {}", user.getEmail());
+//            return;
+//        }
+//
+//        for (Account account : accounts) {
+//            account.setStatus(AccountStatus.ACTIVE);
+//            accountRepository.save(account);
+//            logger.info("Account {} status updated to ACTIVE", account.getAccountNumber());
+//        }
+//    }
 
     private void changeAccountStatusToActive(User user) {
         Account account = accountRepository.findFirstByUserId(user.getId());

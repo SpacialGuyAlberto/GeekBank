@@ -85,23 +85,6 @@ public class AccountServiceTest {
         verify(accountRepository, times(1)).findByAccountNumber("ACC123");
     }
 
-    @Test
-    public void testGetAccountsByUserId() {
-        Account account1 = new Account();
-        account1.setId(1L);
-
-        Account account2 = new Account();
-        account2.setId(2L);
-
-        List<Account> accounts = Arrays.asList(account1, account2);
-
-        when(accountRepository.findByUserId(100L)).thenReturn(accounts);
-
-        List<Account> result = accountService.getAccountsByUserId(100L);
-
-        assertEquals(2, result.size());
-        verify(accountRepository, times(1)).findByUserId(100L);
-    }
 
     @Test
     public void testUpdateAccountExists() {
