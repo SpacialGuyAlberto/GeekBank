@@ -71,6 +71,7 @@ public class Account {
     @Column(nullable = false)
     private Date updatedDate;
 
+
     public AccountType getAccountType() {
         return accountType;
     }

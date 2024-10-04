@@ -3,6 +3,7 @@ package com.geekbank.bank.controllers;
 import com.geekbank.bank.models.Roles;
 import com.geekbank.bank.models.User;
 import com.geekbank.bank.services.UserService;
+import com.geekbank.bank.services.SendGridEmailService;
 import com.geekbank.bank.util.JwtTokenUtil;
 import com.geekbank.bank.models.UserDetailsImpl;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,6 +24,7 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.UUID;
 
 @Order(1)
 @CrossOrigin(origins = "${DOMAIN_ORIGIN_URL}")
@@ -35,13 +37,15 @@ public class RegisterController {
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
     private  Roles roles;
+    private final SendGridEmailService emailService;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenUtil jwtTokenUtil;
 
     @Autowired
-    public RegisterController(AuthenticationManager authenticationManager, UserService userService, PasswordEncoder passwordEncoder, JwtTokenUtil jwtTokenUtil) {
+    public RegisterController(AuthenticationManager authenticationManager, UserService userService, SendGridEmailService emailService, PasswordEncoder passwordEncoder, JwtTokenUtil jwtTokenUtil) {
         this.authenticationManager = authenticationManager;
         this.userService = userService;
+        this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenUtil = jwtTokenUtil;
     }
@@ -75,6 +79,41 @@ public class RegisterController {
         return ResponseEntity.ok("Usuario registrado correctamente. Por favor, revisa tu email para activar la cuenta.");
     }
 
+    @PostMapping("/registerUserByAdmin")
+    public ResponseEntity<String> registerUserByAdmin(@RequestBody RegisterRequest registerRequest) {
+        logger.info("Administrador iniciando registro para: {}", registerRequest.getEmail());
+
+        if (registerRequest.getEmail() == null || registerRequest.getName() == null) {
+            logger.error("Email o nombre no proporcionados");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email y nombre son requeridos");
+        }
+
+        Optional<User> existingUser = userService.findByEmail(registerRequest.getEmail());
+        if (existingUser.isPresent()) {
+            logger.error("El usuario ya existe: {}", registerRequest.getEmail());
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El usuario ya existe");
+        }
+
+        User newUser = new User();
+        newUser.setEmail(registerRequest.getEmail());
+        newUser.setName(registerRequest.getName());
+        newUser.setRole(Roles.CUSTOMER);
+        newUser.setEnabled(false); // El usuario estará inactivo hasta que establezca su contraseña
+
+        // Generar token de activación
+        String activationToken = UUID.randomUUID().toString();
+        newUser.setActivationToken(activationToken);
+
+        userService.registerUser(newUser);
+        logger.info("Usuario creado por admin: {}", newUser.getEmail());
+
+        // Enviar email al usuario para establecer contraseña
+        emailService.sendSetPasswordEmail(newUser);
+
+        return ResponseEntity.ok("Usuario registrado correctamente. Se ha enviado un correo electrónico para que el usuario establezca su contraseña.");
+    }
+
+
     @GetMapping("/activate")
     public ResponseEntity<String> activateUser(@RequestParam("token") String token) {
         logger.info("Activating user with token: {}", token);
@@ -102,6 +141,11 @@ public class RegisterController {
         public RegisterRequest(String email, String password, String name) {
             this.email = email;
             this.password = password;
+            this.name = name;
+        }
+
+        public RegisterRequest(String email, String name) {
+            this.email = email;
             this.name = name;
         }
 

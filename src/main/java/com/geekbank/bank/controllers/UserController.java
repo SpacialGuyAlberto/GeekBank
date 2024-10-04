@@ -6,12 +6,12 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.web.bind.annotation.RestController;
 import com.geekbank.bank.models.User;
 import com.geekbank.bank.services.UserService;
+import com.geekbank.bank.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
-import java.security.Principal;
 import java.util.Map;
 import java.util.Optional;
 
@@ -32,14 +31,21 @@ public class UserController {
     private final JwtTokenUtil jwtTokenUtil;
     private final JwtDecoder jwtDecoder;
     private final PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
 
     @Autowired
-    public UserController(UserService userService, AuthenticationManager authenticationManager, JwtTokenUtil jwtTokenUtil, JwtDecoder jwtDecoder, PasswordEncoder passwordEncoder) {
+    public UserController(UserService userService,
+                          AuthenticationManager authenticationManager,
+                          JwtTokenUtil jwtTokenUtil,
+                          JwtDecoder jwtDecoder,
+                          PasswordEncoder passwordEncoder,
+                          UserRepository userRepository) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
         this.jwtTokenUtil = jwtTokenUtil;
         this.jwtDecoder = jwtDecoder;
         this.passwordEncoder = passwordEncoder;
+        this.userRepository = userRepository;
     }
 
     @GetMapping("/{userId}")
@@ -114,6 +120,50 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Error interno al actualizar los detalles del usuario: " + e.getMessage()));
         }
+    }
+
+    @PostMapping("/setPassword")
+    public ResponseEntity<String> setPassword(@RequestBody SetPasswordRequest request) {
+        String token = request.getToken();
+        String newPassword = request.getPassword();
+
+        Optional<User> userOptional = userRepository.findByActivationToken(token);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            user.setPassword(passwordEncoder.encode(newPassword));
+            user.setEnabled(true);
+            user.setActivationToken(null);
+            userRepository.save(user);
+
+            return ResponseEntity.ok("Contraseña establecida correctamente.");
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token inválido o expirado.");
+        }
+    }
+
+    public class SetPasswordRequest {
+        public String getToken() {
+            return token;
+        }
+
+        public void setToken(String token) {
+            this.token = token;
+        }
+
+        private String token;
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+
+        private String password;
+
+
+        // Getters y setters
     }
 
 

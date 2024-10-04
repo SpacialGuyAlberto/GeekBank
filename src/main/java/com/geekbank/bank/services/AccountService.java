@@ -26,7 +26,7 @@ public class AccountService {
     // Crear una nueva cuenta
     public Account createAccount(Account account) {
         // Validaciones iniciales (si es necesario)
-
+        account.setAccountNumber(generateUniqueAccountNumber());
         // Inicializar campos predeterminados
         account.setStatus(AccountStatus.ACTIVE);
         account.setVerificationStatus(VerificationStatus.UNVERIFIED);

@@ -1,10 +1,7 @@
 package com.geekbank.bank.services;
 
-import com.geekbank.bank.models.Account;
+import com.geekbank.bank.models.*;
 import com.geekbank.bank.repositories.AccountRepository;
-import com.geekbank.bank.models.AccountStatus;
-import com.geekbank.bank.models.VerificationStatus;
-import com.geekbank.bank.models.User;
 import com.geekbank.bank.repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +57,7 @@ public class UserService {
         user.setActivationToken(token);
         userRepository.save(user);
 
+
         Account account = new Account();
         account.setUser(user);
         account.setCurrency("USD");
@@ -68,6 +66,7 @@ public class UserService {
         account.setBalance(0.0);
         account.setLoyaltyPoints(0);
         account.setDailyLimit(1000.0);
+        account.setAccountType(AccountType.SAVINGS);
 
         accountService.createAccount(account);
 

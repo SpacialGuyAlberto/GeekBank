@@ -1,5 +1,6 @@
 package com.geekbank.bank.services;
 
+import com.geekbank.bank.models.User;
 import com.sendgrid.*;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Content;
@@ -44,5 +45,49 @@ public class SendGridEmailService {
             ex.printStackTrace();
         }
     }
+
+    public void sendSetPasswordEmail(User user) {
+        // Configurar las direcciones de email
+        Email from = new Email("lalbertomurillo1996@gmail.com");
+        Email toEmail = new Email(user.getEmail());
+
+        // Asunto del email
+        String subject = "Establece tu contraseña en [Nombre de tu Aplicación]"; // Reemplaza con el nombre de tu aplicación
+
+        // Construir el enlace de activación
+        String activationLink = domainUrl + "/set-password?token=" + user.getActivationToken();
+
+        // Contenido del email en HTML
+        String body = "<p>Hola " + user.getName() + ",</p>"
+                + "<p>Tu cuenta ha sido creada. Por favor, haz clic en el siguiente enlace para establecer tu contraseña y activar tu cuenta:</p>"
+                + "<p><a href=\"" + activationLink + "\">Establecer contraseña</a></p>"
+                + "<p>Si no solicitaste esta cuenta, por favor ignora este correo.</p>";
+
+        // Configurar el contenido del email
+        Content content = new Content("text/html", body);
+
+        // Crear el objeto Mail
+        Mail mail = new Mail(from, subject, toEmail, content);
+
+        // Inicializar SendGrid
+        SendGrid sg = new SendGrid(sendGridApiKey);
+        Request request = new Request();
+
+        try {
+            request.setMethod(Method.POST);
+            request.setEndpoint("mail/send");
+            request.setBody(mail.build());
+
+            Response response = sg.api(request);
+            System.out.println("Código de respuesta: " + response.getStatusCode());
+            System.out.println("Cuerpo de la respuesta: " + response.getBody());
+            System.out.println("Encabezados de la respuesta: " + response.getHeaders());
+        } catch (IOException ex) {
+            System.err.println("Error al enviar email a: " + user.getEmail());
+            ex.printStackTrace();
+        }
+    }
+
+
 
 }
