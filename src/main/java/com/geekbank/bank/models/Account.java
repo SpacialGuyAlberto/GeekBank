@@ -1,9 +1,17 @@
 package com.geekbank.bank.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import java.util.List;
+import java.util.Date;
+import java.util.List;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Account {
 
     @Id
@@ -16,12 +24,109 @@ public class Account {
     @Column(nullable = false)
     private double balance;
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference // Para manejar la serialización
     private User user;
 
     @OneToMany(mappedBy = "account")
     private List<Transaction> transactions;
+
+
+    private String currency;
+
+    public AccountStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(AccountStatus status) {
+        this.status = status;
+    }
+
+    // Nuevo: Estado de la cuenta
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AccountStatus status;
+
+    public Date getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    // Nuevo: Fecha de creación
+    @CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(nullable = false, updatable = false)
+    private Date createdDate;
+
+    public Date getUpdatedDate() {
+        return updatedDate;
+    }
+
+    public void setUpdatedDate(Date updatedDate) {
+        this.updatedDate = updatedDate;
+    }
+
+    // Nuevo: Fecha de última actualización
+    @UpdateTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(nullable = false)
+    private Date updatedDate;
+
+
+    public AccountType getAccountType() {
+        return accountType;
+    }
+
+    public void setAccountType(AccountType accountType) {
+        this.accountType = accountType;
+    }
+
+    // Nuevo: Tipo de cuenta (personal, negocio, etc.)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AccountType accountType;
+
+    public double getDailyLimit() {
+        return dailyLimit;
+    }
+
+    public void setDailyLimit(double dailyLimit) {
+        this.dailyLimit = dailyLimit;
+    }
+
+    // Nuevo: Límite diario de transacciones
+    @Column(nullable = false)
+    private double dailyLimit;
+
+    public VerificationStatus getVerificationStatus() {
+        return verificationStatus;
+    }
+
+    public void setVerificationStatus(VerificationStatus verificationStatus) {
+        this.verificationStatus = verificationStatus;
+    }
+
+    // Nuevo: Estado de verificación de la cuenta
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private VerificationStatus verificationStatus;
+
+    public int getLoyaltyPoints() {
+        return loyaltyPoints;
+    }
+
+    public void setLoyaltyPoints(int loyaltyPoints) {
+        this.loyaltyPoints = loyaltyPoints;
+    }
+
+    // Nuevo: Puntos de lealtad acumulados
+    @Column(nullable = false)
+    private int loyaltyPoints;
+
 
     public Long getId() {
         return id;
@@ -61,5 +166,9 @@ public class Account {
 
     public void setTransactions(List<Transaction> transactions) {
         this.transactions = transactions;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
     }
 }
