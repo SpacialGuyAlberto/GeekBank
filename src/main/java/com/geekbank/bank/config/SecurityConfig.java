@@ -56,7 +56,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/registerUser", "/api/auth/registerUserByAdmin", "/api/auth/activate", "/api/auth/validate-password","/api/auth/login", "/api/auth/google-login", "/api/auth/logout", "/api/auth/reset-password",
                                 "/api/home", "/api/gift-cards/**", "/api/kinguin-gift-cards/**", "/api/users/**", "/api/public/**", "/api/cart", "/api/cart/**",
                                 "/api/telegram/**", "/api/kinguin/**", "/api/users/user-details", "/api/users/${userId}", "/api/orders", "/api/orders/**",
-                                "/api/highlights/**", "/api/highlights", "/api/users/update-user-details", "/api/users/**", "/api/transactions", "/api/transactions/**", "/api/wish-list", "/api/wish-list/**").permitAll()
+                                "/api/highlights/**", "/api/highlights", "/api/users/update-user-details", "/api/users/**", "/api/transactions", "/api/transactions/**",
+                                "/api/wish-list", "/api/wish-list/**", "/api/wish-list/${wishedItemId}").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2Login -> oauth2Login

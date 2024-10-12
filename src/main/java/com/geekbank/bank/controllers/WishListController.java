@@ -1,7 +1,6 @@
 package com.geekbank.bank.controllers;
 
 import com.geekbank.bank.models.*;
-import com.geekbank.bank.services.CartService;
 import com.geekbank.bank.services.UserService;
 import com.geekbank.bank.services.WishService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/wish-list")
@@ -21,6 +21,15 @@ public class WishListController {
     public WishListController(WishService wishService, UserService userService) {
         this.wishService = wishService;
         this.userService = userService;
+    }
+
+    @GetMapping("/{wishedItemId}")
+    public ResponseEntity<WishedItemGiftcardDTO> getWishedItemById(Authentication authentication, @PathVariable Long wishedItemId) {
+        User user = userService.findByEmail(authentication.getName()).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(401).build();
+        }
+        return ResponseEntity.ok(wishService.getWishedItem(wishedItemId));
     }
 
     @GetMapping

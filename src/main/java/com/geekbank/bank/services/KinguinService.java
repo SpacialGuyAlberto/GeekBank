@@ -10,9 +10,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 
+
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class KinguinService {
@@ -21,6 +24,7 @@ public class KinguinService {
     private static final String apiKey = "77d96c852356b1c654a80f424d67048f";
     private final RestTemplate restTemplate = new RestTemplate();
 
+    
 
     public List<KinguinGiftCard> fetchGiftCards(int page) {
         HttpHeaders headers = new HttpHeaders();
@@ -40,6 +44,16 @@ public class KinguinService {
 
         return giftCards;
     }
+
+    public Map<Long, KinguinGiftCard> fetchGiftCardsByIds(List<Long> productIds) {
+        return productIds.parallelStream()
+                .map(productId -> {
+                    KinguinGiftCard giftCard = fetchGiftCardById(String.valueOf(productId)).orElse(null);
+                    return new AbstractMap.SimpleEntry<>(productId, giftCard);
+                })
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
 
     public List<KinguinGiftCard> searchGiftCardsByName(String name) {
         HttpHeaders headers = new HttpHeaders();

@@ -9,6 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import java.util.List;
@@ -17,7 +20,6 @@ import java.util.List;
 public class WishService {
     private final WishedItemRepository wishedItemRepository;
     private final KinguinService kinguinService;
-
     private static final Logger logger = LoggerFactory.getLogger(WishService.class);
 
     @Autowired
@@ -26,17 +28,33 @@ public class WishService {
         this.kinguinService = kinguinService;
     }
 
+    public WishedItemGiftcardDTO getWishedItem(Long id){
+        WishedItem wishedItem = wishedItemRepository.findByProductId(id);
+
+        KinguinGiftCard giftCard = kinguinService.fetchGiftCardById(wishedItem.getProductId().toString());
+        return new WishedItemGiftcardDTO(wishedItem, giftCard);
+    }
 
     public List<WishedItemGiftcardDTO> getWishedItems(User user) {
         List<WishedItem> wishedItems = wishedItemRepository.findByUser(user);
+
+        // Obtener todos los productIds de los wishedItems
+        List<Long> productIds = wishedItems.stream()
+                .map(WishedItem::getProductId)
+                .collect(Collectors.toList());
+
+        // Obtener todas las tarjetas de regalo en una sola llamada
+        Map<Long, KinguinGiftCard> giftCardMap = kinguinService.fetchGiftCardsByIds(productIds);
+
+        // Construir la lista de WishedItemGiftcardDTO
         return wishedItems.stream()
                 .map(wishedItem -> {
-                    KinguinGiftCard giftcard = kinguinService.fetchGiftCardById(String.valueOf(wishedItem.getProductId()))
-                            .orElse(null);
+                    KinguinGiftCard giftcard = giftCardMap.get(wishedItem.getProductId());
                     return new WishedItemGiftcardDTO(wishedItem, giftcard);
                 })
                 .collect(Collectors.toList());
     }
+
 
     public WishedItem addWishedItem(User user, Long productId, int quantity) {
         WishedItem existingItem = wishedItemRepository.findByUserAndProductId(user, productId);
