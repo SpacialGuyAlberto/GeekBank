@@ -508,7 +508,7 @@ public class KinguinGiftCard implements GiftCard {
 
     @Override
     public String getCardNumber() {
-        return null; // No se aplica para este tipo de gift card
+        return productId;
     }
 
     @Override

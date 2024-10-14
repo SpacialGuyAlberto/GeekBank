@@ -57,7 +57,7 @@ public class SecurityConfig {
                                 "/api/home", "/api/gift-cards/**", "/api/kinguin-gift-cards/**", "/api/users/**", "/api/public/**", "/api/cart", "/api/cart/**",
                                 "/api/telegram/**", "/api/kinguin/**", "/api/users/user-details", "/api/users/${userId}", "/api/orders", "/api/orders/**",
                                 "/api/highlights/**", "/api/highlights", "/api/users/update-user-details", "/api/users/**", "/api/transactions", "/api/transactions/**",
-                                "/api/wish-list", "/api/wish-list/**", "/api/wish-list/${wishedItemId}").permitAll()
+                                "/api/wish-list", "/api/wish-list/**", "/api/wish-list/${wishedItemId}", "/api/feedbacks/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2Login -> oauth2Login
