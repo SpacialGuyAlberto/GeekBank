@@ -17,62 +17,15 @@ import java.util.Date;
 
 
 @Entity
+@Table(name = "feedbacks")
 public class Feedback {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = true)
-    @JsonBackReference // Para manejar la serialización
-    private User user;
-
-    private String productId;
-    private int score;
-    private String message;
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    @CreationTimestamp // Anotación para gestionar automáticamente la fecha de creación
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date createdAt;
-
-
-    // Constructor sin argumentos (no-arg constructor)
-    public Feedback() {
-    }
-
-    // Constructor con argumentos
-    public Feedback(User user, int score, String message, String productId, Date createdAt) {
-        this.user = user;
-        this.score = score;
-        this.message = message;
-        this.productId = productId;
-        this.createdAt = createdAt;
-    }
-
-    // Getters y setters
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public String getProductId() {
-        return productId;
-    }
-
-    public void setProductId(String productId) {
-        this.productId = productId;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public int getScore() {
@@ -91,11 +44,46 @@ public class Feedback {
         this.message = message;
     }
 
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getGiftCardId() {
+        return giftCardId;
+    }
+
+    public void setGiftCardId(String giftCardId) {
+        this.giftCardId = giftCardId;
+    }
+
+    private int score;
+
+    private String message;
+
+    private String userId;
+
+    private String giftCardId;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date createdAt;
+
+    // Getters y setters
+
     public Long getId() {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    // ... otros getters y setters
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
     }
 }

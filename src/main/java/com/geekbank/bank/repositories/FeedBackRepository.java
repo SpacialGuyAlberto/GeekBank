@@ -15,19 +15,14 @@ import java.util.List;
 @Repository
 public interface FeedBackRepository extends JpaRepository<Feedback, Long>{
 
-    List<Feedback> findByUser(User user);
 
-    // Alternativamente, si quieres buscar por el ID del usuario
-    List<Feedback> findByUserId(Long userId);
-    List<Feedback> findAll();
-    Optional<Feedback> findById(Long id);
-    List<Feedback> findByProductId(String productId);
+    List<Feedback> findByGiftCardId(String giftCardId);
 
+    // Encuentra feedbacks por userId
+    List<Feedback> findByUserId(String userId);
+
+    // Encuentra feedbacks creados después de una fecha específica
     List<Feedback> findByCreatedAtAfter(Date date);
-    List<Feedback> findByUserAndProductId(User user, String productId);
-
-    // Alternativamente, si quieres buscar por el ID del usuario
-    List<Feedback> findByUserIdAndProductId(Long userId, String productId);
 
     // Encuentra feedbacks creados antes de una fecha específica
     List<Feedback> findByCreatedAtBefore(Date date);
@@ -35,9 +30,10 @@ public interface FeedBackRepository extends JpaRepository<Feedback, Long>{
     // Encuentra feedbacks dentro de un rango de fechas
     List<Feedback> findByCreatedAtBetween(Date startDate, Date endDate);
 
-    // Otra forma usando @Query para una consulta más personalizada
-    @Query("SELECT f FROM Feedback f WHERE f.createdAt BETWEEN :startDate AND :endDate")
-    List<Feedback> findFeedbacksInDateRange(@Param("startDate") Date startDate, @Param("endDate") Date endDate);
+    // Método personalizado usando @Query para una consulta más específica
+    @org.springframework.data.jpa.repository.Query("SELECT f FROM Feedback f WHERE f.createdAt BETWEEN :startDate AND :endDate")
+    List<Feedback> findFeedbacksInDateRange(@org.springframework.data.repository.query.Param("startDate") Date startDate,
+                                            @org.springframework.data.repository.query.Param("endDate") Date endDate);
 
 
 }

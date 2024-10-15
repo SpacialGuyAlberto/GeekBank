@@ -1,12 +1,13 @@
 package com.geekbank.bank.controllers;
 
 import com.geekbank.bank.models.Feedback;
-import com.geekbank.bank.models.User;
+import com.geekbank.bank.dto.FeedbackRequest;
 import com.geekbank.bank.services.FeedbackService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,35 +33,23 @@ public class FeedbackController {
 
     // Crear un nuevo feedback
     @PostMapping
-    public Feedback createFeedback(@RequestBody FeedbackRequest feedbackRequest) {
-        // Aquí deberás buscar o crear el User según sea necesario. En este ejemplo, asumo que ya tienes el User.
-        User user = new User(); // Recuperar o crear el objeto User según tus necesidades
-        user.setId(feedbackRequest.getUserId()); // Asignar el UserId
-
-        return feedbackService.createFeedback(user, feedbackRequest.getProductId(), feedbackRequest.getScore(), feedbackRequest.getMessage());
+    public ResponseEntity<Feedback> createFeedback(@RequestBody FeedbackRequest feedbackRequest) {
+        Feedback feedback = feedbackService.createFeedback(feedbackRequest);
+        return ResponseEntity.ok(feedback);
     }
 
     // Obtener feedbacks por productId
-    @GetMapping("/product/{productId}")
-    public List<Feedback> getFeedbacksByProductId(@PathVariable String productId) {
-        return feedbackService.getFeedbacksByProductId(productId);
+    @GetMapping("/giftcard/{giftCardId}")
+    public ResponseEntity<List<Feedback>> getFeedbacksByGiftCardId(@PathVariable String giftCardId) {
+        List<Feedback> feedbacks = feedbackService.getFeedbacksByGiftCardId(giftCardId);
+        return ResponseEntity.ok(feedbacks);
     }
 
     // Obtener feedbacks por User (Aquí debes pasar el ID del User)
     @GetMapping("/user/{userId}")
-    public List<Feedback> getFeedbacksByUserId(@PathVariable Long userId) {
-        return feedbackService.getFeedbacksByUserId(userId);
-    }
-
-    // Actualizar un feedback existente
-    @PutMapping("/{id}")
-    public ResponseEntity<Feedback> updateFeedback(@PathVariable Long id, @RequestBody Feedback feedbackDetails) {
-        try {
-            Feedback updatedFeedback = feedbackService.updateFeedback(id, feedbackDetails);
-            return ResponseEntity.ok(updatedFeedback);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<List<Feedback>> getFeedbacksByUserId(@PathVariable String userId) {
+        List<Feedback> feedbacks = feedbackService.getFeedbacksByUserId(userId);
+        return ResponseEntity.ok(feedbacks);
     }
 
     // Eliminar un feedback por ID
@@ -69,45 +58,38 @@ public class FeedbackController {
         feedbackService.deleteFeedback(id);
         return ResponseEntity.noContent().build();
     }
+    @GetMapping("/after/{date}")
+    public ResponseEntity<List<Feedback>> getFeedbacksAfterDate(@PathVariable long date) {
+        Date limitDate = new Date(date);
+        List<Feedback> feedbacks = feedbackService.getFeedbacksAfterDate(limitDate);
+        return ResponseEntity.ok(feedbacks);
+    }
+
+    @GetMapping("/before/{date}")
+    public ResponseEntity<List<Feedback>> getFeedbacksBeforeDate(@PathVariable long date) {
+        Date limitDate = new Date(date);
+        List<Feedback> feedbacks = feedbackService.getFeedbacksBeforeDate(limitDate);
+        return ResponseEntity.ok(feedbacks);
+    }
+
+    @GetMapping("/range")
+    public ResponseEntity<List<Feedback>> getFeedbacksInDateRange(@RequestParam long startDate,
+                                                                  @RequestParam long endDate) {
+        Date start = new Date(startDate);
+        Date end = new Date(endDate);
+        List<Feedback> feedbacks = feedbackService.getFeedbacksInDateRange(start, end);
+        return ResponseEntity.ok(feedbacks);
+    }
+
+    @GetMapping("/custom-range")
+    public ResponseEntity<List<Feedback>> getFeedbacksInDateRangeCustom(@RequestParam long startDate,
+                                                                        @RequestParam long endDate) {
+        Date start = new Date(startDate);
+        Date end = new Date(endDate);
+        List<Feedback> feedbacks = feedbackService.getFeedbacksInDateRangeCustom(start, end);
+        return ResponseEntity.ok(feedbacks);
+    }
+
 }
 
 
-class FeedbackRequest {
-    private Long userId;
-    private String productId;
-    private int score;
-    private String message;
-
-    // Getters y setters
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public String getProductId() {
-        return productId;
-    }
-
-    public void setProductId(String productId) {
-        this.productId = productId;
-    }
-
-    public int getScore() {
-        return score;
-    }
-
-    public void setScore(int score) {
-        this.score = score;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-}
