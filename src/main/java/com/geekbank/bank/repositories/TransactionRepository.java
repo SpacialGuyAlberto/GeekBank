@@ -17,6 +17,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByStatus(TransactionStatus status);
 
     List<Transaction> findByTimestampBetween(LocalDateTime start, LocalDateTime end);
+    List<Transaction> findByTimestampBetweenAndUserId(LocalDateTime start, LocalDateTime end, Long userId);
+
     Transaction findByPhoneNumber(String phoneNUmber);
     List<Transaction> findByStatusAndPhoneNumber(TransactionStatus status, String phoneNumber);
 

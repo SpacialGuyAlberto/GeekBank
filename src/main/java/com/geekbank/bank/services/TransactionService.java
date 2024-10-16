@@ -2,10 +2,8 @@ package com.geekbank.bank.services;
 
 import com.geekbank.bank.controllers.TransactionWebSocketController;
 import com.geekbank.bank.controllers.WebSocketController;
-import com.geekbank.bank.models.Transaction;
-import com.geekbank.bank.models.TransactionStatus;
-import com.geekbank.bank.models.TransactionType;
-import com.geekbank.bank.models.User;
+import com.geekbank.bank.models.*;
+import com.geekbank.bank.repositories.GiftCardRepository;
 import com.geekbank.bank.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,6 +13,7 @@ import com.geekbank.bank.repositories.TransactionRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class TransactionService {
@@ -26,13 +25,14 @@ public class TransactionService {
     @Autowired
     private WebSocketController webSocketController;
     @Autowired
+    private GiftCardRepository giftCardRepository;
+    @Autowired
     private TransactionWebSocketController transactionWebSocketController;
 
 
     @Transactional
-    public Transaction createTransaction(User user, double amount, TransactionType type, String description, String phoneNumber) {
+    public Transaction createTransaction(User user, double amount, TransactionType type, String description, String phoneNumber, List<OrderRequest.Product> products) {
         Transaction transaction = new Transaction();
-        // Set all necessary fields
         transaction.setAmount(amount);
         transaction.setUser(user);
         transaction.setType(type);
@@ -40,15 +40,36 @@ public class TransactionService {
         transaction.setTransactionNumber(generateTransactionNumber());
         transaction.setDescription(description);
         transaction.setPhoneNumber(phoneNumber);
-        transaction.setAccount(null);
-        // Ensure the status is set
         transaction.setStatus(TransactionStatus.PENDING);
 
+        // Limitar la cantidad de productos a 10
+        if (products.size() > 10) {
+            throw new IllegalArgumentException("No se pueden agregar más de 10 productos por transacción.");
+        }
+
+        // Crear TransactionProduct para cada producto en la solicitud
+        List<TransactionProduct> transactionProducts = products.stream().map(productRequest -> {
+            Long productId = (long) productRequest.getKinguinId();
+
+            // Aquí no verificamos la existencia del producto
+            // Solo almacenamos el productId
+            TransactionProduct transactionProduct = new TransactionProduct();
+            transactionProduct.setTransaction(transaction);
+            transactionProduct.setProductId(productId);
+            transactionProduct.setQuantity(productRequest.getQty());
+
+            return transactionProduct;
+        }).collect(Collectors.toList());
+
+        transaction.setProducts(transactionProducts);
+
         Transaction savedTransaction = transactionRepository.save(transaction);
-        // Save the transaction to the database
         transactionStorageService.storePendingTransaction(savedTransaction);
+        // Aquí puedes agregar lógica adicional, como almacenar la transacción pendiente
         return savedTransaction;
     }
+
+
 
     @Transactional
     public void updateTransactionStatus(Long transactionId, TransactionStatus newStatus) {
@@ -92,4 +113,14 @@ public class TransactionService {
     private String generateTransactionNumber() {
         return "TX-" + System.currentTimeMillis();
     }
+
+    public List<Transaction> getTransactionsByUserIdAndTimestamp(Long userId, LocalDateTime start, LocalDateTime end) {
+        return transactionRepository.findByTimestampBetweenAndUserId(start, end, userId);
+    }
+
+    public List<Transaction> getTransactionsByTimestamp(LocalDateTime start, LocalDateTime end) {
+        return transactionRepository.findByTimestampBetween(start, end);
+    }
+
+
 }

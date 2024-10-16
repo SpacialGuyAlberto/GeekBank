@@ -17,6 +17,7 @@ public interface FeedBackRepository extends JpaRepository<Feedback, Long>{
 
 
     List<Feedback> findByGiftCardId(String giftCardId);
+//    List<Feedback> findByUser(User user);
 
     // Encuentra feedbacks por userId
     List<Feedback> findByUserId(String userId);

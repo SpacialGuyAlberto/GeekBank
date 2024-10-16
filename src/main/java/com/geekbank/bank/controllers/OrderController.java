@@ -42,8 +42,26 @@ public class OrderController {
             user = userRepository.findById(orderRequest.getUserId())
                     .orElse(null);
         }
+
+        // Almacenar la solicitud de orden
         orderRequestStorageService.storeOrderRequest(orderRequest);
-        transactionService.createTransaction(user, orderRequest.getAmount(), TransactionType.PURCHASE, "Descripción", orderRequest.getPhoneNumber());
+
+        // Crear la transacción con la lista de productos
+        try {
+            transactionService.createTransaction(
+                    user,
+                    orderRequest.getAmount(),
+                    TransactionType.PURCHASE,
+                    "Descripción",
+                    orderRequest.getPhoneNumber(),
+                    orderRequest.getProducts()
+            );
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(500).body("Error al crear la transacción: " + e.getMessage());
+        }
+
         return ResponseEntity.ok("Order placed successfully");
     }
 }

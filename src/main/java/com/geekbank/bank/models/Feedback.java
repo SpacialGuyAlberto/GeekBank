@@ -71,13 +71,21 @@ public class Feedback {
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
 
-    // Getters y setters
+//    public User getUser() {
+//        return user;
+//    }
+//
+//    public void setUser(User user) {
+//        this.user = user;
+//    }
+//
+//    @ManyToOne
+//    @JoinColumn(name = "user_id")
+//    private User user;
 
     public Long getId() {
         return id;
     }
-
-    // ... otros getters y setters
 
     public Date getCreatedAt() {
         return createdAt;

@@ -1,8 +1,14 @@
 package com.geekbank.bank.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.geekbank.bank.models.GiftCard;
 import com.geekbank.bank.models.KinguinGiftCard;
+import com.geekbank.bank.models.GiftCardEntity;
+import com.geekbank.bank.repositories.GiftCardRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.HttpEntity;
@@ -15,6 +21,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,9 +29,110 @@ public class KinguinService {
 
     private static final String apiUrl = "https://gateway.kinguin.net/esa/api/v1/products";
     private static final String apiKey = "77d96c852356b1c654a80f424d67048f";
+    private static AtomicInteger progress = new AtomicInteger(0);
+    private static boolean isSyncing = false;
+    private static int totalGiftCards = 0;
+    private static int synchronizedGiftCards = 0;
     private final RestTemplate restTemplate = new RestTemplate();
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
-    
+    @Autowired
+    private ObjectMapper objectMapper;
+    @Autowired
+    private GiftCardRepository giftCardRepository;
+
+    public List<KinguinGiftCard> fetchAllGiftCards() {
+        List<KinguinGiftCard> allGiftCards = new ArrayList<>();
+        int currentPage = 1;
+        boolean hasMore = true;
+
+        while (hasMore) {
+            List<KinguinGiftCard> giftCards = fetchGiftCards(currentPage);
+            if (giftCards.isEmpty()) {
+                hasMore = false;
+            } else {
+                for (KinguinGiftCard kCard : giftCards) {
+                    // Verificar si la GiftCard ya existe e insertarla si no existe
+                    if (!giftCardRepository.existsById((long) kCard.getKinguinId())) {
+                        GiftCardEntity entity2 = new GiftCardEntity();
+                        entity2.setKinguinId((long) kCard.getKinguinId());
+                        entity2.setProductId(truncate(kCard.getProductId().trim(), 255)); // Limpiar espacios
+                        entity2.setPrice(kCard.getPrice());
+                        entity2.setReleaseDate(kCard.getExpirationDate().trim()); // Limpiar espacios
+                        entity2.setPlatform(truncate(kCard.getPlatform().trim(), 100)); // Limpiar espacios
+                        entity2.setQty(kCard.getQty());
+                        entity2.setTextQty(kCard.getTextQty());
+                        entity2.setRegionalLimitations(truncate(kCard.getRegionalLimitations().trim(), 500)); // Limpiar espacios
+                        entity2.setRegionId(kCard.getRegionId());
+                        entity2.setOffersCount(kCard.getOffersCount());
+                        entity2.setTotalQty(kCard.getTotalQty());
+                        entity2.setAgeRating(truncate(kCard.getAgeRating().trim(), 100));
+
+                        // Logs detallados antes de la inserción
+                        logger.debug("Insertando GiftCard ID {} con los siguientes datos:", entity2.getKinguinId());
+                        logger.debug("Product ID: {}", entity2.getProductId());
+                        logger.debug("Name: {}", entity2.getName());
+                        logger.debug("Age Rating: {}", entity2.getAgeRating());
+
+                        giftCardRepository.save(entity2);
+                        giftCardRepository.flush();
+
+                        synchronizedGiftCards++;
+                        progress.set((int) ((synchronizedGiftCards / (double) totalGiftCards) * 100));
+
+                        logger.info("GiftCard ID {} insertada exitosamente.", entity2.getKinguinId());
+                    } else {
+                        logger.debug("GiftCard ID {} ya existe en la base de datos. Omitiendo inserción.", kCard.getKinguinId());
+                        synchronizedGiftCards++;
+                        progress.set((int) ((synchronizedGiftCards / (double) totalGiftCards) * 100));
+                    }
+
+                    // Agregar la GiftCard a la lista de todas las GiftCards obtenidas
+                    allGiftCards.add(kCard);
+                }
+
+                currentPage++;
+                logger.debug("Página {}: {} GiftCards obtenidas.", currentPage, giftCards.size());
+
+                // Opcional: Agregar un retraso para evitar exceder los límites de tasa de la API
+                try {
+                    Thread.sleep(200); // Espera de 200 ms entre solicitudes
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    logger.error("Interrupción durante el sleep entre solicitudes de páginas: {}", e.getMessage());
+                    break;
+                }
+            }
+        }
+
+        logger.info("Total de GiftCards obtenidas: {}", allGiftCards.size());
+        return allGiftCards;
+    }
+
+
+    private String truncate(String value, int maxLength) {
+        if (value != null && value.length() > maxLength) {
+            return value.substring(0, maxLength);
+        }
+        return value;
+    }
+
+    public static int getProgress() {
+        return progress.get();
+    }
+
+    public static boolean isSyncing() {
+        return isSyncing;
+    }
+
+    public static int getTotalGiftCards() {
+        return totalGiftCards;
+    }
+
+    public static int getSynchronizedGiftCards() {
+        return synchronizedGiftCards;
+    }
+
 
     public List<KinguinGiftCard> fetchGiftCards(int page) {
         HttpHeaders headers = new HttpHeaders();
