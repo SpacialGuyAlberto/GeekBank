@@ -80,6 +80,7 @@ public class TransactionService {
         transactionRepository.save(transaction);
 
         webSocketController.notifyTransactionUpdate(transaction.getPhoneNumber(), newStatus.name());
+        webSocketController.transactionNumber(transaction.getTransactionNumber());
     }
 
     public List<Transaction> findPendingTransactionsByPhoneNumber(String phoneNumber) {

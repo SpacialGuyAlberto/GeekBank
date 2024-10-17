@@ -43,4 +43,11 @@ public class TransactionController {
         return ResponseEntity.ok(transactions);
     }
 
+//    @PutMapping("/cancel")
+//    public ResponseEntity<List<Transaction>> cancelRunningTransaction(
+//            @RequestParam Long userId
+//    ){
+//        transactionService.
+//    }
+
 }
