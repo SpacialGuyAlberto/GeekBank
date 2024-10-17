@@ -40,14 +40,14 @@ public class FeedbackController {
 
     // Obtener feedbacks por productId
     @GetMapping("/giftcard/{giftCardId}")
-    public ResponseEntity<List<Feedback>> getFeedbacksByGiftCardId(@PathVariable String giftCardId) {
+    public ResponseEntity<List<Feedback>> getFeedbacksByGiftCardId(@PathVariable Long giftCardId) {
         List<Feedback> feedbacks = feedbackService.getFeedbacksByGiftCardId(giftCardId);
         return ResponseEntity.ok(feedbacks);
     }
 
     // Obtener feedbacks por User (Aquí debes pasar el ID del User)
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Feedback>> getFeedbacksByUserId(@PathVariable String userId) {
+    public ResponseEntity<List<Feedback>> getFeedbacksByUserId(@PathVariable  Long userId) {
         List<Feedback> feedbacks = feedbackService.getFeedbacksByUserId(userId);
         return ResponseEntity.ok(feedbacks);
     }

@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class KinguinService {
 
     private static final String apiUrl = "https://gateway.kinguin.net/esa/api/v1/products";
-    private static final String apiKey = "77d96c852356b1c654a80f424d67048f";
+    protected static final String apiKey = "77d96c852356b1c654a80f424d67048f";
     private static AtomicInteger progress = new AtomicInteger(0);
     private static boolean isSyncing = false;
     private static int totalGiftCards = 0;

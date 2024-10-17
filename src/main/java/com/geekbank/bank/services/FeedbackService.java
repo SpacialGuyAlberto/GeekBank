@@ -36,7 +36,7 @@ public class FeedbackService {
         return feedbackRepository.findById(id);
     }
 
-    public List<Feedback> getFeedbacksByGiftCardId(String giftCardId) {
+    public List<Feedback> getFeedbacksByGiftCardId(Long giftCardId) {
         return feedbackRepository.findByGiftCardId(giftCardId);
     }
 
@@ -54,7 +54,7 @@ public class FeedbackService {
         return feedbackRepository.findFeedbacksInDateRange(startDate, endDate);
     }
 
-    public List<Feedback> getFeedbacksByUserId(String userId) {
+    public List<Feedback> getFeedbacksByUserId(Long userId) {
         return feedbackRepository.findByUserId(userId);
     }
 

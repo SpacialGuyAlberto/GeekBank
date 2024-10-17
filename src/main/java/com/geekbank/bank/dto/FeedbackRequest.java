@@ -3,26 +3,26 @@ package com.geekbank.bank.dto;
 import java.util.Date;
 
 public class FeedbackRequest {
-    private String userId; // Cambiado de Long a String
-    private String giftCardId; // Renombrado de productId a giftCardId
+    private Long userId; // Cambiado de Long a String
+    private Long giftCardId; // Renombrado de productId a giftCardId
     private int score;
     private String message;
     private Date createdAt; // Añadido el campo createdAt
 
     // Getters y setters
-    public String getUserId() {
+    public Long getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(Long userId) {
         this.userId = userId;
     }
 
-    public String getGiftCardId() {
+    public Long getGiftCardId() {
         return giftCardId;
     }
 
-    public void setGiftCardId(String giftCardId) {
+    public void setGiftCardId(Long giftCardId) {
         this.giftCardId = giftCardId;
     }
 

@@ -2,17 +2,9 @@ package com.geekbank.bank.models;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
-import java.util.List;
-import java.util.Date;
-import java.util.List;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 
@@ -23,6 +15,7 @@ public class Feedback {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
 
     public void setId(Long id) {
         this.id = id;
@@ -44,19 +37,19 @@ public class Feedback {
         this.message = message;
     }
 
-    public String getUserId() {
+    public Long getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(Long userId) {
         this.userId = userId;
     }
 
-    public String getGiftCardId() {
+    public Long getGiftCardId() {
         return giftCardId;
     }
 
-    public void setGiftCardId(String giftCardId) {
+    public void setGiftCardId(Long giftCardId) {
         this.giftCardId = giftCardId;
     }
 
@@ -64,9 +57,11 @@ public class Feedback {
 
     private String message;
 
-    private String userId;
+    @Column(name = "userId", nullable = false)
+    private Long userId;
 
-    private String giftCardId;
+    @Column(name = "giftCardId", nullable = false)
+    private Long giftCardId;
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;

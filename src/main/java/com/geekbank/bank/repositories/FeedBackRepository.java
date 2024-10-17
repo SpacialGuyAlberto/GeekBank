@@ -16,11 +16,11 @@ import java.util.List;
 public interface FeedBackRepository extends JpaRepository<Feedback, Long>{
 
 
-    List<Feedback> findByGiftCardId(String giftCardId);
+    List<Feedback> findByGiftCardId(Long giftCardId);
 //    List<Feedback> findByUser(User user);
 
     // Encuentra feedbacks por userId
-    List<Feedback> findByUserId(String userId);
+    List<Feedback> findByUserId(Long userId);
 
     // Encuentra feedbacks creados después de una fecha específica
     List<Feedback> findByCreatedAtAfter(Date date);

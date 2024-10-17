@@ -29,8 +29,8 @@ public class RecommendationController {
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<KinguinGiftCard>> getRecommendations(
             @PathVariable Long userId,
-            @RequestParam(defaultValue = "5") int k) {
-        List<KinguinGiftCard> recommendations = recommendationService.recommendByUserSimilarity(userId, k);
-        return ResponseEntity.ok(recommendations);  // Devuelve las recomendaciones, incluso si está vacío
+            @RequestParam(defaultValue = "4") int k) {
+        List<KinguinGiftCard> recommendations = recommendationService.recommend(userId, k);
+        return ResponseEntity.ok(recommendations);
     }
 }
