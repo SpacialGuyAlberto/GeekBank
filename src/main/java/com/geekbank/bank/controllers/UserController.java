@@ -60,6 +60,14 @@ public class UserController {
         return user.isPresent() ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
 
+    @GetMapping("/checkUser")
+    public ResponseEntity<Map<String, Boolean>> checkIfUserExists(@RequestParam String email) {
+        boolean exists = userService.findByEmail(email).isPresent();
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("exists", exists);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
         List<User> users = userService.findAllUsers();

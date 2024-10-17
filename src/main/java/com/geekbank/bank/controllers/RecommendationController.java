@@ -33,4 +33,12 @@ public class RecommendationController {
         List<KinguinGiftCard> recommendations = recommendationService.recommend(userId, k);
         return ResponseEntity.ok(recommendations);
     }
+
+    @GetMapping("/popular")
+    public ResponseEntity<List<KinguinGiftCard>> getMostPopular(
+            @RequestParam(defaultValue = "4") int k )
+    {
+        List<KinguinGiftCard> recommendations = recommendationService.recommendByPopularity(k);
+        return ResponseEntity.ok(recommendations);
+    }
 }

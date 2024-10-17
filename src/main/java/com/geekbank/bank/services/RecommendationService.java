@@ -258,12 +258,32 @@ public class RecommendationService {
     public List<KinguinGiftCard> recommendByPopularity(int k) {
         Pageable pageable = PageRequest.of(0, k);
         List<GiftCardEntity> popularGiftCards = giftCardRepository.findTopKPopular(pageable);
-        logger.info("GiftCards recomendadas por popularidad: {}", popularGiftCards.stream()
+
+        // Extraer los IDs de las GiftCards populares
+        List<Long> popularGiftCardIds = popularGiftCards.stream()
                 .map(GiftCardEntity::getKinguinId)
-                .collect(Collectors.toList()));
-        return popularGiftCards.stream()
-                .map(this::convertToKinguinGiftCard)
                 .collect(Collectors.toList());
+
+        logger.info("GiftCards recomendadas por popularidad IDs: {}", popularGiftCardIds);
+
+        // Obtener los detalles de las GiftCards desde la API externa
+        List<KinguinGiftCard> fetchedGiftCards = popularGiftCardIds.stream()
+                .map(giftCardId -> {
+                    String giftCardIdStr = String.valueOf(giftCardId);
+                    KinguinGiftCard kGiftCard = fetchGiftCardById(giftCardIdStr);
+                    if (kGiftCard != null) {
+                        logger.debug("GiftCard obtenida desde API externa: {}", kGiftCard.getKinguinId());
+                    } else {
+                        logger.warn("GiftCard con ID {} no encontrada en el API externo.", giftCardIdStr);
+                    }
+                    return kGiftCard;
+                })
+                .filter(Objects::nonNull) // Filtrar las GiftCards que no fueron encontradas
+                .collect(Collectors.toList());
+
+        logger.info("Total de GiftCards recomendadas por popularidad: {}", fetchedGiftCards.size());
+
+        return fetchedGiftCards;
     }
 
     public KinguinGiftCard fetchGiftCardById(String id) {
