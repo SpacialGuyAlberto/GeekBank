@@ -1,12 +1,33 @@
 package com.geekbank.bank.models;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class OrderRequest {
 
+    public String getOrderRequestId() {
+        return orderRequestId;
+    }
+
+    public void setOrderRequestId() {
+        this.orderRequestId = "ORQ-" + System.currentTimeMillis();
+    }
+
+    private String orderRequestId;
     private Long userId;
     private String phoneNumber;
     private List<Product> products;
     private Double amount;
+
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setOrderRequestId(String orderRequestId) {
+        this.orderRequestId = orderRequestId;
+    }
+
+    private LocalDateTime createdAt;
 
     public String getPhoneNumber() {
         return phoneNumber;
@@ -38,6 +59,10 @@ public class OrderRequest {
 
     public void setProducts(List<Product> products) {
         this.products = products;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return this.createdAt;
     }
 
     public static class Product {

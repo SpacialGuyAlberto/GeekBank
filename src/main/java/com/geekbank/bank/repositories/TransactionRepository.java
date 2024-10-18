@@ -23,4 +23,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByStatusAndPhoneNumber(TransactionStatus status, String phoneNumber);
 
     Transaction findByTransactionNumber(String transactionNumber);
+
+    List<Transaction> findByStatusAndTimestampBefore(TransactionStatus status, LocalDateTime timestamp);
+
 }

@@ -1,8 +1,11 @@
 package com.geekbank.bank.controllers;
 
 import com.geekbank.bank.models.Transaction;
+import com.geekbank.bank.models.TransactionStatus;
 import com.geekbank.bank.repositories.TransactionRepository;
+import com.geekbank.bank.services.OrderRequestStorageService;
 import com.geekbank.bank.services.TransactionService;
+import com.geekbank.bank.services.TransactionStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +20,15 @@ public class TransactionController {
 
     @Autowired
     private TransactionService transactionService;
+
+    @Autowired
+    private TransactionStorageService transactionStorageService;
+
+    @Autowired
+    private TransactionRepository transactionRepository;
+
+    @Autowired
+    private OrderRequestStorageService orderRequestStorageService;
 
     @GetMapping("/pending")
     public ResponseEntity<List<Transaction>> getPendingTransactionsByPhoneNumber(@RequestParam String phoneNumber) {
@@ -43,11 +55,18 @@ public class TransactionController {
         return ResponseEntity.ok(transactions);
     }
 
-//    @PutMapping("/cancel")
-//    public ResponseEntity<List<Transaction>> cancelRunningTransaction(
-//            @RequestParam Long userId
-//    ){
-//        transactionService.
-//    }
+    @PutMapping("/cancel/{transactionId}/{orderRequestId}")
+    public ResponseEntity<Transaction> cancelRunningTransaction(
+            @PathVariable String transactionId,
+            @PathVariable String orderRequestId
+    ) {
+        Transaction transaction = transactionService.findByTransactionNumber(transactionId);
+        transactionStorageService.removeTransactionById(transaction.getId());
+        transactionService.updateTransactionStatus(transaction.getId(), TransactionStatus.CANCELLED);
+        transactionRepository.save(transaction);
+        orderRequestStorageService.removeOrderRequestById(orderRequestId);
+
+        return ResponseEntity.ok(transaction);
+    }
 
 }

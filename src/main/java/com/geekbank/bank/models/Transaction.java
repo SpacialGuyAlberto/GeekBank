@@ -49,6 +49,17 @@ public class Transaction {
     @JsonManagedReference
     private List<TransactionProduct> products = new ArrayList<>();
 
+    public LocalDateTime getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
+    }
+
+    @Column(nullable = false)
+    private LocalDateTime expiresAt;
+
 
     public List<TransactionProduct> getProducts() {
         return products;

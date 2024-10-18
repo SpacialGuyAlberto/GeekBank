@@ -15,7 +15,4 @@ public class WebSocketController {
     public void notifyTransactionUpdate(String phoneNumber, String status) {
         messagingTemplate.convertAndSend("/topic/transaction-status/" + phoneNumber, status);
     }
-    public void transactionNumber(String transactionNumber){
-        messagingTemplate.convertAndSend("/topic/transaction-number/" + transactionNumber);
-    }
 }

@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -114,13 +116,35 @@ public class TelegramListener {
                         lastUpdateId = updateId;
 
                         Pattern pattern = Pattern.compile("/Message from 555: /Transaccion exitosa\\. /n Monto: L\\. (\\d+\\.\\d+) /n Cargos: L 0\\.00 Nombre Cliente: [A-Z ]+ /n Ref: (\\+\\d+)");
-                        Matcher matcher = pattern.matcher(text);
+                        //corregir a los parametros de HONDURAS
+                        Pattern smsPattern = Pattern.compile(
+                                "/Message from (\\d{3}): Has recibido L (\\d{2,}\\.\\d{2}) del (\\d{12,13})\\. Ref\\. (\\d{9,10}), Fecha: (\\d{2}/\\d{2}/\\d{2}) (\\d{2}:\\d{2}) Nuevo balance Tigo Money: L (\\d{2,}\\.\\d{2})"
+                        );
+
+
+                        Matcher matcher = smsPattern.matcher(text);
                         if (matcher.find()) {
-                            String phoneNumber = matcher.group(2);
+                            System.out.println("FOUND SMS MATCHING");
+                            String messageFrom = matcher.group(1);
+                            String amountReceived = matcher.group(2);
+                            Double amountReceivedAsDouble = Double.parseDouble(amountReceived);
+                            String phoneNumber = matcher.group(3);
+                            String referenceNumber = matcher.group(4);
+                            String date = matcher.group(5);
+                            String time = matcher.group(6);
+//                            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yy HH:mm");
+//                            LocalDateTime parsedDateTime = LocalDateTime.parse(time, formatter);
+                            String newBalance = matcher.group(7);
+
+                            //String phoneNumber = matcher.group(2);
                             System.out.println("Received Phone Number: " + phoneNumber);
 
                             OrderRequest orderRequest = orderRequestStorageService.getOrderRequestByPhoneNumber(phoneNumber);
-                            Transaction transaction = transactionStorageService.getTransactionByPhoneNumber(phoneNumber);
+
+                            Transaction transaction = transactionStorageService.findMatchingTransaction(phoneNumber, amountReceivedAsDouble);
+
+//                            Transaction transaction = transactionStorageService.getTransactionByPhoneNumber(phoneNumber);
+                            //verificar la suma de los productos de las transacciones
                             Transaction transactionInDB = transactionService.findByTransactionNumber(transaction.getTransactionNumber());
 
                             if (orderRequest != null) {
@@ -134,7 +158,7 @@ public class TelegramListener {
                                     OrderResponse orderResponse = orderService.placeOrder(orderRequest);
                                     String key = "Prueba";
                                     System.out.println("Order placed with ID: " + orderResponse.getOrderId());
-                                    smsService.sendPaymentNotification(phoneNumber);
+//                                    smsService.sendPaymentNotification(phoneNumber);
                                     transactionService.updateTransactionStatus(transactionInDB.getId(), TransactionStatus.COMPLETED);
                                     ///Hay que borrar las transacciones del ConcurrentHashmap
                                     transactionStorageService.removeTransaction(transactionInDB.getPhoneNumber());
@@ -161,6 +185,8 @@ public class TelegramListener {
                                 System.out.println("No matching Order Request found. Ignoring the message.");
                             }
 
+                        } else {
+                            System.out.println("NOT FOUND SMS MATCHING");
                         }
                     }
                 }

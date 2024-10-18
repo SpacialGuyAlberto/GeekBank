@@ -6,6 +6,7 @@ import com.geekbank.bank.models.*;
 import com.geekbank.bank.repositories.GiftCardRepository;
 import com.geekbank.bank.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.geekbank.bank.repositories.TransactionRepository;
@@ -29,6 +30,8 @@ public class TransactionService {
     @Autowired
     private TransactionWebSocketController transactionWebSocketController;
 
+    private static final long EXPIRATION_MINUTES = 5;
+
 
     @Transactional
     public Transaction createTransaction(User user, double amount, TransactionType type, String description, String phoneNumber, List<OrderRequest.Product> products) {
@@ -41,18 +44,14 @@ public class TransactionService {
         transaction.setDescription(description);
         transaction.setPhoneNumber(phoneNumber);
         transaction.setStatus(TransactionStatus.PENDING);
+        transaction.setExpiresAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES));
 
-        // Limitar la cantidad de productos a 10
         if (products.size() > 10) {
             throw new IllegalArgumentException("No se pueden agregar más de 10 productos por transacción.");
         }
 
-        // Crear TransactionProduct para cada producto en la solicitud
         List<TransactionProduct> transactionProducts = products.stream().map(productRequest -> {
             Long productId = (long) productRequest.getKinguinId();
-
-            // Aquí no verificamos la existencia del producto
-            // Solo almacenamos el productId
             TransactionProduct transactionProduct = new TransactionProduct();
             transactionProduct.setTransaction(transaction);
             transactionProduct.setProductId(productId);
@@ -65,10 +64,8 @@ public class TransactionService {
 
         Transaction savedTransaction = transactionRepository.save(transaction);
         transactionStorageService.storePendingTransaction(savedTransaction);
-        // Aquí puedes agregar lógica adicional, como almacenar la transacción pendiente
         return savedTransaction;
     }
-
 
 
     @Transactional
@@ -76,11 +73,16 @@ public class TransactionService {
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new RuntimeException("Transacción no encontrada"));
 
+        if (transaction.getStatus() == TransactionStatus.CANCELLED){
+            throw new RuntimeException("No se puede actualizar una transaccion cancelada.");
+        }
+        if (transaction.getStatus() == TransactionStatus.EXPIRED){
+            throw new RuntimeException("No se puede actualizar una transaccion expirada.");
+        }
+
         transaction.setStatus(newStatus);
         transactionRepository.save(transaction);
-
         webSocketController.notifyTransactionUpdate(transaction.getPhoneNumber(), newStatus.name());
-        webSocketController.transactionNumber(transaction.getTransactionNumber());
     }
 
     public List<Transaction> findPendingTransactionsByPhoneNumber(String phoneNumber) {
@@ -121,6 +123,23 @@ public class TransactionService {
 
     public List<Transaction> getTransactionsByTimestamp(LocalDateTime start, LocalDateTime end) {
         return transactionRepository.findByTimestampBetween(start, end);
+    }
+
+    @Scheduled(fixedRate = 360000)
+    @Transactional
+    public void expireTransaction(){
+        LocalDateTime now = LocalDateTime.now();
+        List<Transaction> pendingTransactions = transactionRepository.findByStatusAndTimestampBefore(TransactionStatus.PENDING, now);
+
+        for (Transaction transaction : pendingTransactions) {
+            transaction.setStatus(TransactionStatus.EXPIRED);
+            transactionRepository.save(transaction);
+
+            transactionStorageService.removeTransactionById(transaction.getId());
+            webSocketController.notifyTransactionUpdate(transaction.getPhoneNumber(), TransactionStatus.EXPIRED.name());
+
+            System.out.println("Transaction expired: " + transaction.getTransactionNumber());
+        }
     }
 
 
