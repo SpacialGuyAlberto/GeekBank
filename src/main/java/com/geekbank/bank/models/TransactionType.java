@@ -5,6 +5,7 @@ public enum TransactionType {
     WITHDRAWAL,
     TRANSFER,
     PURCHASE,
+    BALANCE_PURCHASE,
     REFUND;
 }
 

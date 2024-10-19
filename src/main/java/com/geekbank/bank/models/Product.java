@@ -13,10 +13,8 @@ public class Product {
     private double price;
     private String description;
 
-    // Constructor vacío requerido por JPA
     public Product() {}
 
-    // Constructor con parámetros
     public Product(String productId, String name, double price, String description) {
         this.productId = productId;
         this.name = name;
@@ -24,7 +22,6 @@ public class Product {
         this.description = description;
     }
 
-    // Getters y Setters
     public String getProductId() {
         return productId;
     }
@@ -37,6 +34,4 @@ public class Product {
         return this.description;
     }
 
-    // Otros getters y setters para 'name', 'price' y 'description'
-    // ...
 }

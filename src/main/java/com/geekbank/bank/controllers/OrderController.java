@@ -45,13 +45,22 @@ public class OrderController {
         orderRequest.setOrderRequestId();
         orderRequestStorageService.storeOrderRequest(orderRequest);
 
+        TransactionType transactionType = TransactionType.PURCHASE;
+
+        if (orderRequest.getProducts() != null && !orderRequest.getProducts().isEmpty()) {
+            OrderRequest.Product firstProduct = orderRequest.getProducts().get(0);
+            if ( firstProduct.getKinguinId() == -1) {
+                transactionType = TransactionType.BALANCE_PURCHASE;
+            }
+        }
+
         Transaction savedTransaction;
-        // Crear la transacción con la lista de productos
+
         try {
             savedTransaction = transactionService.createTransaction(
                     user,
                     orderRequest.getAmount(),
-                    TransactionType.PURCHASE,
+                    transactionType,
                     "Descripción",
                     orderRequest.getPhoneNumber(),
                     orderRequest.getProducts()

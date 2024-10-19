@@ -60,28 +60,25 @@ public class TransactionStorageService {
         System.out.println("Removal of Transaction by ID: " + (removed ? "succeeded" : "failed for ID: " + transactionId));
     }
 
-//    public Transaction findMatchingTransaction(String phoneNumber, double amountReceived, LocalDateTime transactionTime) {
-//        return pendingTransactions.values().stream()
-//                .filter(transaction ->
-//                        transaction.getPhoneNumber().equals(phoneNumber) &&  // Mismo número de teléfono
-//                                transaction.getAmount() == amountReceived &&  // Mismo monto
-//                                transaction.getTimestamp().toLocalDate().equals(LocalDateTime.now().toLocalDate()) &&  // La fecha es la de hoy
-//                                !transaction.getTimestamp().isBefore(transactionTime.minus(5, ChronoUnit.MINUTES))  // No más de 5 minutos de diferencia
-//                )
-//                .findFirst()
-//                .orElse(null);
-//    }
-public Transaction findMatchingTransaction(String phoneNumber, double amountReceived) {
-    return pendingTransactions.values().stream()
-            .filter(transaction ->
-                    transaction.getPhoneNumber().equals(phoneNumber) &&  // Mismo número de teléfono
-                            transaction.getAmount() == amountReceived
-            )
-            .findFirst()
-            .orElse(null);
-}
+    public Transaction findMatchingTransaction(String phoneNumber) {
+        return pendingTransactions.values().stream()
+                .filter(transaction ->
+                        transaction.getPhoneNumber().equals(phoneNumber)
+                )
+                .findFirst()
+                .orElse(null);
+    }
 
 
+//public Transaction findMatchingTransaction(String phoneNumber, double amountReceived) {
+//    return pendingTransactions.values().stream()
+//            .filter(transaction ->
+//                    transaction.getPhoneNumber().equals(phoneNumber) &&  // Mismo número de teléfono
+//                            transaction.getAmount() <= amountReceived
+//            )
+//            .findFirst()
+//            .orElse(null);
+//}
     public boolean hasTransactionForPhoneNumber(String phoneNumber){
         boolean isTransactionRemovedFromQueue = pendingTransactions.containsKey(phoneNumber);
         System.out.println("Checking if transaction exists for phone number in queue: " +  phoneNumber + " -> " + ( isTransactionRemovedFromQueue ? "Exists" : "Does not exist"));
