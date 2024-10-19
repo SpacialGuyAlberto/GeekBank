@@ -248,6 +248,54 @@ public class KinguinGiftCard implements GiftCard {
         return this.qty;
     }
 
+    public String getProductId() {
+        return this.productId;
+    }
+
+    public String getDescription() {
+        return this.description;
+    }
+
+    public String getPlatform() {
+        return this.platform;
+    }
+
+    public int getTextQty() {
+        return this.textQty;
+    }
+
+    public String getRegionalLimitations() {
+        return this.regionalLimitations;
+    }
+
+    public int getRegionId() {
+        return this.regionId;
+    }
+
+    public String getActivationDetails() {
+        return this.activationDetails;
+    }
+
+    public String getOriginalName() {
+        return this.originalName;
+    }
+
+    public int getOffersCount() {
+        return this.offersCount;
+    }
+
+    public int getTotalQty() {
+        return this.totalQty;
+    }
+
+    public String getAgeRating() {
+        return this.ageRating;
+    }
+
+    public void setExpirationDate(String releaseDate) {
+        this.releaseDate = releaseDate;
+    }
+
 
     // Getters and Setters...
 
@@ -508,7 +556,7 @@ public class KinguinGiftCard implements GiftCard {
 
     @Override
     public String getCardNumber() {
-        return null; // No se aplica para este tipo de gift card
+        return productId;
     }
 
     @Override

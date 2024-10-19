@@ -60,6 +60,14 @@ public class UserController {
         return user.isPresent() ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
 
+    @GetMapping("/checkUser")
+    public ResponseEntity<Map<String, Boolean>> checkIfUserExists(@RequestParam String email) {
+        boolean exists = userService.findByEmail(email).isPresent();
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("exists", exists);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
         List<User> users = userService.findAllUsers();
@@ -102,13 +110,9 @@ public class UserController {
             }
             if (userInfoRequest.getName() != null && !userInfoRequest.getName().isEmpty()) {
                 user.setName(userInfoRequest.getName());
-            } else {
-                return ResponseEntity.badRequest().body(Map.of("error", "El nombre no puede estar vacío"));
             }
             if (userInfoRequest.getPhoneNumber() != null && !userInfoRequest.getPhoneNumber().isEmpty()) {
                 user.setPhoneNumber(userInfoRequest.getPhoneNumber());
-            } else {
-                return ResponseEntity.badRequest().body(Map.of("error", "El número de teléfono no puede estar vacío"));
             }
 
             userService.updateUser(user);

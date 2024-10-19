@@ -26,6 +26,14 @@ public class User {
     private String email;
 
 
+    public Account getAccount() {
+        return account;
+    }
+
+    public void setAccount(Account account) {
+        this.account = account;
+    }
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     @JsonManagedReference // Para manejar la serialización
     private Account account;

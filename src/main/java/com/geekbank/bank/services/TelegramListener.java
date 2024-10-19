@@ -4,15 +4,15 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.geekbank.bank.models.OrderRequest;
-import com.geekbank.bank.models.OrderResponse;
-import com.geekbank.bank.models.Transaction;
-import com.geekbank.bank.models.TransactionStatus;
+import com.geekbank.bank.models.*;
 import com.geekbank.bank.repositories.TransactionRepository;
+import com.geekbank.bank.repositories.AccountRepository;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +42,8 @@ public class TelegramListener {
     private TransactionService transactionService;
     @Autowired
     private TransactionStorageService transactionStorageService;
+    @Autowired
+    private AccountRepository accountRepository;
 
     public TelegramListener(SmsService smsService) {
         this.smsService = smsService;
@@ -113,54 +115,105 @@ public class TelegramListener {
 
                         lastUpdateId = updateId;
 
-                        Pattern pattern = Pattern.compile("/Message from 555: /Transaccion exitosa\\. /n Monto: L\\. (\\d+\\.\\d+) /n Cargos: L 0\\.00 Nombre Cliente: [A-Z ]+ /n Ref: (\\+\\d+)");
-                        Matcher matcher = pattern.matcher(text);
+                        // Patrón para mensajes de SMS
+                        Pattern smsPattern = Pattern.compile(
+                                "/Message from (\\d{3}): Has recibido L (\\d{2,}\\.\\d{2}) del (\\d{12,13})\\. Ref\\. (\\d{9,10}), Fecha: (\\d{2}/\\d{2}/\\d{2}) (\\d{2}:\\d{2}) Nuevo balance Tigo Money: L (\\d{2,}\\.\\d{2})"
+                        );
+
+                        Matcher matcher = smsPattern.matcher(text);
                         if (matcher.find()) {
-                            String phoneNumber = matcher.group(2);
+                            System.out.println("FOUND SMS MATCHING");
+                            String messageFrom = matcher.group(1);
+                            String amountReceived = matcher.group(2);
+                            double amountReceivedAsDouble = Double.parseDouble(amountReceived);
+                            String phoneNumber = matcher.group(3);
+                            String referenceNumber = matcher.group(4);
+                            String date = matcher.group(5);
+                            String time = matcher.group(6);
+                            String newBalance = matcher.group(7);
+
                             System.out.println("Received Phone Number: " + phoneNumber);
 
+                            // Obtener la OrderRequest y la Transaction asociadas
                             OrderRequest orderRequest = orderRequestStorageService.getOrderRequestByPhoneNumber(phoneNumber);
-                            Transaction transaction = transactionStorageService.getTransactionByPhoneNumber(phoneNumber);
-                            Transaction transactionInDB = transactionService.findByTransactionNumber(transaction.getTransactionNumber());
+                            Transaction transaction = transactionStorageService.findMatchingTransaction(phoneNumber);
 
-                            if (orderRequest != null) {
-                                System.out.println("Matching Order Request found for this phone number. Processing the order...");
-                                ///ACTIVAR ESTA OPCION PARA LUEGO
-//                                List<String> keys = orderService.downloadKeys(orderResponse.getOrderId());
-//                                smsService.sendPaymentNotification(phoneNumber);
-                                try {
-                                    ///ACTIVAR ESTA OPCION LUEGO
-//                                    smsService.sendKeysToPhoneNumber(phoneNumber, keys);
-                                    OrderResponse orderResponse = orderService.placeOrder(orderRequest);
-                                    String key = "Prueba";
-                                    System.out.println("Order placed with ID: " + orderResponse.getOrderId());
-                                    smsService.sendPaymentNotification(phoneNumber);
-                                    transactionService.updateTransactionStatus(transactionInDB.getId(), TransactionStatus.COMPLETED);
-                                    ///Hay que borrar las transacciones del ConcurrentHashmap
-                                    transactionStorageService.removeTransaction(transactionInDB.getPhoneNumber());
-//                                    System.out.println("Transaction status before save: " + transaction.getStatus());
+                            if (transaction != null) {
+                                Transaction transactionInDB = transactionService.findByTransactionNumber(transaction.getTransactionNumber());
 
-                                } catch (Exception e) {
-                                    System.err.println("Failed to send payment notification: " + e.getMessage());
+                                if (transactionInDB != null && orderRequest != null) {
+                                    System.out.println("Matching Order Request found for this phone number. Processing the order...");
 
+                                    try {
+                                        if (amountReceivedAsDouble < transactionInDB.getAmount()) {
+                                            String failureReason = "Monto recibido insuficiente.";
+                                            transactionService.updateTransactionStatus(transactionInDB.getId(), TransactionStatus.FAILED, failureReason);
+                                            System.err.println("Failed to process transaction: " + failureReason);
+                                            // Remover la OrderRequest del almacenamiento temporal
+                                            orderRequestStorageService.removeOrderRequest(phoneNumber);
+                                            continue;
+                                        }
 
-                                    if (e.getMessage().contains("Unprocessable Entity")) {
-                                        System.out.println("Insufficient balance. Cancelling transaction.");
-                                        transactionService.updateTransactionStatus(transaction.getId(), TransactionStatus.CANCELLED);
+                                        if (transactionInDB.getType() == TransactionType.BALANCE_PURCHASE) {
+                                            // **Caso de compra de balance**
+                                            User user = transactionInDB.getUser();
+                                            if (user == null) {
+                                                throw new RuntimeException("Usuario no encontrado para la transacción.");
+                                            }
+                                            Account account = user.getAccount();
+                                            if (account == null) {
+                                                throw new RuntimeException("Cuenta no encontrada para el usuario.");
+                                            }
+
+                                            account.setBalance(account.getBalance() + transactionInDB.getAmount());
+                                            accountRepository.save(account);
+
+                                            transactionService.updateTransactionStatus(transactionInDB.getId(), TransactionStatus.COMPLETED, null);
+                                            System.out.println("Balance updated for user: " + user.getEmail());
+
+                                            // Opcional: Enviar notificación al usuario
+                                            // smsService.sendBalanceUpdatedNotification(phoneNumber);
+
+                                        } else if (transactionInDB.getType() == TransactionType.PURCHASE) {
+                                            // **Caso de compra de productos**
+                                            OrderResponse orderResponse = orderService.placeOrder(orderRequest);
+                                            System.out.println("Order placed with ID: " + orderResponse.getOrderId());
+
+                                            transactionService.updateTransactionStatus(transactionInDB.getId(), TransactionStatus.COMPLETED, null);
+
+                                            // Opcional: Enviar notificación al usuario
+                                            // smsService.sendPaymentNotification(phoneNumber);
+                                        } else {
+                                            // Otros tipos de transacciones si aplica
+                                            System.out.println("Unknown transaction type. Skipping.");
+                                        }
+
+                                        // Remover transacción del almacenamiento temporal
+                                        transactionStorageService.removeTransaction(transactionInDB.getPhoneNumber());
+
+                                    } catch (Exception e) {
+                                        String failureReason = "Error al procesar la transacción: " + e.getMessage();
+                                        System.err.println("Failed to process transaction: " + failureReason);
+                                        transactionService.updateTransactionStatus(transactionInDB.getId(), TransactionStatus.FAILED, failureReason);
+                                    } finally {
+                                        // Remover la OrderRequest del almacenamiento temporal
+                                        orderRequestStorageService.removeOrderRequest(phoneNumber);
+
+                                        if (!orderRequestStorageService.hasOrderForPhoneNumber(phoneNumber)) {
+                                            System.out.println("OrderRequest for phone number [" + phoneNumber + "] was successfully removed.");
+                                        } else {
+                                            System.err.println("Failed to remove OrderRequest for phone number [" + phoneNumber + "].");
+                                        }
                                     }
-                                } finally {
-                                    orderRequestStorageService.removeOrderRequest(phoneNumber);
-                                    transactionStorageService.removeTransaction(phoneNumber);
-                                    if (!orderRequestStorageService.hasOrderForPhoneNumber(phoneNumber)) {
-                                        System.out.println("OrderRequest for phone number [" + phoneNumber + "] was successfully removed.");
-                                    } else {
-                                        System.err.println("Failed to remove OrderRequest for phone number [" + phoneNumber + "].");
-                                    }
+                                } else {
+                                    System.out.println("No matching Order Request or Transaction found. Ignoring the message.");
                                 }
                             } else {
-                                System.out.println("No matching Order Request found. Ignoring the message.");
+                                System.out.println("No matching Transaction found. Ignoring the message.");
                             }
 
+                        } else {
+                            System.out.println("NOT FOUND SMS MATCHING");
                         }
                     }
                 }
@@ -169,5 +222,8 @@ public class TelegramListener {
             e.printStackTrace();
         }
     }
+
+
+
 
 }

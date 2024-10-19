@@ -53,10 +53,10 @@ public class OrderService {
         if (orderResponse != null && orderResponse.getOrderId() != null) {
             System.out.println("Order placed successfully with ID: " + orderResponse.getOrderId());
 
-            List<String> keys = downloadKeys(orderResponse.getOrderId());
-
-            String phoneNumber = orderRequest.getPhoneNumber();
-            smsService.sendKeysToPhoneNumber(phoneNumber, keys);
+//            List<String> keys = downloadKeys(orderResponse.getOrderId());
+//
+//            String phoneNumber = orderRequest.getPhoneNumber();
+//            smsService.sendKeysToPhoneNumber(phoneNumber, keys);
         } else {
             System.err.println("Order failed or did not return a valid Order ID.");
         }
