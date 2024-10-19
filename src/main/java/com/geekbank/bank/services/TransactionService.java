@@ -69,21 +69,28 @@ public class TransactionService {
 
 
     @Transactional
-    public void updateTransactionStatus(Long transactionId, TransactionStatus newStatus) {
+    public void updateTransactionStatus(Long transactionId, TransactionStatus newStatus, String failureReason) {
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new RuntimeException("Transacción no encontrada"));
 
         if (transaction.getStatus() == TransactionStatus.CANCELLED){
-            throw new RuntimeException("No se puede actualizar una transaccion cancelada.");
+            throw new RuntimeException("No se puede actualizar una transacción cancelada.");
         }
         if (transaction.getStatus() == TransactionStatus.EXPIRED){
-            throw new RuntimeException("No se puede actualizar una transaccion expirada.");
+            throw new RuntimeException("No se puede actualizar una transacción expirada.");
         }
 
         transaction.setStatus(newStatus);
         transactionRepository.save(transaction);
-        webSocketController.notifyTransactionUpdate(transaction.getPhoneNumber(), newStatus.name());
+
+        // Notificar al frontend con la razón del fallo si existe
+        if (failureReason != null && !failureReason.isEmpty()) {
+            webSocketController.notifyTransactionUpdate(transaction.getPhoneNumber(), newStatus.name(), failureReason);
+        } else {
+            webSocketController.notifyTransactionUpdate(transaction.getPhoneNumber(), newStatus.name(), null);
+        }
     }
+
 
     public List<Transaction> findPendingTransactionsByPhoneNumber(String phoneNumber) {
         return transactionRepository.findByStatusAndPhoneNumber(TransactionStatus.PENDING, phoneNumber);
@@ -136,7 +143,6 @@ public class TransactionService {
             transactionRepository.save(transaction);
 
             transactionStorageService.removeTransactionById(transaction.getId());
-            webSocketController.notifyTransactionUpdate(transaction.getPhoneNumber(), TransactionStatus.EXPIRED.name());
 
             System.out.println("Transaction expired: " + transaction.getTransactionNumber());
         }

@@ -125,7 +125,7 @@ public class TelegramListener {
                             System.out.println("FOUND SMS MATCHING");
                             String messageFrom = matcher.group(1);
                             String amountReceived = matcher.group(2);
-                            Double amountReceivedAsDouble = Double.parseDouble(amountReceived);
+                            double amountReceivedAsDouble = Double.parseDouble(amountReceived);
                             String phoneNumber = matcher.group(3);
                             String referenceNumber = matcher.group(4);
                             String date = matcher.group(5);
@@ -145,14 +145,30 @@ public class TelegramListener {
                                     System.out.println("Matching Order Request found for this phone number. Processing the order...");
 
                                     try {
+                                        if (amountReceivedAsDouble < transactionInDB.getAmount()) {
+                                            String failureReason = "Monto recibido insuficiente.";
+                                            transactionService.updateTransactionStatus(transactionInDB.getId(), TransactionStatus.FAILED, failureReason);
+                                            System.err.println("Failed to process transaction: " + failureReason);
+                                            // Remover la OrderRequest del almacenamiento temporal
+                                            orderRequestStorageService.removeOrderRequest(phoneNumber);
+                                            continue;
+                                        }
+
                                         if (transactionInDB.getType() == TransactionType.BALANCE_PURCHASE) {
                                             // **Caso de compra de balance**
                                             User user = transactionInDB.getUser();
+                                            if (user == null) {
+                                                throw new RuntimeException("Usuario no encontrado para la transacción.");
+                                            }
                                             Account account = user.getAccount();
+                                            if (account == null) {
+                                                throw new RuntimeException("Cuenta no encontrada para el usuario.");
+                                            }
+
                                             account.setBalance(account.getBalance() + transactionInDB.getAmount());
                                             accountRepository.save(account);
 
-                                            transactionService.updateTransactionStatus(transactionInDB.getId(), TransactionStatus.COMPLETED);
+                                            transactionService.updateTransactionStatus(transactionInDB.getId(), TransactionStatus.COMPLETED, null);
                                             System.out.println("Balance updated for user: " + user.getEmail());
 
                                             // Opcional: Enviar notificación al usuario
@@ -163,11 +179,10 @@ public class TelegramListener {
                                             OrderResponse orderResponse = orderService.placeOrder(orderRequest);
                                             System.out.println("Order placed with ID: " + orderResponse.getOrderId());
 
-                                            transactionService.updateTransactionStatus(transactionInDB.getId(), TransactionStatus.COMPLETED);
+                                            transactionService.updateTransactionStatus(transactionInDB.getId(), TransactionStatus.COMPLETED, null);
 
                                             // Opcional: Enviar notificación al usuario
                                             // smsService.sendPaymentNotification(phoneNumber);
-
                                         } else {
                                             // Otros tipos de transacciones si aplica
                                             System.out.println("Unknown transaction type. Skipping.");
@@ -177,8 +192,9 @@ public class TelegramListener {
                                         transactionStorageService.removeTransaction(transactionInDB.getPhoneNumber());
 
                                     } catch (Exception e) {
-                                        System.err.println("Failed to process transaction: " + e.getMessage());
-                                        transactionService.updateTransactionStatus(transactionInDB.getId(), TransactionStatus.FAILED);
+                                        String failureReason = "Error al procesar la transacción: " + e.getMessage();
+                                        System.err.println("Failed to process transaction: " + failureReason);
+                                        transactionService.updateTransactionStatus(transactionInDB.getId(), TransactionStatus.FAILED, failureReason);
                                     } finally {
                                         // Remover la OrderRequest del almacenamiento temporal
                                         orderRequestStorageService.removeOrderRequest(phoneNumber);
@@ -206,6 +222,7 @@ public class TelegramListener {
             e.printStackTrace();
         }
     }
+
 
 
 

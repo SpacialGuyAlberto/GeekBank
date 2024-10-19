@@ -2,6 +2,7 @@ package com.geekbank.bank.services;
 import com.geekbank.bank.models.OrderRequest;
 import com.geekbank.bank.models.Transaction;
 import com.geekbank.bank.models.TransactionStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -10,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class TransactionStorageService {
+
     private ConcurrentHashMap<String, Transaction> pendingTransactions = new ConcurrentHashMap<>();
     protected void storePendingTransaction(Transaction transaction){
 
@@ -79,6 +81,7 @@ public class TransactionStorageService {
 //            .findFirst()
 //            .orElse(null);
 //}
+
     public boolean hasTransactionForPhoneNumber(String phoneNumber){
         boolean isTransactionRemovedFromQueue = pendingTransactions.containsKey(phoneNumber);
         System.out.println("Checking if transaction exists for phone number in queue: " +  phoneNumber + " -> " + ( isTransactionRemovedFromQueue ? "Exists" : "Does not exist"));

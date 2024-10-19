@@ -62,7 +62,7 @@ public class TransactionController {
     ) {
         Transaction transaction = transactionService.findByTransactionNumber(transactionId);
         transactionStorageService.removeTransactionById(transaction.getId());
-        transactionService.updateTransactionStatus(transaction.getId(), TransactionStatus.CANCELLED);
+        transactionService.updateTransactionStatus(transaction.getId(), TransactionStatus.CANCELLED, "User Canceled");
         transactionRepository.save(transaction);
         orderRequestStorageService.removeOrderRequestById(orderRequestId);
 
