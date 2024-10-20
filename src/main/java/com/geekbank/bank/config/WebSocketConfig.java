@@ -15,8 +15,8 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    @Value("${DOMAIN_ORIGIN_URL}")
-    private String frontendUrl;
+    @Value("${DOMAIN_ORIGIN_URL}")  // Inyecta la variable de entorno DOMAIN_URL
+    private String domainUrl;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
@@ -27,7 +27,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/api/ws")
-                .setAllowedOrigins(frontendUrl)
+                .setAllowedOrigins("http://localhost:4200", domainUrl, "http://astralisbank.com:3000")
                 .withSockJS();
     }
 }
