@@ -3,6 +3,14 @@ package com.geekbank.bank.models;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -65,6 +73,10 @@ public class Feedback {
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
+
+    public Feedback() {
+    }
+
 
 //    public User getUser() {
 //        return user;
