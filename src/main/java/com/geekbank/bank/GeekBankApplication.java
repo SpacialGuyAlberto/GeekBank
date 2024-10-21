@@ -8,9 +8,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import io.github.cdimascio.dotenv.Dotenv;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+
 
 @SpringBootApplication
 @EnableScheduling
+@EntityScan(basePackages = {"com.geekbank.bank.models"})
 public class GeekBankApplication  {
 
     @Autowired
