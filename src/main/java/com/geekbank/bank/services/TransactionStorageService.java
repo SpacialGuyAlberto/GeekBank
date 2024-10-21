@@ -46,13 +46,10 @@ public class TransactionStorageService {
 
         boolean removed = false;
 
-        // Iterar sobre las transacciones en el ConcurrentHashMap
         for (Map.Entry<String, Transaction> entry : pendingTransactions.entrySet()) {
             Transaction transaction = entry.getValue();
 
-            // Comprobar si el ID de la transacción coincide con el transactionId dado
             if (transaction.getId().equals(transactionId)) {
-                // Eliminar la transacción por su número de teléfono (la clave en el mapa)
                 pendingTransactions.remove(entry.getKey());
                 removed = true;
                 break;
