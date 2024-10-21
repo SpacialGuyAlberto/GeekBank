@@ -1,18 +1,33 @@
 package com.geekbank.bank.models;
-
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class OrderRequest {
 
+    public String getOrderRequestId() {
+        return orderRequestId;
+    }
+
+    public void setOrderRequestId() {
+        this.orderRequestId = "ORQ-" + System.currentTimeMillis();
+    }
+
+    private String orderRequestId;
     private Long userId;
     private String phoneNumber;
     private List<Product> products;
     private Double amount;
 
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setOrderRequestId(String orderRequestId) {
+        this.orderRequestId = orderRequestId;
+    }
+
+    private LocalDateTime createdAt;
 
     public String getPhoneNumber() {
         return phoneNumber;
@@ -21,6 +36,7 @@ public class OrderRequest {
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
+
     public Long getUserId() {
         return userId;
     }
@@ -28,22 +44,25 @@ public class OrderRequest {
     public void setUserId(Long userId) {
         this.userId = userId;
     }
+
     public Double getAmount(){
         return this.amount;
     }
 
-    public List<KinguinGiftCard> getProducts() {
-        return products.stream().map(product -> {
-            KinguinGiftCard giftCard = new KinguinGiftCard();
-            giftCard.setKinguinId(product.getKinguinId());
-            giftCard.setQty(product.getQty());
-            giftCard.setPrice(product.getPrice());
-            return giftCard;
-        }).collect(Collectors.toList());
+    public void setAmount(Double amount){
+        this.amount = amount;
+    }
+
+    public List<Product> getProducts() {
+        return products;
     }
 
     public void setProducts(List<Product> products) {
         this.products = products;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return this.createdAt;
     }
 
     public static class Product {

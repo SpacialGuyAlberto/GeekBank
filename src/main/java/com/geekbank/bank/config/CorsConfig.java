@@ -20,7 +20,8 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOrigin(domainUrl); // Aquí se permite la URL del frontend
+        config.addAllowedOrigin(domainUrl);
+        config.addAllowedOrigin("http://astralisbank.com");// Aquí se permite la URL del frontend
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         config.setExposedHeaders(Arrays.asList("Authorization"));

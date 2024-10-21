@@ -65,7 +65,7 @@ dependencies {
     implementation 'com.twilio.sdk:twilio:10.4.0'
     implementation 'com.twilio.sdk:twilio:10.4.0'
     implementation 'io.github.cdimascio:java-dotenv:5.2.2'
-
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.0'
 
     // Dependencias adicionales
     implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.1'

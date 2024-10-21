@@ -26,8 +26,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws")
-                .setAllowedOrigins(domainUrl) // Permitir el origen del frontend
+        registry.addEndpoint("/api/ws", "http://astralisbank.com:7070/api/ws")
+                .setAllowedOrigins("http://localhost:4200", domainUrl, "http://astralisbank.com:3000")
                 .withSockJS();
     }
 }

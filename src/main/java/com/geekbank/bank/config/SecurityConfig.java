@@ -30,14 +30,16 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     @Autowired
     private JwtRequestFilter jwtRequestFilter;
-    @Value("${DOMAIN_ORIGIN_URL}")  // Inyecta la variable de entorno DOMAIN_URL
-    private String domainUrl;
+    @Value("${DOMAIN_ORIGIN_URL}")
+    private String frontendUrl;
 
     private final UserDetailsServiceImpl userDetailsService;
 
@@ -52,11 +54,12 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/api/auth/registerUser", "/api/auth/activate", "/api/auth/validate-password","/api/auth/login", "/api/auth/google-login", "/api/auth/logout", "/api/auth/reset-password",
+                        .requestMatchers("/api/ws/**").permitAll()
+                        .requestMatchers("/api/auth/registerUser", "/api/auth/registerUserByAdmin", "/api/auth/activate", "/api/auth/validate-password","/api/auth/login", "/api/auth/google-login", "/api/auth/logout", "/api/auth/reset-password",
                                 "/api/home", "/api/gift-cards/**", "/api/kinguin-gift-cards/**", "/api/users/**", "/api/public/**", "/api/cart", "/api/cart/**",
                                 "/api/telegram/**", "/api/kinguin/**", "/api/users/user-details", "/api/users/${userId}", "/api/orders", "/api/orders/**",
-                                "/api/highlights/**", "/api/highlights", "/api/users/update-user-details", "/api/users/**", "/api/transactions", "/api/transactions/**").permitAll()
+                                "/api/highlights/**", "/api/highlights", "/api/users/update-user-details", "/api/users/**", "/api/transactions", "/api/transactions/**",
+                                "/api/wish-list", "/api/wish-list/**", "/api/wish-list/${wishedItemId}", "/api/feedbacks/**", "/api/recommendations/**", "/api/recommendations/user/${userId}", "/api/sync/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2Login -> oauth2Login
@@ -95,12 +98,16 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOrigin(domainUrl);
+        config.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://astralisbank.com"));
+        config.addAllowedOrigin("http://astralisbank.com:3000");
+        config.addAllowedOrigin(frontendUrl);
+        config.setAllowedMethods(Arrays.asList("GET","POST"));
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
     }

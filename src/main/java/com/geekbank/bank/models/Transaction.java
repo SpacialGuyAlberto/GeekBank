@@ -1,8 +1,11 @@
 package com.geekbank.bank.models;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import com.geekbank.bank.models.TransactionStatus;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Entity
@@ -17,6 +20,7 @@ public class Transaction {
 
     @Column(nullable = false)
     private double amount;
+
     @Column(nullable = false)
     private String phoneNumber;
 
@@ -41,8 +45,40 @@ public class Transaction {
     @JoinColumn(name = "account_id", nullable = true)
     private Account account;
 
+    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<TransactionProduct> products = new ArrayList<>();
+
+    public LocalDateTime getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
+    }
+
+    @Column(nullable = false)
+    private LocalDateTime expiresAt;
+
+
+    public List<TransactionProduct> getProducts() {
+        return products;
+    }
+
+
     public Long getId() {
         return id;
+    }
+    public User getUser() {
+        return user;
+    }
+
+    public Account getAccount() {
+        return account;
+    }
+
+    public void setProducts(List<TransactionProduct> products) {
+        this.products = products;
     }
 
     public void setId(Long id) {
@@ -98,21 +134,7 @@ public class Transaction {
     public void setDescription(String description) {
         this.description = description;
     }
-//    public User getUser() {
-//        return user;
-//    }
-//
-//    public void setUser(Optional<User> user) {
-//        this.user = user.get();
-//    }
 
-//    public Account getAccount() {
-//        return account;
-//    }
-//
-//    public void setAccount(Account account) {
-//        this.account = account;
-//    }
     public void setUser(User user){
         this.user = user;
     }

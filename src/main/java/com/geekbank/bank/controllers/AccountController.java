@@ -6,6 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,9 +24,9 @@ public class AccountController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Account>> getAllAccounts() {
-        List<Account> accounts = accountService.getAllAccounts();
-        return new ResponseEntity<>(accounts, HttpStatus.OK);
+    @PreAuthorize("hasRole('ADMIN')")
+    public Page<Account> getAllAccounts(Pageable pageable) {
+        return accountService.getAllAccounts(pageable);
     }
 
     @GetMapping("/{id}")

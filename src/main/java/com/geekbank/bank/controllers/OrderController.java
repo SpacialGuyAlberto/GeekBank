@@ -42,8 +42,37 @@ public class OrderController {
             user = userRepository.findById(orderRequest.getUserId())
                     .orElse(null);
         }
+        orderRequest.setOrderRequestId();
         orderRequestStorageService.storeOrderRequest(orderRequest);
-        transactionService.createTransaction(user, orderRequest.getAmount(), TransactionType.PURCHASE, "Descripción", orderRequest.getPhoneNumber());
-        return ResponseEntity.ok("Order placed successfully");
+
+        TransactionType transactionType = TransactionType.PURCHASE;
+
+        if (orderRequest.getProducts() != null && !orderRequest.getProducts().isEmpty()) {
+            OrderRequest.Product firstProduct = orderRequest.getProducts().get(0);
+            if ( firstProduct.getKinguinId() == -1) {
+                transactionType = TransactionType.BALANCE_PURCHASE;
+            }
+        }
+
+        Transaction savedTransaction;
+
+        try {
+            savedTransaction = transactionService.createTransaction(
+                    user,
+                    orderRequest.getAmount(),
+                    transactionType,
+                    "Descripción",
+                    orderRequest.getPhoneNumber(),
+                    orderRequest.getProducts()
+            );
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(500).body("Error al crear la transacción: " + e.getMessage());
+        }
+        String transactionNumber = savedTransaction.getTransactionNumber();
+        String responseMessage = "Order placed successfully: " + orderRequest.getOrderRequestId() + "\n Transaction number: "  + transactionNumber;
+
+        return ResponseEntity.ok(responseMessage);
     }
 }
