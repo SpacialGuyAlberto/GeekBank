@@ -7,6 +7,8 @@ services:
       - POSTGRES_USER=postgres
     ports:
       - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Volumen para persistencia de datos
   spring-boot-app:
     build:
       context: .
@@ -15,3 +17,6 @@ services:
       - '7070:7070'
     depends_on:
       - postgres
+
+volumes:
+  postgres_data:  # Definición del volumen persistente
