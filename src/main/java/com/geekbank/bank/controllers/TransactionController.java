@@ -69,4 +69,10 @@ public class TransactionController {
         return ResponseEntity.ok(transaction);
     }
 
+    @GetMapping("/by-number/{transactionNumber}")
+    public ResponseEntity<Transaction> getTransactionByNumber(@PathVariable String transactionNumber) {
+        Transaction transaction = transactionService.findByTransactionNumber(transactionNumber);
+
+        return ResponseEntity.ok(transaction);
+    }
 }

@@ -59,6 +59,8 @@ public class OrderController {
         try {
             savedTransaction = transactionService.createTransaction(
                     user,
+                    orderRequest.getGuestId(),
+                    orderRequest.getOrderRequestId(),
                     orderRequest.getAmount(),
                     transactionType,
                     "Descripción",
@@ -70,6 +72,11 @@ public class OrderController {
         } catch (RuntimeException e) {
             return ResponseEntity.status(500).body("Error al crear la transacción: " + e.getMessage());
         }
+
+        TransactionResponse response = new TransactionResponse();
+        response.setOrderRequestNumber(orderRequest.getOrderRequestId());
+        response.setTransactionNumber(savedTransaction.getTransactionNumber());
+
         String transactionNumber = savedTransaction.getTransactionNumber();
         String responseMessage = "Order placed successfully: " + orderRequest.getOrderRequestId() + "\n Transaction number: "  + transactionNumber;
 

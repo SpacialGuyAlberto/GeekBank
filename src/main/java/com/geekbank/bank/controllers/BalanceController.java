@@ -33,6 +33,8 @@ public class BalanceController {
         try {
             transaction = transactionService.createTransaction(
                     user,
+                    balanceRequest.getGuestId(),
+                    balanceRequest.getId(),
                     balanceRequest.getAmount(),
                     TransactionType.BALANCE_PURCHASE, // Necesitarás agregar este tipo
                     "Compra de balance",

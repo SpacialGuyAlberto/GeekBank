@@ -30,23 +30,37 @@ public class TransactionService {
     @Autowired
     private TransactionWebSocketController transactionWebSocketController;
 
+    @Autowired
+    private UserRepository userRepository;
+
     private static final long EXPIRATION_MINUTES = 5;
 
 
     @Transactional
-    public Transaction createTransaction(User user, double amount, TransactionType type, String description, String phoneNumber, List<OrderRequest.Product> products) {
+    public Transaction createTransaction(User user, String guestId, String orderRequestNumber, double amount, TransactionType type, String description, String phoneNumber, List<OrderRequest.Product> products) {
         Transaction transaction = new Transaction();
         transaction.setAmount(amount);
-        transaction.setUser(user);
+
+        if (user != null) {
+            transaction.setUser(user);
+        } else if (guestId != null && !guestId.isEmpty()) {
+            transaction.setGuestId(guestId);
+        } else {
+            throw new IllegalArgumentException("Either userId or guestId must be provided");
+        }
+
         transaction.setType(type);
         transaction.setTimestamp(LocalDateTime.now());
         transaction.setTransactionNumber(generateTransactionNumber());
         transaction.setDescription(description);
         transaction.setPhoneNumber(phoneNumber);
+
+        transaction.setOrderRequestNumber(orderRequestNumber);
+
         transaction.setStatus(TransactionStatus.PENDING);
         transaction.setExpiresAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES));
 
-        if (products.size() > 10) {
+        if (products != null && products.size() > 10) {
             throw new IllegalArgumentException("No se pueden agregar más de 10 productos por transacción.");
         }
 

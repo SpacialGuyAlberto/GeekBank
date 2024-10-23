@@ -37,9 +37,26 @@ public class Transaction {
 
     private String description;
 
+    public String getOrderRequestNumber() {
+        return orderRequestNumber;
+    }
+
+    private String orderRequestNumber;
+
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = true)
     private User user;
+
+    public String getGuestId() {
+        return guestId;
+    }
+
+    public void setGuestId(String guestId) {
+        this.guestId = guestId;
+    }
+
+    @Column(nullable = true)
+    private String guestId;
 
     @ManyToOne
     @JoinColumn(name = "account_id", nullable = true)
@@ -144,4 +161,7 @@ public class Transaction {
     }
 
 
+    public void setOrderRequestNumber(String orderRequestNumber) {
+        this.orderRequestNumber = orderRequestNumber;
+    }
 }

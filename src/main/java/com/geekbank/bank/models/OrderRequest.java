@@ -1,4 +1,6 @@
 package com.geekbank.bank.models;
+import jakarta.persistence.Column;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -14,6 +16,12 @@ public class OrderRequest {
 
     private String orderRequestId;
     private Long userId;
+
+    public void setGuestId(String guestId) {
+        this.guestId = guestId;
+    }
+
+    private String guestId;
     private String phoneNumber;
     private List<Product> products;
     private Double amount;
@@ -64,6 +72,11 @@ public class OrderRequest {
     public LocalDateTime getCreatedAt() {
         return this.createdAt;
     }
+
+    public String getGuestId() {
+        return this.guestId;
+    }
+
 
     public static class Product {
         private int kinguinId;

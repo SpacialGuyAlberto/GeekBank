@@ -1,39 +1,47 @@
+// src/main/java/com/geekbank/bank/models/BalancePurchaseRequest.java
 package com.geekbank.bank.models;
 
 import java.time.LocalDateTime;
 
 public class BalancePurchaseRequest {
 
+    private String id;
+    private Long userId;
+    private String guestId; // Opcional, para usuarios guest
+    private String phoneNumber;
+    private Double amount;
+    private LocalDateTime createdAt;
+
+    // Constructor
+    public BalancePurchaseRequest() {
+        setId();
+        this.createdAt = LocalDateTime.now();
+    }
+
+    // Getters y setters
+
     public String getId() {
         return id;
     }
 
     public void setId() {
-        this.id= "BR-" + System.currentTimeMillis();
+        this.id = "BAL-" + System.currentTimeMillis();
     }
 
-    private String id;
-    private Long userId;
-    private String phoneNumber;
-    private Double amount;
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    private LocalDateTime createdAt;
-
-    // Getters y Setters
     public Long getUserId() {
         return userId;
     }
 
     public void setUserId(Long userId) {
-       this.userId = userId;
+        this.userId = userId;
+    }
+
+    public String getGuestId() {
+        return guestId;
+    }
+
+    public void setGuestId(String guestId) {
+        this.guestId = guestId;
     }
 
     public String getPhoneNumber() {
@@ -44,11 +52,19 @@ public class BalancePurchaseRequest {
         this.phoneNumber = phoneNumber;
     }
 
-    public Double getAmount() {
-        return amount;
+    public Double getAmount(){
+        return this.amount;
     }
 
-    public void setAmount(Double amount) {
+    public void setAmount(Double amount){
         this.amount = amount;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return this.createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }
