@@ -74,6 +74,12 @@ dependencies {
 
     implementation 'org.json:json:20210307'
 
+    // H2 para pruebas en memoria
+    testImplementation 'com.h2database:h2:2.1.214'
+
+    // Mockito para Simulación de Servicios (si es necesario)
+    testImplementation 'org.mockito:mockito-core:5.3.1'
+
     // Dependencias duplicadas eliminadas para evitar conflictos
 }
 
