@@ -12,6 +12,10 @@ public class CartItemWithGiftcardDTO {
         this.giftcard = giftcard;
     }
 
+    public CartItemWithGiftcardDTO() {
+
+    }
+
     // Getters and Setters
     public CartItem getCartItem() {
         return cartItem;

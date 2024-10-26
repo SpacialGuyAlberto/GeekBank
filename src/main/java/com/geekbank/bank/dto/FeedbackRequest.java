@@ -8,6 +8,26 @@ public class FeedbackRequest {
     private int score;
     private String message;
     private Date createdAt; // Añadido el campo createdAt
+    // Constructor vacío (necesario para algunos frameworks)
+    public FeedbackRequest() {}
+
+    // Nuevo constructor con todos los campos
+    public FeedbackRequest(Long userId, Long giftCardId, int score, String message, Date createdAt) {
+        this.userId = userId;
+        this.giftCardId = giftCardId;
+        this.score = score;
+        this.message = message;
+        this.createdAt = createdAt;
+    }
+
+    // Constructor alternativo sin el campo createdAt, si no necesitas inicializarlo siempre
+    public FeedbackRequest(Long userId, Long giftCardId, int score, String message) {
+        this.userId = userId;
+        this.giftCardId = giftCardId;
+        this.score = score;
+        this.message = message;
+    }
+
 
     // Getters y setters
     public Long getUserId() {
@@ -48,5 +68,9 @@ public class FeedbackRequest {
 
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public void setRating(int i) {
+        this.score = i;
     }
 }

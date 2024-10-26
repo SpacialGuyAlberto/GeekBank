@@ -46,15 +46,21 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'io.github.cdimascio:java-dotenv:5.2.2'
 
-
     runtimeOnly 'com.mysql:mysql-connector-j'
     runtimeOnly 'com.oracle.database.jdbc:ojdbc11'
     runtimeOnly 'org.postgresql:postgresql'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.mockito', module: 'mockito-core'
+    }
+    testImplementation 'org.mockito:mockito-core:5.3.1'
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'org.springframework.graphql:spring-graphql-test'
-    testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
-    //Mail service
+    testImplementation('org.springframework.restdocs:spring-restdocs-mockmvc:3.0.1') {
+        exclude group: 'com.vaadin.external.google', module: 'android-json'
+    }
+
+    // Mail service
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.security:spring-security-oauth2-jose'
@@ -63,8 +69,6 @@ dependencies {
     implementation 'com.nimbusds:nimbus-jose-jwt:9.19'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.twilio.sdk:twilio:10.4.0'
-    implementation 'com.twilio.sdk:twilio:10.4.0'
-    implementation 'io.github.cdimascio:java-dotenv:5.2.2'
     implementation 'com.github.ben-manes.caffeine:caffeine:3.1.0'
 
     // Dependencias adicionales
@@ -77,10 +81,7 @@ dependencies {
     // H2 para pruebas en memoria
     testImplementation 'com.h2database:h2:2.1.214'
 
-    // Mockito para Simulación de Servicios (si es necesario)
-    testImplementation 'org.mockito:mockito-core:5.3.1'
-
-    // Dependencias duplicadas eliminadas para evitar conflictos
+    // Mockito para Simulación de Servicios (ya incluido mediante 'mockito-core:5.3.1')
 }
 
 dependencyManagement {
@@ -90,9 +91,14 @@ dependencyManagement {
     }
 }
 
+tasks.named('processTestAot') {
+    enabled = false
+}
+
 tasks.named('test') {
-    outputs.dir snippetsDir
     useJUnitPlatform()
+    systemProperty 'spring.aot.enabled', 'false'
+    systemProperty 'spring.test.context.aot.enabled', 'false'
 }
 
 tasks.named('asciidoctor') {
@@ -106,12 +112,16 @@ generateJava {
     generateClient = true
 }
 
+
+graalvmNative {
+    test {
+        // Deshabilita el soporte AOT para pruebas
+        enabled = false
+    }
+}
+
 hibernate {
     enhancement {
         enableAssociationManagement = true
     }
-}
-
-test {
-    enabled = false
 }

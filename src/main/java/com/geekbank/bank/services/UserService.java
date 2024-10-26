@@ -133,20 +133,6 @@ public class UserService {
         }
     }
 
-//    private void changeAccountStatusToActiveAllAccounts(User user) {
-//        List<Account> accounts = accountService.getAccountsByUserId(user.getId());
-//
-//        if (accounts.isEmpty()) {
-//            logger.warn("No accounts found for user {}", user.getEmail());
-//            return;
-//        }
-//
-//        for (Account account : accounts) {
-//            account.setStatus(AccountStatus.ACTIVE);
-//            accountRepository.save(account);
-//            logger.info("Account {} status updated to ACTIVE", account.getAccountNumber());
-//        }
-//    }
 
     private void changeAccountStatusToActive(User user) {
         Account account = accountRepository.findFirstByUserId(user.getId());
@@ -169,4 +155,14 @@ public class UserService {
             throw new RuntimeException("Usuario no encontrado");
         }
     }
+
+    public Optional<User> findByActivationToken(String token) {
+        return userRepository.findByActivationToken(token);
+    }
+
+    public void saveUser(User user) {
+        userRepository.save(user);
+    }
+
+
 }

@@ -13,6 +13,10 @@ public class HighlightItemWithGiftcardDTO {
         this.giftcard = giftcard;
     }
 
+    public HighlightItemWithGiftcardDTO() {
+
+    }
+
     // Getters and Setters
     public HighlightItem getHighlightItem() {
         return this.highlightItem;

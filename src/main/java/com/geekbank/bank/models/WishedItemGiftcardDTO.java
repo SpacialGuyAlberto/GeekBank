@@ -1,6 +1,10 @@
 package com.geekbank.bank.models;
 
 public class WishedItemGiftcardDTO {
+    public WishedItemGiftcardDTO() {
+
+    }
+
     public WishedItem getWishedItem() {
         return wishedItem;
     }

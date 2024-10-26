@@ -93,7 +93,7 @@ public class TelegramListener {
         }
     }
 
-    private void processResponse(String response) {
+    void processResponse(String response) {
         try {
             JSONObject jsonResponse = new JSONObject(response);
             JSONArray resultArray = jsonResponse.getJSONArray("result");

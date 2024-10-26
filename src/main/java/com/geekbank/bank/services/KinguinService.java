@@ -17,10 +17,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 
 
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -152,6 +149,8 @@ public class KinguinService {
 
         return giftCards;
     }
+
+
 
     public Map<Long, KinguinGiftCard> fetchGiftCardsByIds(List<Long> productIds) {
         return productIds.parallelStream()

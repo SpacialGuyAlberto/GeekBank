@@ -101,4 +101,8 @@ public class Feedback {
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
     }
+
+    public void setRating(int i) {
+        this.score = i;
+    }
 }

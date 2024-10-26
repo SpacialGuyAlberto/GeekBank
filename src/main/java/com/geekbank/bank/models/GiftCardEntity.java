@@ -188,5 +188,7 @@ public class GiftCardEntity {
         // Constructor vacío
         public GiftCardEntity() {}
 
-        // Getters y Setters (omitidos por brevedad)
+
+
+    // Getters y Setters (omitidos por brevedad)
     }

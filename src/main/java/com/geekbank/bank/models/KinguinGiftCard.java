@@ -104,6 +104,17 @@ public class KinguinGiftCard implements GiftCard {
     @JsonProperty("updatedAt")
     private String updatedAt;
 
+    public KinguinGiftCard(String s, String title, double v, String date) {
+        this.productId = s;
+        this.name = title;
+        this.price = v;
+        this.releaseDate = date;
+    }
+
+    public KinguinGiftCard(){
+
+    }
+
     public void setName(String name) {
         this.name = name;
     }
