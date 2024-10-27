@@ -2,11 +2,9 @@ package com.geekbank.bank.models;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import com.geekbank.bank.models.TransactionStatus;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Entity
 public class Transaction {
@@ -37,26 +35,18 @@ public class Transaction {
 
     private String description;
 
-    public String getOrderRequestNumber() {
-        return orderRequestNumber;
-    }
-
     private String orderRequestNumber;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
-    public String getGuestId() {
-        return guestId;
-    }
-
-    public void setGuestId(String guestId) {
-        this.guestId = guestId;
-    }
-
     @Column(nullable = true)
     private String guestId;
+
+
+    @Column(nullable = true)
+    private Long gameUserId;
 
     @ManyToOne
     @JoinColumn(name = "account_id", nullable = true)
@@ -66,43 +56,18 @@ public class Transaction {
     @JsonManagedReference
     private List<TransactionProduct> products = new ArrayList<>();
 
-    public LocalDateTime getExpiresAt() {
-        return expiresAt;
-    }
-
-    public void setExpiresAt(LocalDateTime expiresAt) {
-        this.expiresAt = expiresAt;
-    }
-
     @Column(nullable = false)
     private LocalDateTime expiresAt;
 
-
-    public List<TransactionProduct> getProducts() {
-        return products;
-    }
-
+    // Getters and Setters
 
     public Long getId() {
         return id;
-    }
-    public User getUser() {
-        return user;
-    }
-
-    public Account getAccount() {
-        return account;
-    }
-
-    public void setProducts(List<TransactionProduct> products) {
-        this.products = products;
     }
 
     public void setId(Long id) {
         this.id = id;
     }
-    public String getPhoneNumber(){ return this.phoneNumber; }
-    public void setPhoneNumber(String phoneNumber ){ this.phoneNumber = phoneNumber; }
 
     public String getTransactionNumber() {
         return transactionNumber;
@@ -118,6 +83,14 @@ public class Transaction {
 
     public void setAmount(double amount) {
         this.amount = amount;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     public TransactionType getType() {
@@ -152,16 +125,59 @@ public class Transaction {
         this.description = description;
     }
 
-    public void setUser(User user){
-        this.user = user;
+    public String getOrderRequestNumber() {
+        return orderRequestNumber;
     }
-
-    public void setAccount(Account account){
-        this.account = account;
-    }
-
 
     public void setOrderRequestNumber(String orderRequestNumber) {
         this.orderRequestNumber = orderRequestNumber;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public String getGuestId() {
+        return guestId;
+    }
+
+    public void setGuestId(String guestId) {
+        this.guestId = guestId;
+    }
+
+    public Account getAccount() {
+        return account;
+    }
+
+    public void setAccount(Account account) {
+        this.account = account;
+    }
+
+    public List<TransactionProduct> getProducts() {
+        return products;
+    }
+
+    public void setProducts(List<TransactionProduct> products) {
+        this.products = products;
+    }
+
+    public LocalDateTime getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
+    }
+
+    public Long getGameUserId() {
+        return gameUserId;
+    }
+
+    public void setGameUserId(Long gameUserId) {
+        this.gameUserId = gameUserId;
     }
 }

@@ -60,6 +60,7 @@ public class OrderController {
             savedTransaction = transactionService.createTransaction(
                     user,
                     orderRequest.getGuestId(),
+                    orderRequest.getGameUserId(),
                     orderRequest.getOrderRequestId(),
                     orderRequest.getAmount(),
                     transactionType,

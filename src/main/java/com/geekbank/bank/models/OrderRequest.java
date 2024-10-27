@@ -22,6 +22,8 @@ public class OrderRequest {
     }
 
     private String guestId;
+
+    private Long gameUserId;
     private String phoneNumber;
     private List<Product> products;
     private Double amount;
@@ -75,6 +77,14 @@ public class OrderRequest {
 
     public String getGuestId() {
         return this.guestId;
+    }
+
+    public Long getGameUserId() {
+        return gameUserId;
+    }
+
+    public void setGameUserId(Long gameUserId) {
+        this.gameUserId = gameUserId;
     }
 
 

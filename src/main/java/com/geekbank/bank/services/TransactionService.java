@@ -37,7 +37,7 @@ public class TransactionService {
 
 
     @Transactional
-    public Transaction createTransaction(User user, String guestId, String orderRequestNumber, double amount, TransactionType type, String description, String phoneNumber, List<OrderRequest.Product> products) {
+    public Transaction createTransaction(User user, String guestId, Long gameUserId, String orderRequestNumber, double amount, TransactionType type, String description, String phoneNumber, List<OrderRequest.Product> products) {
         Transaction transaction = new Transaction();
         transaction.setAmount(amount);
 
@@ -47,6 +47,10 @@ public class TransactionService {
             transaction.setGuestId(guestId);
         } else {
             throw new IllegalArgumentException("Either userId or guestId must be provided");
+        }
+
+        if (gameUserId != null){
+            transaction.setGameUserId(gameUserId);
         }
 
         transaction.setType(type);
@@ -105,6 +109,9 @@ public class TransactionService {
         }
     }
 
+    public List<Transaction> findTransactionByGameUserId(Long gameUserId){
+        return transactionRepository.findByGameUserId(gameUserId);
+    }
 
     public List<Transaction> findPendingTransactionsByPhoneNumber(String phoneNumber) {
         return transactionRepository.findByStatusAndPhoneNumber(TransactionStatus.PENDING, phoneNumber);

@@ -25,5 +25,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     Transaction findByTransactionNumber(String transactionNumber);
 
     List<Transaction> findByStatusAndTimestampBefore(TransactionStatus status, LocalDateTime timestamp);
+    List<Transaction> findByGameUserId(Long gameUserId);
 
 }
