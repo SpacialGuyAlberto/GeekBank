@@ -40,7 +40,8 @@ public class BalanceController {
                     TransactionType.BALANCE_PURCHASE, // Necesitarás agregar este tipo
                     "Compra de balance",
                     balanceRequest.getPhoneNumber(),
-                    null// Sin productos asociados
+                    null,
+                    false
             );
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error creating transaction: " + e.getMessage());

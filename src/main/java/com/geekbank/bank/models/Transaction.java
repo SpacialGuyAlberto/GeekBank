@@ -59,6 +59,10 @@ public class Transaction {
     @Column(nullable = false)
     private LocalDateTime expiresAt;
 
+    @Column(nullable = false)
+    private Boolean isManual = false; // Default value can be false
+
+
     // Getters and Setters
 
     public Long getId() {
@@ -179,5 +183,13 @@ public class Transaction {
 
     public void setGameUserId(Long gameUserId) {
         this.gameUserId = gameUserId;
+    }
+
+    public Boolean getManual() {
+        return isManual;
+    }
+
+    public void setManual(Boolean manual) {
+        isManual = manual;
     }
 }

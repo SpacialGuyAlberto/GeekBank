@@ -66,9 +66,10 @@ public class OrderController {
                     transactionType,
                     "Descripción",
                     orderRequest.getPhoneNumber(),
-                    orderRequest.getProducts()
+                    orderRequest.getProducts(),
+                    orderRequest.getManual()  // Ensure this is correctly passed
             );
-        } catch (IllegalArgumentException e) {
+        }  catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (RuntimeException e) {
             return ResponseEntity.status(500).body("Error al crear la transacción: " + e.getMessage());

@@ -22,8 +22,9 @@ public class OrderRequest {
     }
 
     private String guestId;
-
     private Long gameUserId;
+
+    private Boolean isManual;
     private String phoneNumber;
     private List<Product> products;
     private Double amount;
@@ -85,6 +86,13 @@ public class OrderRequest {
 
     public void setGameUserId(Long gameUserId) {
         this.gameUserId = gameUserId;
+    }
+    public Boolean getManual() {
+        return isManual;
+    }
+
+    public void setManual(Boolean manual) {
+        isManual = manual;
     }
 
 

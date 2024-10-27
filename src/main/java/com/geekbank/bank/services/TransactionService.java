@@ -37,7 +37,7 @@ public class TransactionService {
 
 
     @Transactional
-    public Transaction createTransaction(User user, String guestId, Long gameUserId, String orderRequestNumber, double amount, TransactionType type, String description, String phoneNumber, List<OrderRequest.Product> products) {
+    public Transaction createTransaction(User user, String guestId, Long gameUserId, String orderRequestNumber, double amount, TransactionType type, String description, String phoneNumber, List<OrderRequest.Product> products, Boolean isManual) {
         Transaction transaction = new Transaction();
         transaction.setAmount(amount);
 
@@ -53,6 +53,14 @@ public class TransactionService {
             transaction.setGameUserId(gameUserId);
         }
 
+        if (isManual != null){
+            transaction.setManual(isManual);
+            transaction.setExpiresAt(LocalDateTime.now().plusMinutes(600));
+        } else {
+            transaction.setExpiresAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES));
+            transaction.setManual(false);
+        }
+
         transaction.setType(type);
         transaction.setTimestamp(LocalDateTime.now());
         transaction.setTransactionNumber(generateTransactionNumber());
@@ -62,7 +70,6 @@ public class TransactionService {
         transaction.setOrderRequestNumber(orderRequestNumber);
 
         transaction.setStatus(TransactionStatus.PENDING);
-        transaction.setExpiresAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES));
 
         if (products != null && products.size() > 10) {
             throw new IllegalArgumentException("No se pueden agregar más de 10 productos por transacción.");
@@ -79,6 +86,7 @@ public class TransactionService {
         }).collect(Collectors.toList());
 
         transaction.setProducts(transactionProducts);
+
 
         Transaction savedTransaction = transactionRepository.save(transaction);
         transactionStorageService.storePendingTransaction(savedTransaction);
@@ -169,5 +177,7 @@ public class TransactionService {
         }
     }
 
-
+    public List<Transaction> getTransactionsByManualStatus(Boolean isManual) {
+        return transactionRepository.findByIsManual(isManual);
+    }
 }
