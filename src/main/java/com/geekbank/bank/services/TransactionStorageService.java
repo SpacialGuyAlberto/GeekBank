@@ -56,7 +56,7 @@ public class TransactionStorageService {
     public List<Transaction> findPendingTransactionsForPhoneNumberAndAmount(String phoneNumber, double amountReceived) {
         List<Transaction> transactions = pendingTransactions.getOrDefault(phoneNumber, Collections.emptyList());
         return transactions.stream()
-                .filter(transaction -> transaction.getAmount() <= amountReceived)
+                .filter(transaction -> transaction.getAmountHnl() <= amountReceived)
                 .collect(Collectors.toList());
     }
 

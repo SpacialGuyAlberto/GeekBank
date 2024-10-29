@@ -39,7 +39,7 @@ public class TransactionRepositoryIntegrationTest {
         // Crear y guardar transacciones de prueba
         transaction1 = new Transaction();
         transaction1.setTransactionNumber("TXN001");
-        transaction1.setAmount(100.00);
+        transaction1.setAmountUsd(100.00);
         transaction1.setPhoneNumber("1234567890");
         transaction1.setType(TransactionType.PURCHASE);
         transaction1.setTimestamp(LocalDateTime.now().minusDays(5));
@@ -49,7 +49,7 @@ public class TransactionRepositoryIntegrationTest {
 
         transaction2 = new Transaction();
         transaction2.setTransactionNumber("TXN002");
-        transaction2.setAmount(200.00);
+        transaction2.setAmountUsd(200.00);
         transaction2.setPhoneNumber("0987654321");
         transaction2.setType(TransactionType.REFUND);
         transaction2.setTimestamp(LocalDateTime.now().minusDays(3));
@@ -59,7 +59,7 @@ public class TransactionRepositoryIntegrationTest {
 
         transaction3 = new Transaction();
         transaction3.setTransactionNumber("TXN003");
-        transaction3.setAmount(150.00);
+        transaction3.setAmountUsd(150.00);
         transaction3.setPhoneNumber("1234567890");
         transaction3.setType(TransactionType.PURCHASE);
         transaction3.setTimestamp(LocalDateTime.now().minusDays(1));
@@ -128,7 +128,7 @@ public class TransactionRepositoryIntegrationTest {
     public void testFindByTransactionNumber() {
         Transaction transaction = transactionRepository.findByTransactionNumber("TXN002");
         assertNotNull(transaction, "La transacción no debería ser nula");
-        assertEquals(200.00, transaction.getAmount(), "El monto de la transacción debería ser 200.00");
+        assertEquals(200.00, transaction.getAmountUsd(), "El monto de la transacción debería ser 200.00");
     }
 
     @Test

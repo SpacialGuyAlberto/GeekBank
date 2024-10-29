@@ -17,7 +17,13 @@ public class Transaction {
     private String transactionNumber;
 
     @Column(nullable = false)
-    private double amount;
+    private double amountUsd;
+
+    @Column(name = "amount_hnl", nullable = false)
+    private double amountHnl; // Monto en HNL
+
+    @Column(name = "exchange_rate", nullable = false)
+    private double exchangeRate; // Tasa de cambio utilizada
 
     @Column(nullable = false)
     private String phoneNumber;
@@ -81,12 +87,12 @@ public class Transaction {
         this.transactionNumber = transactionNumber;
     }
 
-    public double getAmount() {
-        return amount;
+    public double getAmountUsd() {
+        return amountUsd;
     }
 
-    public void setAmount(double amount) {
-        this.amount = amount;
+    public void setAmountUsd(double amount) {
+        this.amountUsd = amount;
     }
 
     public String getPhoneNumber() {
@@ -198,5 +204,22 @@ public class Transaction {
 
     public void setTempPin(Long tempPin) {
         this.tempPin = tempPin;
+    }
+
+
+    public double getAmountHnl() {
+        return amountHnl;
+    }
+
+    public void setAmountHnl(double amountHnl) {
+        this.amountHnl = amountHnl;
+    }
+
+    public double getExchangeRate() {
+        return exchangeRate;
+    }
+
+    public void setExchangeRate(double exchangeRate) {
+        this.exchangeRate = exchangeRate;
     }
 }

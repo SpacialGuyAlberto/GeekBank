@@ -14,6 +14,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.io.ByteArrayInputStream;
 import java.net.HttpURLConnection;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -71,7 +72,7 @@ public class TelegramListenerIntegrationTest {
         OrderRequest mockOrderRequest = mock(OrderRequest.class);
         Transaction mockTransaction = mock(Transaction.class);
         when(orderRequestStorageService.getOrderRequestByPhoneNumber(anyString())).thenReturn(mockOrderRequest);
-        when(transactionStorageService.findMatchingTransaction(anyString())).thenReturn(mockTransaction);
+        when(transactionStorageService.findPendingTransactionsForPhoneNumber(anyString())).thenReturn((List<Transaction>) mockTransaction);
         when(transactionService.findByTransactionNumber(anyString())).thenReturn(mockTransaction);
         when(mockTransaction.getAmount()).thenReturn(100.0);
         when(mockTransaction.getType()).thenReturn(TransactionType.BALANCE_PURCHASE);
@@ -87,7 +88,7 @@ public class TelegramListenerIntegrationTest {
 
         // Verificar interacciones
         verify(orderRequestStorageService, times(1)).getOrderRequestByPhoneNumber(anyString());
-        verify(transactionStorageService, times(1)).findMatchingTransaction(anyString());
+        verify(transactionStorageService, times(1)).findPendingTransactionsForPhoneNumber(anyString());
         verify(transactionService, times(1)).updateTransactionStatus(anyLong(), eq(TransactionStatus.COMPLETED), isNull());
     }
 
@@ -115,6 +116,6 @@ public class TelegramListenerIntegrationTest {
 
         // Verificar que no se llama a los métodos relacionados con la orden o la transacción
         verify(orderRequestStorageService, never()).getOrderRequestByPhoneNumber(anyString());
-        verify(transactionStorageService, never()).findMatchingTransaction(anyString());
+        verify(transactionStorageService, never()).findPendingTransactionsForPhoneNumber(anyString());
     }
 }

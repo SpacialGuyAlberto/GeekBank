@@ -55,11 +55,27 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/ws/**", "/api/transactions/{transactionId}", "/api/transactions/cancel/**").permitAll()
-                        .requestMatchers("/api/auth/registerUser", "/api/auth/registerUserByAdmin", "/api/auth/activate", "/api/auth/validate-password","/api/auth/login", "/api/auth/google-login", "/api/auth/logout", "/api/auth/reset-password",
-                                "/api/home", "/api/gift-cards/**", "/api/kinguin-gift-cards/**", "/api/users/**", "/api/public/**", "/api/cart", "/api/cart/**",
-                                "/api/telegram/**", "/api/kinguin/**", "/api/users/user-details", "/api/users/${userId}", "/api/orders", "/api/orders/**",
-                                "/api/highlights/**", "/api/highlights", "/api/users/update-user-details", "/api/users/**", "/api/transactions", "/api/transactions/**", "/api/transactions/cancel/**",
-                                "/api/wish-list", "/api/wish-list/**", "/api/wish-list/${wishedItemId}", "/api/feedbacks/**", "/api/recommendations/**", "/api/recommendations/user/${userId}", "/api/sync/**", "/api/freefire/**", "/api/freefire/products").permitAll()
+                        .requestMatchers("/api/auth/registerUser",
+                                "/api/auth/registerUserByAdmin", "/api/auth/activate",
+                                "/api/auth/validate-password","/api/auth/login",
+                                "/api/auth/google-login", "/api/auth/logout", "/api/auth/reset-password",
+                                "/api/home", "/api/gift-cards/**",
+                                "/api/kinguin-gift-cards/**", "/api/users/**",
+                                "/api/public/**", "/api/cart", "/api/cart/**",
+                                "/api/telegram/**", "/api/kinguin/**",
+                                "/api/users/user-details", "/api/users/${userId}",
+                                "/api/orders", "/api/orders/**",
+                                "/api/highlights/**", "/api/highlights",
+                                "/api/users/update-user-details",
+                                "/api/users/**", "/api/transactions",
+                                "/api/transactions/**", "/api/transactions/cancel/**",
+                                "/api/wish-list", "/api/wish-list/**",
+                                "/api/wish-list/${wishedItemId}", "/api/feedbacks/**",
+                                "/api/recommendations/**", "/api/recommendations/user/${userId}",
+                                "/api/sync/**", "/api/freefire/**", "/api/freefire/products",
+                                "/api/currency"
+
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2Login -> oauth2Login

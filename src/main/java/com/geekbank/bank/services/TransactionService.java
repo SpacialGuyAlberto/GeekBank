@@ -38,6 +38,8 @@ public class TransactionService {
     private OrderRequestStorageService orderRequestStorageService;
     @Autowired
     private AccountRepository accountRepository;
+    @Autowired
+    private CurrencyService currencyService; // Inyectar Currenc
 
     private static final long EXPIRATION_MINUTES = 5;
 
@@ -49,11 +51,33 @@ public class TransactionService {
         return Long.parseLong(formattedPin); // Convierte a Long antes de devolverlo
     }
 
-
+    /**
+     * Crea una nueva transacción, realiza las conversiones necesarias y la almacena.
+     *
+     * @param user               Usuario asociado (puede ser null si es invitado).
+     * @param guestId            ID de invitado (puede ser null si es usuario registrado).
+     * @param gameUserId         ID de usuario del juego (opcional).
+     * @param orderRequestNumber Número de solicitud de orden.
+     * @param amountUSD          Monto en USD.
+     * @param type               Tipo de transacción.
+     * @param description        Descripción de la transacción.
+     * @param phoneNumber        Número de teléfono asociado.
+     * @param products           Lista de productos en la transacción.
+     * @param isManual           Indica si la transacción es manual.
+     * @return Transacción creada.
+     */
     @Transactional
-    public Transaction createTransaction(User user, String guestId, Long gameUserId, String orderRequestNumber, double amount, TransactionType type, String description, String phoneNumber, List<OrderRequest.Product> products, Boolean isManual) {
+    public Transaction createTransaction(User user, String guestId, Long gameUserId, String orderRequestNumber, double amountUSD, TransactionType type, String description, String phoneNumber, List<OrderRequest.Product> products, Boolean isManual) {
+        // Obtener la tasa de cambio actual
+        double exchangeRate = currencyService.getExchangeRateUSDtoHNL();
+
+        // Calcular el monto en HNL
+        double amountHNL = currencyService.convertUsdToHnl(amountUSD, exchangeRate);
+
         Transaction transaction = new Transaction();
-        transaction.setAmount(amount);
+        transaction.setAmountUsd(amountUSD);
+        transaction.setAmountHnl(amountHNL);
+        transaction.setExchangeRate(exchangeRate);
 
         if (user != null) {
             transaction.setUser(user);
@@ -69,7 +93,7 @@ public class TransactionService {
 
         if (isManual != null){
             transaction.setManual(isManual);
-            transaction.setExpiresAt(LocalDateTime.now().plusMinutes(600));
+            transaction.setExpiresAt(LocalDateTime.now().plusMinutes(isManual ? 600 : EXPIRATION_MINUTES));
         } else {
             transaction.setExpiresAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES));
             transaction.setManual(false);
@@ -122,13 +146,14 @@ public class TransactionService {
             }
 
             // Obtener la transacción desde la base de datos
-            Transaction transactionInDB = transactionRepository.findByTransactionNumber(matchingTransaction.getTransactionNumber());
-            if (transactionInDB == null) {
+            Optional<Transaction> optionalTransactionInDB = Optional.ofNullable(transactionRepository.findByTransactionNumber(matchingTransaction.getTransactionNumber()));
+            if (!optionalTransactionInDB.isPresent()) {
                 throw new RuntimeException("Transacción no encontrada en la base de datos.");
             }
+            Transaction transactionInDB = optionalTransactionInDB.get();
 
             // Verificar que el monto recibido es suficiente
-            if (amountReceived < transactionInDB.getAmount()) {
+            if (amountReceived < transactionInDB.getAmountHnl()) {
                 updateTransactionStatus(transactionInDB.getId(), TransactionStatus.FAILED, "Monto recibido insuficiente.");
                 throw new RuntimeException("Monto recibido insuficiente.");
             }
@@ -179,16 +204,15 @@ public class TransactionService {
         return optionalTransaction.get();
     }
 
-    private void processTransaction(Transaction matchingTransaction, Double amountReceived) {
-        // Obtener la transacción desde la base de datos
-        Transaction transactionInDB = transactionRepository.findByTransactionNumber(matchingTransaction.getTransactionNumber());
-
-        if (transactionInDB == null) {
-            throw new RuntimeException("Transacción no encontrada en la base de datos.");
-        }
-
+    /**
+            * Procesa la transacción según su tipo.
+            *
+            * @param transactionInDB  Transacción obtenida de la base de datos.
+            * @param amountReceivedHNL Monto recibido en HNL.
+     */
+    private void processTransaction(Transaction transactionInDB, double amountReceivedHNL) {
         // Verificar que el monto recibido es suficiente
-        if (amountReceived < transactionInDB.getAmount()) {
+        if (amountReceivedHNL < transactionInDB.getAmountHnl()) {
             updateTransactionStatus(transactionInDB.getId(), TransactionStatus.FAILED, "Monto recibido insuficiente.");
             throw new RuntimeException("Monto recibido insuficiente.");
         }
@@ -202,6 +226,11 @@ public class TransactionService {
         }
     }
 
+    /**
+            * Procesa una compra de balance, actualizando el saldo del usuario.
+     *
+             * @param transactionInDB Transacción a procesar.
+            */
     private void processBalancePurchase(Transaction transactionInDB) {
         User user = transactionInDB.getUser();
         if (user == null) {
@@ -212,7 +241,7 @@ public class TransactionService {
             throw new RuntimeException("Cuenta no encontrada para el usuario.");
         }
 
-        account.setBalance(account.getBalance() + transactionInDB.getAmount());
+        account.setBalance(account.getBalance() + transactionInDB.getAmountUsd());
         accountRepository.save(account);
 
         updateTransactionStatus(transactionInDB.getId(), TransactionStatus.COMPLETED, null);
