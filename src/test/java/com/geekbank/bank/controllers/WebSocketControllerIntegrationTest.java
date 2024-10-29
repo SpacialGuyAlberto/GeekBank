@@ -35,9 +35,10 @@ public class WebSocketControllerIntegrationTest {
         String phoneNumber = "123456789";
         String status = "COMPLETED";
         String failureReason = "N/A";
+        String transactionId ="dasads";
 
         // Invocar el método a probar
-        webSocketController.notifyTransactionUpdate(phoneNumber, status, failureReason);
+        webSocketController.notifyTransactionStatus(phoneNumber, status, failureReason, transactionId);
 
         // Verificar que `convertAndSend` fue llamado con los parámetros correctos
         verify(messagingTemplate, times(1))

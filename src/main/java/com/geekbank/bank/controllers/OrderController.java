@@ -67,7 +67,7 @@ public class OrderController {
                     "Descripción",
                     orderRequest.getPhoneNumber(),
                     orderRequest.getProducts(),
-                    orderRequest.getManual()  // Ensure this is correctly passed
+                    orderRequest.getManual()
             );
         }  catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -78,9 +78,11 @@ public class OrderController {
         TransactionResponse response = new TransactionResponse();
         response.setOrderRequestNumber(orderRequest.getOrderRequestId());
         response.setTransactionNumber(savedTransaction.getTransactionNumber());
+        response.setTempPin(savedTransaction.getTempPin());
 
         String transactionNumber = savedTransaction.getTransactionNumber();
-        String responseMessage = "Order placed successfully: " + orderRequest.getOrderRequestId() + "\n Transaction number: "  + transactionNumber;
+        Long tempPin = savedTransaction.getTempPin();
+        String responseMessage = "Order placed successfully: " + orderRequest.getOrderRequestId() + "\n Transaction number: "  + transactionNumber + "\n PIN" + tempPin.toString();
 
         return ResponseEntity.ok(responseMessage);
     }

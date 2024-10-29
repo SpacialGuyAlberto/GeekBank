@@ -95,6 +95,11 @@ public class OrderRequest {
         isManual = manual;
     }
 
+    
+    public OrderRequest() {
+        this.createdAt = LocalDateTime.now();
+    }
+
 
     public static class Product {
         private int kinguinId;

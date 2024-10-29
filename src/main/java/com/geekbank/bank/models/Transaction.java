@@ -60,10 +60,10 @@ public class Transaction {
     private LocalDateTime expiresAt;
 
     @Column(nullable = false)
-    private Boolean isManual = false; // Default value can be false
+    private Boolean isManual = false;
 
-
-    // Getters and Setters
+    @Column(nullable = true)
+    private Long tempPin;
 
     public Long getId() {
         return id;
@@ -191,5 +191,12 @@ public class Transaction {
 
     public void setManual(Boolean manual) {
         isManual = manual;
+    }
+    public Long getTempPin() {
+        return tempPin;
+    }
+
+    public void setTempPin(Long tempPin) {
+        this.tempPin = tempPin;
     }
 }

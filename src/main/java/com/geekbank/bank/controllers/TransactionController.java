@@ -2,17 +2,20 @@ package com.geekbank.bank.controllers;
 
 import com.geekbank.bank.models.Transaction;
 import com.geekbank.bank.models.TransactionStatus;
+import com.geekbank.bank.models.TransactionVerificationRequest;
 import com.geekbank.bank.repositories.TransactionRepository;
 import com.geekbank.bank.services.OrderRequestStorageService;
 import com.geekbank.bank.services.TransactionService;
 import com.geekbank.bank.services.TransactionStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/transactions")
@@ -61,6 +64,7 @@ public class TransactionController {
             @PathVariable String orderRequestId
     ) {
         Transaction transaction = transactionService.findByTransactionNumber(transactionId);
+        transaction.setTempPin(0L);
         transactionStorageService.removeTransactionById(transaction.getId());
         transactionService.updateTransactionStatus(transaction.getId(), TransactionStatus.CANCELLED, "User Canceled");
         transactionRepository.save(transaction);
@@ -75,4 +79,19 @@ public class TransactionController {
 
         return ResponseEntity.ok(transaction);
     }
+
+    @PostMapping("/verify")
+    public ResponseEntity<String> verifyTransaction(@RequestBody Map<String, String> verificationData) {
+        String phoneNumber = verificationData.get("phoneNumber");
+        Long pin = Long.valueOf(verificationData.get("pin"));
+        String refNumber = verificationData.get("refNumber");
+
+        try {
+            transactionService.verifyTransaction(phoneNumber, pin, refNumber);
+            return ResponseEntity.ok("Transacción verificada exitosamente.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error al verificar la transacción: " + e.getMessage());
+        }
+    }
+
 }

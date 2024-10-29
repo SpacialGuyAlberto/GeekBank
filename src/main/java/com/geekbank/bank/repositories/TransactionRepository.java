@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
@@ -27,5 +28,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByStatusAndTimestampBefore(TransactionStatus status, LocalDateTime timestamp);
     List<Transaction> findByGameUserId(Long gameUserId);
     List<Transaction> findByIsManual(Boolean isManual);
+    Optional<Transaction> findByTempPin(Long tempPin);
 
 }
