@@ -55,7 +55,7 @@ public class OrderController {
         }
 
         Transaction savedTransaction;
-
+        Boolean isManual = (orderRequest.getManual() != null) ? orderRequest.getManual() : false;
         try {
             savedTransaction = transactionService.createTransaction(
                     user,
@@ -67,7 +67,7 @@ public class OrderController {
                     "Descripción",
                     orderRequest.getPhoneNumber(),
                     orderRequest.getProducts(),
-                    orderRequest.getManual()
+                    isManual
             );
         }  catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -79,6 +79,7 @@ public class OrderController {
         response.setOrderRequestNumber(orderRequest.getOrderRequestId());
         response.setTransactionNumber(savedTransaction.getTransactionNumber());
         response.setTempPin(savedTransaction.getTempPin());
+        System.out.println("MANUAL TRANSACTION : " + orderRequest.getManual());
 
         String transactionNumber = savedTransaction.getTransactionNumber();
         Long tempPin = savedTransaction.getTempPin();

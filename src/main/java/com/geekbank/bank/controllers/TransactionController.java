@@ -94,4 +94,24 @@ public class TransactionController {
         }
     }
 
+    @PostMapping("/aprove/{transactionNumber}")
+    public ResponseEntity<?> approveTransaction(@PathVariable String transactionNumber) {
+        try {
+            transactionService.approveManualTransaction(transactionNumber);
+            return ResponseEntity.ok("Transacción aprobada exitosamente.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/reject/{transactionNumber}")
+    public ResponseEntity<?> rejectTransaction(@PathVariable String transactionNumber) {
+        try {
+            transactionService.rejectManualTransaction(transactionNumber);
+            return ResponseEntity.ok("Transacción rechazada exitosamente.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
 }

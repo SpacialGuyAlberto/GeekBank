@@ -24,7 +24,7 @@ public class OrderRequest {
     private String guestId;
     private Long gameUserId;
 
-    private Boolean isManual;
+    private Boolean manual;
     private String phoneNumber;
     private List<Product> products;
     private Double amount;
@@ -88,11 +88,11 @@ public class OrderRequest {
         this.gameUserId = gameUserId;
     }
     public Boolean getManual() {
-        return isManual;
+        return manual;
     }
 
     public void setManual(Boolean manual) {
-        isManual = manual;
+        this.manual = manual;
     }
 
     
