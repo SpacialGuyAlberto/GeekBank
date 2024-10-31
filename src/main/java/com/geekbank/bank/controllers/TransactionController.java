@@ -80,6 +80,18 @@ public class TransactionController {
         return ResponseEntity.ok(transaction);
     }
 
+    @GetMapping("/manual-pending")
+    public ResponseEntity<List<Transaction>> getAwaitingTransaction(){
+        List<Transaction> transactions = transactionService.findPendingManualTransactions();
+        return ResponseEntity.ok(transactions);
+    }
+
+    @GetMapping("/awaiting-approval")
+    public ResponseEntity<List<ManualVerificationWebSocketController.ManualVerificationTransactionDto>> fetchAwaitingTransactions(){
+        List<ManualVerificationWebSocketController.ManualVerificationTransactionDto> transactionDtOS = transactionService.fetchPendingForApprovalTransaction();
+        return ResponseEntity.ok(transactionDtOS);
+    }
+
     @PostMapping("/verify")
     public ResponseEntity<String> verifyTransaction(@RequestBody Map<String, String> verificationData) {
         String phoneNumber = verificationData.get("phoneNumber");

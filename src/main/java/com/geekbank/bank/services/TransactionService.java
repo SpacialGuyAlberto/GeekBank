@@ -296,6 +296,28 @@ public class TransactionService {
     public List<Transaction> findPendingTransactionsByPhoneNumber(String phoneNumber) {
         return transactionRepository.findByStatusAndPhoneNumber(TransactionStatus.PENDING, phoneNumber);
     }
+
+
+    public List<Transaction> findPendingManualTransactions(){
+        return transactionRepository.findByStatus(TransactionStatus.AWAITING_MANUAL_PROCESSING);
+    }
+
+    public List<ManualVerificationWebSocketController.ManualVerificationTransactionDto> fetchPendingForApprovalTransaction(){
+        List<Transaction> transactions = transactionRepository.findByStatus(TransactionStatus.AWAITING_MANUAL_PROCESSING);
+        return transactions.stream()
+                .map( transaction -> new ManualVerificationWebSocketController.ManualVerificationTransactionDto(
+                        transaction.getTransactionNumber(),
+                        transaction.getAmountUsd(),
+                        transaction.getAmountHnl(),
+                        transaction.getExchangeRate(),
+                        transaction.getTimestamp(),
+                        transaction.getPhoneNumber(),
+                        transaction.getUser() != null ? transaction.getUser().getEmail() : transaction.getGuestId(),
+                        transaction.getProducts()
+                ))
+                .collect(Collectors.toList());
+    }
+
     public Transaction findByTransactionNumber(String transactionNumber){
         return transactionRepository.findByTransactionNumber(transactionNumber);
     }

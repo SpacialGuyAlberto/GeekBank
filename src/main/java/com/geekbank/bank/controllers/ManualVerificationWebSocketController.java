@@ -18,15 +18,9 @@ public class ManualVerificationWebSocketController {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
-    /**
-     * Envía una transacción para verificación manual al frontend.
-     *
-     * @param transaction Transacción a enviar.
-     */
     public void sendManualVerificationTransaction(Transaction transaction) {
         String destination = "/topic/manual-verifications";
 
-        // Crear un DTO para la transacción
         ManualVerificationTransactionDto dto = new ManualVerificationTransactionDto(
                 transaction.getTransactionNumber(),
                 transaction.getAmountUsd(),
@@ -42,11 +36,6 @@ public class ManualVerificationWebSocketController {
         messagingTemplate.convertAndSend(destination, dto);
     }
 
-    /**
-     * Envía la lista completa de transacciones manuales para verificación al frontend.
-     *
-     * @param transactions Lista de transacciones.
-     */
     public void sendManualVerificationQueue(List<Transaction> transactions) {
         String destination = "/topic/manual-verifications-queue";
 
@@ -66,8 +55,6 @@ public class ManualVerificationWebSocketController {
 
         messagingTemplate.convertAndSend(destination, dtoList);
     }
-
-    // DTO Classes
 
     public static class ManualVerificationTransactionDto {
         private String transactionNumber;
@@ -92,7 +79,6 @@ public class ManualVerificationWebSocketController {
                     .collect(Collectors.toList());
         }
 
-        // Getters y Setters
 
         public String getTransactionNumber() {
             return transactionNumber;
@@ -168,8 +154,6 @@ public class ManualVerificationWebSocketController {
                 this.quantity = product.getQuantity();
 
             }
-
-            // Getters y Setters
 
             public Long getProductId() {
                 return productId;
