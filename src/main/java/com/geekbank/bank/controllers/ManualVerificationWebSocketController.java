@@ -94,7 +94,69 @@ public class ManualVerificationWebSocketController {
 
         // Getters y Setters
 
-        // ...
+        public String getTransactionNumber() {
+            return transactionNumber;
+        }
+
+        public void setTransactionNumber(String transactionNumber) {
+            this.transactionNumber = transactionNumber;
+        }
+
+        public double getAmountUsd() {
+            return amountUsd;
+        }
+
+        public void setAmountUsd(double amountUsd) {
+            this.amountUsd = amountUsd;
+        }
+
+        public double getAmountHnl() {
+            return amountHnl;
+        }
+
+        public void setAmountHnl(double amountHnl) {
+            this.amountHnl = amountHnl;
+        }
+
+        public double getExchangeRate() {
+            return exchangeRate;
+        }
+
+        public void setExchangeRate(double exchangeRate) {
+            this.exchangeRate = exchangeRate;
+        }
+
+        public LocalDateTime getTimestamp() {
+            return timestamp;
+        }
+
+        public void setTimestamp(LocalDateTime timestamp) {
+            this.timestamp = timestamp;
+        }
+
+        public String getPhoneNumber() {
+            return phoneNumber;
+        }
+
+        public void setPhoneNumber(String phoneNumber) {
+            this.phoneNumber = phoneNumber;
+        }
+
+        public String getUserOrGuest() {
+            return userOrGuest;
+        }
+
+        public void setUserOrGuest(String userOrGuest) {
+            this.userOrGuest = userOrGuest;
+        }
+
+        public List<TransactionProductDto> getProducts() {
+            return products;
+        }
+
+        public void setProducts(List<TransactionProductDto> products) {
+            this.products = products;
+        }
 
         public static class TransactionProductDto {
             private Long productId;
@@ -104,11 +166,34 @@ public class ManualVerificationWebSocketController {
             public TransactionProductDto(TransactionProduct product) {
                 this.productId = product.getProductId();
                 this.quantity = product.getQuantity();
+
             }
 
             // Getters y Setters
 
-            // ...
+            public Long getProductId() {
+                return productId;
+            }
+
+            public void setProductId(Long productId) {
+                this.productId = productId;
+            }
+
+            public int getQuantity() {
+                return quantity;
+            }
+
+            public void setQuantity(int quantity) {
+                this.quantity = quantity;
+            }
+
+            public double getPrice() {
+                return price;
+            }
+
+            public void setPrice(double price) {
+                this.price = price;
+            }
         }
     }
 }

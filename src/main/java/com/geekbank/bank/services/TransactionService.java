@@ -43,9 +43,15 @@ public class TransactionService {
     private CurrencyService currencyService; // Inyectar Currenc
 
     private static final long EXPIRATION_MINUTES = 5;
-    private PriorityBlockingQueue<Transaction> manualVerificationQueue;
+
     @Autowired
     private ManualVerificationWebSocketController manualVerificationWebSocketController;
+
+    private PriorityBlockingQueue<Transaction> manualVerificationQueue = new PriorityBlockingQueue<>(
+            100,
+            Comparator.comparing(Transaction::getTimestamp)
+    );
+
 
     private static Long generatePin() {
         Random random = new Random();
@@ -114,6 +120,7 @@ public class TransactionService {
 
         Transaction savedTransaction = transactionRepository.save(transaction);
         transactionStorageService.storePendingTransaction(savedTransaction);
+
         return savedTransaction;
     }
 
@@ -141,26 +148,22 @@ public class TransactionService {
             }
 
             if (transactionInDB.getManual()) {
-                // Actualizar el estado de la transacción a AWAITING_MANUAL_PROCESSING
                 updateTransactionStatus(transactionInDB.getId(), TransactionStatus.AWAITING_MANUAL_PROCESSING, null);
 
-                // Agregar la transacción a la lista de espera para procesamiento manual
                 transactionStorageService.addManualTransaction(transactionInDB);
-
-                // Notificar al frontend que la transacción está pendiente de procesamiento manual
                 webSocketController.notifyTransactionStatus(phoneNumber, TransactionStatus.AWAITING_MANUAL_PROCESSING.name(), "Pendiente de procesamiento manual.", transactionInDB.getTransactionNumber());
+
+                if (Boolean.TRUE.equals(transactionInDB.getManual())) {
+                    manualVerificationWebSocketController.sendManualVerificationTransaction(transactionInDB);
+                }
 
                 System.out.println("Transacción manual agregada a la lista de espera. Transaction ID: " + transactionInDB.getTransactionNumber());
             } else {
-                // Procesar la transacción normalmente
                 processTransaction(transactionInDB, amountReceived);
-
-                // Limpiar datos temporales y notificar al frontend
                 cleanUpAfterSuccess(phoneNumber, matchingTransaction);
             }
 
         } catch (Exception e) {
-            // Manejo de errores y notificación al frontend
             handleVerificationError(phoneNumber, e.getMessage());
         }
     }
@@ -172,8 +175,6 @@ public class TransactionService {
         if (pendingTransactions.isEmpty()) {
             throw new RuntimeException("No hay transacciones pendientes para este número de teléfono.");
         }
-
-        // Encontrar la transacción que coincide con el PIN ingresado
         Optional<Transaction> optionalTransaction = pendingTransactions.stream()
                 .filter(tx -> tx.getTempPin() != null && tx.getTempPin().equals(pin))
                 .findFirst();

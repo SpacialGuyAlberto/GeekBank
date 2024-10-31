@@ -178,8 +178,16 @@ public class TelegramListener {
 
                                 // Asociar el SmsMessage con la transacción
                                 Transaction matchingTransaction = transactions.get(0); // Puedes mejorar la lógica de selección
-                                smsMessage.setTransaction(matchingTransaction);
-                                smsMessageRepository.save(smsMessage);
+
+                                // Verificar si la transacción ya tiene un SmsMessage asociado
+                                if (matchingTransaction.getSmsMessage() == null) {
+                                    smsMessage.setTransaction(matchingTransaction);
+                                    smsMessageRepository.save(smsMessage);
+                                    System.out.println("Associated SmsMessage with Transaction ID: " + matchingTransaction.getId());
+                                } else {
+                                    System.out.println("Transaction ID: " + matchingTransaction.getId() + " already has an associated SmsMessage.");
+                                    // Opcional: Manejar el caso donde ya existe una asociación
+                                }
                             } else {
                                 System.out.println("No pending transactions found for phone number: " + senderPhoneNumber + " and amount: " + amountReceived);
 

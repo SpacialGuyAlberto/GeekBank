@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SmsMessageRepository extends JpaRepository<SmsMessage, Long> {
@@ -32,4 +33,6 @@ public interface SmsMessageRepository extends JpaRepository<SmsMessage, Long> {
     // Query personalizada para mensajes de un remitente y con un monto mínimo
     @Query("SELECT s FROM SmsMessage s WHERE s.senderPhoneNumber = ?1 AND s.amountReceived >= ?2")
     List<SmsMessage> findMessagesByPhoneNumberAndMinAmount(String senderPhoneNumber, double minAmount);
+
+    Optional<SmsMessage> findByTransactionId(Long transactionId);
 }

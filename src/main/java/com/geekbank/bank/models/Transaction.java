@@ -71,6 +71,11 @@ public class Transaction {
     @Column(nullable = true)
     private Long tempPin;
 
+
+
+    @OneToOne(mappedBy = "transaction", cascade = CascadeType.ALL)
+    private SmsMessage smsMessage;
+
     public Long getId() {
         return id;
     }
@@ -221,5 +226,13 @@ public class Transaction {
 
     public void setExchangeRate(double exchangeRate) {
         this.exchangeRate = exchangeRate;
+    }
+
+    public SmsMessage getSmsMessage() {
+        return smsMessage;
+    }
+
+    public void setSmsMessage(SmsMessage smsMessage) {
+        this.smsMessage = smsMessage;
     }
 }
