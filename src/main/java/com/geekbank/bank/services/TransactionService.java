@@ -56,8 +56,8 @@ public class TransactionService {
     private static Long generatePin() {
         Random random = new Random();
         int pin = random.nextInt(9999) + 1;
-        String formattedPin = String.format("%04d", pin); // Asegura que tenga cuatro dígitos
-        return Long.parseLong(formattedPin); // Convierte a Long antes de devolverlo
+        String formattedPin = String.format("%04d", pin);
+        return Long.parseLong(formattedPin);
     }
 
     @Transactional
@@ -148,7 +148,7 @@ public class TransactionService {
             }
 
             if (transactionInDB.getManual()) {
-                updateTransactionStatus(transactionInDB.getId(), TransactionStatus.AWAITING_MANUAL_PROCESSING, null);
+                updateTransactionStatus(transactionInDB.getId(), TransactionStatus.AWAITING_MANUAL_PROCESSING, "El pago esta hecho. Su transaccion debe ser procesada.");
 
                 transactionStorageService.addManualTransaction(transactionInDB);
                 webSocketController.notifyTransactionStatus(phoneNumber, TransactionStatus.AWAITING_MANUAL_PROCESSING.name(), "Pendiente de procesamiento manual.", transactionInDB.getTransactionNumber());
@@ -186,14 +186,8 @@ public class TransactionService {
         return optionalTransaction.get();
     }
 
-    /**
-            * Procesa la transacción según su tipo.
-            *
-            * @param transactionInDB  Transacción obtenida de la base de datos.
-            * @param amountReceivedHNL Monto recibido en HNL.
-     */
     private void processTransaction(Transaction transactionInDB, double amountReceivedHNL) {
-        // Verificar que el monto recibido es suficiente
+
         if (amountReceivedHNL < transactionInDB.getAmountHnl()) {
             updateTransactionStatus(transactionInDB.getId(), TransactionStatus.FAILED, "Monto recibido insuficiente.");
             throw new RuntimeException("Monto recibido insuficiente.");
@@ -208,11 +202,6 @@ public class TransactionService {
         }
     }
 
-    /**
-            * Procesa una compra de balance, actualizando el saldo del usuario.
-     *
-             * @param transactionInDB Transacción a procesar.
-            */
     private void processBalancePurchase(Transaction transactionInDB) {
         User user = transactionInDB.getUser();
         if (user == null) {
@@ -365,10 +354,8 @@ public class TransactionService {
             throw new RuntimeException("La transacción no está en estado de verificación manual.");
         }
 
-        // Procesar la transacción (similar a processTransaction)
         processTransaction(transaction, transaction.getAmountHnl());
 
-        // Actualizar el estado a COMPLETED
         updateTransactionStatus(transaction.getId(), TransactionStatus.COMPLETED, "Transacción aprobada manualmente.");
     };
 
@@ -382,7 +369,6 @@ public class TransactionService {
             throw new RuntimeException("La transacción no está en estado de verificación manual.");
         }
 
-        // Actualizar el estado a FAILED
         updateTransactionStatus(transaction.getId(), TransactionStatus.FAILED, "Transacción rechazada manualmente.");
     }
 }
