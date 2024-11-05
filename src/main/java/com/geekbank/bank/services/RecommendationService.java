@@ -1,10 +1,7 @@
 package com.geekbank.bank.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.geekbank.bank.models.GiftCardEntity;
-import com.geekbank.bank.models.KinguinGiftCard;
-import com.geekbank.bank.models.Feedback;
-import com.geekbank.bank.models.User;
+import com.geekbank.bank.models.*;
 import com.geekbank.bank.repositories.FeedBackRepository;
 import com.geekbank.bank.repositories.GiftCardRepository;
 import com.geekbank.bank.repositories.UserRepository;
@@ -18,12 +15,17 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+// Asegúrate de tener esta dependencia en tu proyecto
+// Puedes usar la biblioteca Apache Commons Text para el cálculo de similitud del coseno
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static com.geekbank.bank.services.KinguinService.apiKey;
@@ -45,7 +47,15 @@ public class RecommendationService {
 
     private Set<Long> existingGiftCardIds;
 
+    private final KinguinService kinguinService;
+
     private static final Logger logger = LoggerFactory.getLogger(RecommendationService.class);
+
+    private final Map<Long, KinguinGiftCard> kinguinCache = new ConcurrentHashMap<>();
+
+    public RecommendationService(KinguinService kinguinService) {
+        this.kinguinService = kinguinService;
+    }
 
     /**
      * Inicializa el conjunto de IDs de GiftCards existentes en la base de datos local.
@@ -451,4 +461,151 @@ public class RecommendationService {
 
         return kGiftCard;
     }
+
+    // Definición única y sin duplicados del conjunto STOP_WORDS
+    private static final Set<String> STOP_WORDS;
+
+    static {
+        Set<String> stopWords = new HashSet<>();
+
+        // Palabras vacías en español
+        stopWords.addAll(Arrays.asList(
+                "y", "el", "la", "de", "en", "un", "una", "es", "con", "para", "por", "a",
+                "los", "las", "del", "al", "unos", "unas"
+        ));
+
+        // Palabras vacías en inglés
+        stopWords.addAll(Arrays.asList(
+                "a", "about", "above", "after", "again", "against", "all", "am", "an", "and",
+                "any", "are", "aren't", "as", "at", "be", "because", "been", "before",
+                "being", "below", "between", "both", "but", "by", "can't", "cannot", "could",
+                "couldn't", "did", "didn't", "do", "does", "doesn't", "doing", "don't", "down",
+                "during", "each", "few", "for", "from", "further", "had", "hadn't", "has",
+                "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "he's", "her",
+                "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's",
+                "i", "i'd", "i'll", "i'm", "i've", "if", "in", "into", "is", "isn't", "it",
+                "it's", "its", "itself", "let's", "me", "more", "most", "mustn't", "my",
+                "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or",
+                "other", "ought", "our", "ours", "ourselves", "out", "over", "own", "same",
+                "shan't", "she", "she'd", "she'll", "she's", "should", "shouldn't", "so",
+                "some", "such", "than", "that", "that's", "the", "their", "theirs", "them",
+                "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll",
+                "they're", "they've", "this", "those", "through", "to", "too", "under", "until",
+                "up", "very", "was", "wasn't", "we", "we'd", "we'll", "we're", "we've", "were",
+                "weren't", "what", "what's", "when", "when's", "where", "where's", "which",
+                "while", "who", "who's", "whom", "why", "why's", "with", "won't", "would",
+                "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your", "yours",
+                "yourself", "yourselves"
+        ));
+
+        STOP_WORDS = Collections.unmodifiableSet(stopWords);
+    }
+
+    private double calculateSimilarity(GiftCardEntity product1, GiftCardEntity product2) {
+        // Combinar las características en una sola cadena para cada producto
+        String combinedFeatures1 = combineFeatures(product1);
+        String combinedFeatures2 = combineFeatures(product2);
+
+        // Convertir las cadenas de características en mapas de frecuencia de términos
+        Map<String, Integer> vector1 = getTermFrequencyMap(combinedFeatures1);
+        Map<String, Integer> vector2 = getTermFrequencyMap(combinedFeatures2);
+
+        // Calcular la similitud del coseno usando tu clase CosineSimilarity
+        return CosineSimilarity.cosineSimilarity(vector1, vector2);
+    }
+
+    private String combineFeatures(GiftCardEntity product) {
+        StringBuilder combined = new StringBuilder();
+
+        // Agregar géneros
+        if (product.getGenres() != null) {
+            combined.append(String.join(" ", product.getGenres())).append(" ");
+        }
+
+        // Agregar desarrolladores
+        if (product.getDevelopers() != null) {
+            combined.append(String.join(" ", product.getDevelopers())).append(" ");
+        }
+
+        // Agregar editores
+        if (product.getPublishers() != null) {
+            combined.append(String.join(" ", product.getPublishers())).append(" ");
+        }
+
+        // Agregar plataforma
+        if (product.getPlatform() != null && !product.getPlatform().isEmpty()) {
+            combined.append(product.getPlatform()).append(" ");
+        }
+
+        // Agregar etiquetas
+        if (product.getTags() != null) {
+            combined.append(String.join(" ", product.getTags())).append(" ");
+        }
+
+        // Agregar nombre
+        if (product.getName() != null && !product.getName().isEmpty()) {
+            combined.append(product.getName()).append(" ");
+        }
+
+        // Agregar descripción
+        if (product.getDescription() != null && !product.getDescription().isEmpty()) {
+            combined.append(product.getDescription()).append(" ");
+        }
+
+        return combined.toString().trim();
+    }
+
+    private Map<String, Integer> getTermFrequencyMap(String text) {
+        Map<String, Integer> termFrequencyMap = new HashMap<>();
+        if (text == null || text.isEmpty()) {
+            return termFrequencyMap;
+        }
+
+        String[] tokens = text.toLowerCase().split("\\s+");
+        for (String token : tokens) {
+            token = token.replaceAll("[^a-zA-Z0-9]", ""); // Eliminar caracteres especiales
+            if (token.isEmpty() || STOP_WORDS.contains(token)) {
+                continue; // Omitir palabras vacías y términos vacíos
+            }
+            termFrequencyMap.put(token, termFrequencyMap.getOrDefault(token, 0) + 1);
+        }
+        return termFrequencyMap;
+    }
+
+    public List<KinguinGiftCard> recommendByContent(Long productId, int k) {
+        // Obtener el producto actual
+        GiftCardEntity currentProduct = giftCardRepository.findById(productId).orElse(null);
+        if (currentProduct == null) {
+            logger.warn("Producto con ID {} no encontrado.", productId);
+            return Collections.emptyList();
+        }
+
+        // Obtener productos distintos del actual
+        List<GiftCardEntity> allProducts = giftCardRepository.findAllExcludingId(productId); // Crear un nuevo método en repositorio para esto
+
+        // Calcula la similaridad en paralelo
+        Map<GiftCardEntity, Double> similarityScores = allProducts.parallelStream()
+                .collect(Collectors.toMap(
+                        otherProduct -> otherProduct,
+                        otherProduct -> calculateSimilarity(currentProduct, otherProduct)
+                ));
+
+        // Selecciona los top-k productos similares
+        List<GiftCardEntity> recommendedProducts = similarityScores.entrySet().stream()
+                .sorted(Map.Entry.<GiftCardEntity, Double>comparingByValue().reversed())
+                .limit(k)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        // Realiza llamadas a `fetchGiftCardById` en paralelo para mejorar la velocidad
+        List<KinguinGiftCard> recommendedKinguinGiftCards = recommendedProducts.parallelStream()
+                .map(entity -> kinguinService.fetchGiftCardById(String.valueOf(entity.getKinguinId())))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        logger.info("Total de GiftCards recomendadas por contenido: {}", recommendedKinguinGiftCards.size());
+        return recommendedKinguinGiftCards;
+    }
+
+
 }

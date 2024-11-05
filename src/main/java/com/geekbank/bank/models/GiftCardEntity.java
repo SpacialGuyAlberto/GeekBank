@@ -1,6 +1,9 @@
 package com.geekbank.bank.models;
 
+import com.geekbank.bank.converters.ListToStringConverter;
 import jakarta.persistence.*;
+
+import java.util.List;
 
 @Entity
 @Table(name = "gift_cards")
@@ -181,14 +184,70 @@ public class GiftCardEntity {
     @Column(name = "total_qty")
     private Integer totalQty;
 
+    @Column(name = "cover_image", length = 255)
+    private String coverImage;
+
+    @Column(name = "genres", length = 500)
+    @Convert(converter = ListToStringConverter.class)
+    private List<String> genres;
+
     @Column(name = "age_rating", length = 100)
     private String ageRating;
+
+    public List<String> getDevelopers() {
+        return developers;
+    }
+
+    public void setDevelopers(List<String> developers) {
+        this.developers = developers;
+    }
+
+    public List<String> getPublishers() {
+        return publishers;
+    }
+
+    public void setPublishers(List<String> publishers) {
+        this.publishers = publishers;
+    }
+
+    @Column(name = "developers", length = 500)
+    @Convert(converter = ListToStringConverter.class)
+    private List<String> developers;
+
+    @Column(name = "publishers", length = 500)
+    @Convert(converter = ListToStringConverter.class)
+    private List<String> publishers;
+
+    @Column(name = "tags", length = 500)
+    @Convert(converter = ListToStringConverter.class)
+    private List<String> tags;
+
+
+
+
+    public String getCoverImage() {
+        return coverImage;
+    }
+
+    public void setCoverImage(String coverImage) {
+        this.coverImage = coverImage;
+    }
+
+    public List<String> getGenres() {
+        return genres;
+    }
+
+    public void setGenres(List<String> genres) {
+        this.genres = genres;
+    }
 
 
         // Constructor vacío
         public GiftCardEntity() {}
 
-
+    public List<String> getTags() {
+        return this.tags;
+    }
 
     // Getters y Setters (omitidos por brevedad)
     }

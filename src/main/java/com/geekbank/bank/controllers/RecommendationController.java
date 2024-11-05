@@ -1,5 +1,6 @@
 package com.geekbank.bank.controllers;
 
+import com.geekbank.bank.models.GiftCardEntity;
 import com.geekbank.bank.models.KinguinGiftCard;
 import com.geekbank.bank.models.Product;
 import com.geekbank.bank.services.RecommendationService;
@@ -39,6 +40,15 @@ public class RecommendationController {
             @RequestParam(defaultValue = "4") int k )
     {
         List<KinguinGiftCard> recommendations = recommendationService.recommendByPopularity(k);
+        return ResponseEntity.ok(recommendations);
+    }
+
+    @GetMapping("/content-based/{productId}")
+    public ResponseEntity<List<KinguinGiftCard>> getContentBasedRecommendations(
+            @PathVariable Long productId,
+            @RequestParam(defaultValue = "5") int limit) {
+
+        List<KinguinGiftCard> recommendations = recommendationService.recommendByContent(productId, limit);
         return ResponseEntity.ok(recommendations);
     }
 }

@@ -2,6 +2,7 @@ package com.geekbank.bank.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.geekbank.bank.mappers.GiftCardMapper;
 import com.geekbank.bank.models.GiftCard;
 import com.geekbank.bank.models.KinguinGiftCard;
 import com.geekbank.bank.models.GiftCardEntity;
@@ -49,39 +50,31 @@ public class KinguinService {
                 hasMore = false;
             } else {
                 for (KinguinGiftCard kCard : giftCards) {
-                    // Verificar si la GiftCard ya existe e insertarla si no existe
-                    if (!giftCardRepository.existsById((long) kCard.getKinguinId())) {
-                        GiftCardEntity entity2 = new GiftCardEntity();
-                        entity2.setKinguinId((long) kCard.getKinguinId());
-                        entity2.setProductId(truncate(kCard.getProductId().trim(), 255)); // Limpiar espacios
-                        entity2.setPrice(kCard.getPrice());
-                        entity2.setReleaseDate(kCard.getExpirationDate().trim()); // Limpiar espacios
-                        entity2.setPlatform(truncate(kCard.getPlatform().trim(), 100)); // Limpiar espacios
-                        entity2.setQty(kCard.getQty());
-                        entity2.setTextQty(kCard.getTextQty());
-                        entity2.setRegionalLimitations(truncate(kCard.getRegionalLimitations().trim(), 500)); // Limpiar espacios
-                        entity2.setRegionId(kCard.getRegionId());
-                        entity2.setOffersCount(kCard.getOffersCount());
-                        entity2.setTotalQty(kCard.getTotalQty());
-                        entity2.setAgeRating(truncate(kCard.getAgeRating().trim(), 100));
+                    Long kinguinId = (long) kCard.getKinguinId();
 
-                        // Logs detallados antes de la inserción
-                        logger.debug("Insertando GiftCard ID {} con los siguientes datos:", entity2.getKinguinId());
-                        logger.debug("Product ID: {}", entity2.getProductId());
-                        logger.debug("Name: {}", entity2.getName());
-                        logger.debug("Age Rating: {}", entity2.getAgeRating());
+                    try {
+                        if (giftCardRepository.existsById(kinguinId)) {
+                            // Obtener la entidad existente
+                            GiftCardEntity existingEntity = giftCardRepository.findById(kinguinId).orElse(null);
+                            if (existingEntity != null) {
+                                // Actualizar la entidad con los datos de kCard
+                                GiftCardMapper.updateGiftCardEntity(existingEntity, kCard);
+                                giftCardRepository.save(existingEntity);
+                                logger.info("GiftCard ID {} actualizada exitosamente.", existingEntity.getKinguinId());
+                            }
+                        } else {
+                            // Crear una nueva entidad y guardarla
+                            GiftCardEntity newEntity = GiftCardMapper.mapToGiftCardEntity(kCard);
+                            giftCardRepository.save(newEntity);
+                            logger.info("GiftCard ID {} insertada exitosamente.", newEntity.getKinguinId());
+                        }
 
-                        giftCardRepository.save(entity2);
-                        giftCardRepository.flush();
-
+                        // Incrementar el contador y actualizar el progreso
                         synchronizedGiftCards++;
                         progress.set((int) ((synchronizedGiftCards / (double) totalGiftCards) * 100));
 
-                        logger.info("GiftCard ID {} insertada exitosamente.", entity2.getKinguinId());
-                    } else {
-                        logger.debug("GiftCard ID {} ya existe en la base de datos. Omitiendo inserción.", kCard.getKinguinId());
-                        synchronizedGiftCards++;
-                        progress.set((int) ((synchronizedGiftCards / (double) totalGiftCards) * 100));
+                    } catch (Exception e) {
+                        logger.error("Error al procesar GiftCard ID {}: {}", kinguinId, e.getMessage());
                     }
 
                     // Agregar la GiftCard a la lista de todas las GiftCards obtenidas
@@ -105,6 +98,7 @@ public class KinguinService {
         logger.info("Total de GiftCards obtenidas: {}", allGiftCards.size());
         return allGiftCards;
     }
+
 
 
     private String truncate(String value, int maxLength) {
@@ -191,15 +185,19 @@ public class KinguinService {
 
         for (Map.Entry<String, String> entry : filters.entrySet()) {
             if (entry.getValue() != null && !entry.getValue().isEmpty()) {
-                urlBuilder.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
+                urlBuilder.append(entry.getKey())
+                        .append("=")
+                        .append(entry.getValue())
+                        .append("&");
             }
         }
 
+        // Remueve el último "&" si existe
         String finalUrl = urlBuilder.toString();
-        // Remover el último "&"
         finalUrl = finalUrl.endsWith("&") ? finalUrl.substring(0, finalUrl.length() - 1) : finalUrl;
-        System.out.print(" final url : " + finalUrl);
+        System.out.println("Final URL: " + finalUrl);
 
+        // Realiza la solicitud HTTP
         ResponseEntity<JsonNode> response = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, JsonNode.class);
         JsonNode products = response.getBody();
 

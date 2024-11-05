@@ -8,6 +8,11 @@ import java.util.List;
 public class KinguinGiftCard implements GiftCard {
 
     private boolean isHighlight;
+
+    public String getName() {
+        return name;
+    }
+
     @JsonProperty("name")
     private String name;
 
@@ -25,6 +30,10 @@ public class KinguinGiftCard implements GiftCard {
 
     @JsonProperty("publishers")
     private List<String> publishers;
+
+    public List<String> getGenres() {
+        return genres;
+    }
 
     @JsonProperty("genres")
     private List<String> genres;
@@ -305,6 +314,22 @@ public class KinguinGiftCard implements GiftCard {
 
     public void setExpirationDate(String releaseDate) {
         this.releaseDate = releaseDate;
+    }
+
+    public String getReleaseDate() {
+        return this.releaseDate;
+    }
+
+    public List<String> getMerchantName() {
+        return this.merchantName;
+    }
+
+    public List<String> getDevelopers() {
+        return this.developers;
+    }
+
+    public List<String> getPublishers(){
+        return this.publishers;
     }
 
 
