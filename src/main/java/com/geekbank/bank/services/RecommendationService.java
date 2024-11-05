@@ -5,6 +5,7 @@ import com.geekbank.bank.models.*;
 import com.geekbank.bank.repositories.FeedBackRepository;
 import com.geekbank.bank.repositories.GiftCardRepository;
 import com.geekbank.bank.repositories.UserRepository;
+import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,12 +21,14 @@ import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.AsyncResult;
+import java.util.concurrent.CompletableFuture;
+
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import static com.geekbank.bank.services.KinguinService.apiKey;
@@ -53,6 +56,7 @@ public class RecommendationService {
 
     private final Map<Long, KinguinGiftCard> kinguinCache = new ConcurrentHashMap<>();
 
+
     public RecommendationService(KinguinService kinguinService) {
         this.kinguinService = kinguinService;
     }
@@ -67,6 +71,7 @@ public class RecommendationService {
                 .map(GiftCardEntity::getKinguinId)
                 .collect(Collectors.toSet());
 
+        logger.info("Total de GiftCards existentes en la base de datos: {}", existingGiftCardIds.size());
         logger.info("Total de GiftCards existentes en la base de datos: {}", existingGiftCardIds.size());
         logger.debug("Algunos GiftCards existentes: {}", existingGiftCardIds.stream().limit(10).collect(Collectors.toList()));
     }
@@ -572,6 +577,42 @@ public class RecommendationService {
         return termFrequencyMap;
     }
 
+//    public List<KinguinGiftCard> recommendByContent(Long productId, int k) {
+//        // Obtener el producto actual
+//        GiftCardEntity currentProduct = giftCardRepository.findById(productId).orElse(null);
+//        if (currentProduct == null) {
+//            logger.warn("Producto con ID {} no encontrado.", productId);
+//            return Collections.emptyList();
+//        }
+//
+//        // Obtener productos distintos del actual
+//        List<GiftCardEntity> allProducts = giftCardRepository.findAllExcludingId(productId); // Crear un nuevo método en repositorio para esto
+//
+//        // Calcula la similaridad en paralelo
+//        Map<GiftCardEntity, Double> similarityScores = allProducts.parallelStream()
+//                .collect(Collectors.toMap(
+//                        otherProduct -> otherProduct,
+//                        otherProduct -> calculateSimilarity(currentProduct, otherProduct)
+//                ));
+//
+//        // Selecciona los top-k productos similares
+//        List<GiftCardEntity> recommendedProducts = similarityScores.entrySet().stream()
+//                .sorted(Map.Entry.<GiftCardEntity, Double>comparingByValue().reversed())
+//                .limit(k)
+//                .map(Map.Entry::getKey)
+//                .collect(Collectors.toList());
+//
+//        // Realiza llamadas a `fetchGiftCardById` en paralelo para mejorar la velocidad
+//        List<KinguinGiftCard> recommendedKinguinGiftCards = recommendedProducts.parallelStream()
+//                .map(entity -> kinguinService.fetchGiftCardById(String.valueOf(entity.getKinguinId())))
+//                .filter(Objects::nonNull)
+//                .collect(Collectors.toList());
+//
+//        logger.info("Total de GiftCards recomendadas por contenido: {}", recommendedKinguinGiftCards.size());
+//        return recommendedKinguinGiftCards;
+//    }
+
+
     public List<KinguinGiftCard> recommendByContent(Long productId, int k) {
         // Obtener el producto actual
         GiftCardEntity currentProduct = giftCardRepository.findById(productId).orElse(null);
@@ -581,23 +622,23 @@ public class RecommendationService {
         }
 
         // Obtener productos distintos del actual
-        List<GiftCardEntity> allProducts = giftCardRepository.findAllExcludingId(productId); // Crear un nuevo método en repositorio para esto
+        List<GiftCardEntity> allProducts = giftCardRepository.findAllExcludingId(productId);
 
-        // Calcula la similaridad en paralelo
+        // Calcular similitud usando parallelStream
         Map<GiftCardEntity, Double> similarityScores = allProducts.parallelStream()
                 .collect(Collectors.toMap(
                         otherProduct -> otherProduct,
                         otherProduct -> calculateSimilarity(currentProduct, otherProduct)
                 ));
 
-        // Selecciona los top-k productos similares
+        // Seleccionar los top-k productos similares
         List<GiftCardEntity> recommendedProducts = similarityScores.entrySet().stream()
                 .sorted(Map.Entry.<GiftCardEntity, Double>comparingByValue().reversed())
                 .limit(k)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
 
-        // Realiza llamadas a `fetchGiftCardById` en paralelo para mejorar la velocidad
+        // Obtener detalles de las GiftCards recomendadas en paralelo con caché
         List<KinguinGiftCard> recommendedKinguinGiftCards = recommendedProducts.parallelStream()
                 .map(entity -> kinguinService.fetchGiftCardById(String.valueOf(entity.getKinguinId())))
                 .filter(Objects::nonNull)
@@ -606,6 +647,37 @@ public class RecommendationService {
         logger.info("Total de GiftCards recomendadas por contenido: {}", recommendedKinguinGiftCards.size());
         return recommendedKinguinGiftCards;
     }
+
+
+
+    @Async("taskExecutor")
+    public CompletableFuture<Map.Entry<GiftCardEntity, Double>> calculateSimilarityAsync(GiftCardEntity product1, GiftCardEntity product2) {
+        try {
+            double similarity = calculateSimilarity(product1, product2);
+            return CompletableFuture.completedFuture(new AbstractMap.SimpleEntry<>(product2, similarity));
+        } catch (Exception e) {
+            logger.error("Error calculando similitud para GiftCard ID {}: {}", product2.getKinguinId(), e.getMessage());
+            return CompletableFuture.completedFuture(null);
+        }
+    }
+
+    @Async("taskExecutor")
+    public CompletableFuture<KinguinGiftCard> fetchGiftCardByIdAsync(Long giftCardId) {
+        try {
+            KinguinGiftCard giftCard = kinguinService.fetchGiftCardById(String.valueOf(giftCardId));
+            if (giftCard != null) {
+                logger.debug("GiftCard obtenida: {}", giftCard.getKinguinId());
+            } else {
+                logger.warn("GiftCard con ID {} no encontrada en el API externo.", giftCardId);
+            }
+            return CompletableFuture.completedFuture(giftCard);
+        } catch (Exception e) {
+            logger.error("Error al obtener GiftCard con ID {}: {}", giftCardId, e.getMessage());
+            return CompletableFuture.completedFuture(null);
+        }
+    }
+
+
 
 
 }
