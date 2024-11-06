@@ -9,6 +9,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 public class CorsConfig {
@@ -24,7 +25,7 @@ public class CorsConfig {
         config.addAllowedOrigin("http://astralisbank.com");// Aquí se permite la URL del frontend
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
-        config.setExposedHeaders(Arrays.asList("Authorization"));
+        config.setExposedHeaders(List.of("Authorization"));
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }

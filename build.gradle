@@ -61,6 +61,7 @@ dependencies {
         exclude group: 'com.vaadin.external.google', module: 'android-json'
     }
 
+    // Mail service
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.security:spring-security-oauth2-jose'
@@ -71,6 +72,7 @@ dependencies {
     implementation 'com.twilio.sdk:twilio:10.4.0'
     implementation 'com.github.ben-manes.caffeine:caffeine:3.1.0'
 
+    // Dependencias adicionales
     implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
     implementation 'javax.activation:activation:1.1.1'
@@ -113,6 +115,7 @@ generateJava {
 
 graalvmNative {
     test {
+        // Deshabilita el soporte AOT para pruebas
         enabled = false
     }
 }
