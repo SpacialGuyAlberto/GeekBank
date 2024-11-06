@@ -1,5 +1,6 @@
 package com.geekbank.bank.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -25,12 +26,10 @@ public class SmsMessage {
     private double newBalance;
     private LocalDateTime receivedAt;
 
-    // Relación opcional con Transaction
     @OneToOne
     @JoinColumn(name = "transaction_id")
+    @JsonBackReference
     private Transaction transaction;
-
-
 
     public SmsMessage() {
     }

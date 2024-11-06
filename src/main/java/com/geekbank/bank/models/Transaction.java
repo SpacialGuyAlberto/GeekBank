@@ -74,7 +74,9 @@ public class Transaction {
 
 
     @OneToOne(mappedBy = "transaction", cascade = CascadeType.ALL)
+    @JsonManagedReference
     private SmsMessage smsMessage;
+
 
     public Long getId() {
         return id;
