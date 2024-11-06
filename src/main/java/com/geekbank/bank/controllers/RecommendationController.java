@@ -46,7 +46,7 @@ public class RecommendationController {
     @GetMapping("/content-based/{productId}")
     public ResponseEntity<List<KinguinGiftCard>> getContentBasedRecommendations(
             @PathVariable Long productId,
-            @RequestParam(defaultValue = "5") int limit) {
+            @RequestParam(defaultValue = "20") int limit) {
 
         List<KinguinGiftCard> recommendations = recommendationService.recommendByContent(productId, limit);
         return ResponseEntity.ok(recommendations);
