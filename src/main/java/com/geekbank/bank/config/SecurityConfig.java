@@ -73,7 +73,8 @@ public class SecurityConfig {
                                 "/api/wish-list/${wishedItemId}", "/api/feedbacks/**",
                                 "/api/recommendations/**", "/api/recommendations/user/${userId}",
                                 "/api/sync/**", "/api/freefire/**", "/api/freefire/products",
-                                "/api/currency", "/api/recommendations/content-based/**"
+                                "/api/currency", "/api/recommendations/content-based/**",
+                                "/api/manual-orders/**"
 
                         ).permitAll()
                         .anyRequest().authenticated()

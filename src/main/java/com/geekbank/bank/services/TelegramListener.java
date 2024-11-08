@@ -112,7 +112,7 @@ public class TelegramListener {
             JSONArray resultArray = jsonResponse.getJSONArray("result");
 
             if (resultArray.length() == 0) {
-                System.out.println("No new messages.");
+               // System.out.println("No new messages.");
             } else {
                 for (int i = 0; i < resultArray.length(); i++) {
                     JSONObject update = resultArray.getJSONObject(i);

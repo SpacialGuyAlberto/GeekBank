@@ -18,6 +18,7 @@ java {
 repositories {
     mavenCentral()
     maven { url 'https://repo.spring.io/milestone' }
+    maven { url 'https://jitpack.io' }
 }
 
 ext {
@@ -46,6 +47,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'io.github.cdimascio:java-dotenv:5.2.2'
     implementation 'org.apache.commons:commons-text:1.10.0'
+    implementation 'org.seleniumhq.selenium:selenium-java:4.10.0'
+    implementation 'com.github.2captcha:2captcha-java:1.2.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.3'
 
     runtimeOnly 'com.mysql:mysql-connector-j'
     runtimeOnly 'com.oracle.database.jdbc:ojdbc11'
@@ -76,6 +80,7 @@ dependencies {
     implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
     implementation 'javax.activation:activation:1.1.1'
+
 
     implementation 'org.json:json:20210307'
 
