@@ -27,7 +27,6 @@ public class HighlightService {
         this.kinguinService = kinguinService;
     }
 
-    // Obtener los highlights por IDs de productos
     public List<HighlightItemWithGiftcardDTO> getHighlightsByProductIds() {
         List<HighlightItem> highlightItems = highlightItemRepository.findAll();
         return highlightItems.stream()
@@ -39,7 +38,6 @@ public class HighlightService {
                 .collect(Collectors.toList());
     }
 
-    // Agregar nuevos highlights
     public List<HighlightItem> addHighlightItems(List<Long> productIds) {
         List<HighlightItem> newHighlights = productIds.stream()
                 .map(productId -> {
@@ -51,7 +49,6 @@ public class HighlightService {
         return newHighlights;
     }
 
-    // Eliminar highlights por IDs de productos
     @Transactional
     public void removeHighlightItems(List<Long> productIds) {
         logger.debug("Attempting to delete highlight items with product IDs: {}", productIds);

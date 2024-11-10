@@ -74,7 +74,8 @@ public class SecurityConfig {
                                 "/api/recommendations/**", "/api/recommendations/user/${userId}",
                                 "/api/sync/**", "/api/freefire/**", "/api/freefire/products",
                                 "/api/currency", "/api/recommendations/content-based/**",
-                                "/api/manual-orders/**"
+                                "/api/manual-orders/**",
+                                "/api/main-screen-gift-cards/**"
 
                         ).permitAll()
                         .anyRequest().authenticated()
