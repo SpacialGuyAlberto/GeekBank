@@ -79,11 +79,13 @@ public class OrderController {
         response.setOrderRequestNumber(orderRequest.getOrderRequestId());
         response.setTransactionNumber(savedTransaction.getTransactionNumber());
         response.setTempPin(savedTransaction.getTempPin());
+        response.setTransactionStatus(TransactionStatus.PENDING);
         System.out.println("MANUAL TRANSACTION : " + orderRequest.getManual());
 
         String transactionNumber = savedTransaction.getTransactionNumber();
         Long tempPin = savedTransaction.getTempPin();
-        String responseMessage = "Order placed successfully: " + orderRequest.getOrderRequestId() + "\n Transaction number: "  + transactionNumber + "\n PIN" + tempPin.toString();
+        TransactionStatus transactionStatus = savedTransaction.getStatus();
+        String responseMessage = "Order placed successfully: " + orderRequest.getOrderRequestId() + "\n Transaction number: "  + transactionNumber + "\n PIN" + tempPin.toString() + "\n Status" + transactionStatus.name();
 
         return ResponseEntity.ok(responseMessage);
     }

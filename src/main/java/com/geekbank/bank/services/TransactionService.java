@@ -102,6 +102,7 @@ public class TransactionService {
         transaction.setTempPin(generatePin());
         transaction.setStatus(TransactionStatus.PENDING);
 
+
         if (products != null && products.size() > 10) {
             throw new IllegalArgumentException("No se pueden agregar más de 10 productos por transacción.");
         }
@@ -120,7 +121,7 @@ public class TransactionService {
 
         Transaction savedTransaction = transactionRepository.save(transaction);
         transactionStorageService.storePendingTransaction(savedTransaction);
-
+        updateTransactionStatus(savedTransaction.getId(), TransactionStatus.PENDING, null);
         return savedTransaction;
     }
 

@@ -5,6 +5,8 @@ public class TransactionResponse {
     private String transactionNumber;
     private Long tempPin;
 
+    private TransactionStatus transactionStatus;
+
     // Getters y setters
 
     public String getOrderRequestNumber() {
@@ -29,4 +31,12 @@ public class TransactionResponse {
     public void setTempPin(Long tempPin) {
         this.tempPin = tempPin;
     }
+    public TransactionStatus getTransactionStatus() {
+        return transactionStatus;
+    }
+
+    public void setTransactionStatus(TransactionStatus transactionStatus) {
+        this.transactionStatus = transactionStatus;
+    }
+
 }
