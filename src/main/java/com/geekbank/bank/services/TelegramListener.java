@@ -20,18 +20,20 @@ import com.geekbank.bank.repositories.UnmatchedPaymentRepository;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import com.geekbank.bank.controllers.WebSocketController;
 
 @Service
-public class TelegramListener {
+public class TelegramListener implements ApplicationListener<ContextClosedEvent> {
 
     private static final String TELEGRAM_BOT_TOKEN = "7022402011:AAHf6k0ZolFa9hwiZMu1srj868j5-eqUecU";
     private static final String BASE_URL = "https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN + "/getUpdates";
     private int lastUpdateId = 0;
     private String orderRequestPhoneNumber;
-
+    private volatile boolean running = true;
 
     @Autowired
     private SmsService smsService;
@@ -58,6 +60,7 @@ public class TelegramListener {
     @Autowired
     private UnmatchedPaymentRepository unmatchedPaymentRepository;
 
+
     public TelegramListener(SmsService smsService) {
         this.smsService = smsService;
     }
@@ -70,7 +73,7 @@ public class TelegramListener {
     }
 
     public void listenForMessages() {
-        while (true) {
+        while (running) {
             try {
                 String urlWithOffset = BASE_URL + "?offset=" + (lastUpdateId + 1);
                 URL url = new URL(urlWithOffset);
@@ -102,8 +105,17 @@ public class TelegramListener {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                Thread.currentThread().interrupt();
+                System.err.println("El hilo de TelegramListener fue interrumpido. Saliendo del bucle.");
+                break;
             }
         }
+    }
+
+    @Override
+    public void onApplicationEvent(ContextClosedEvent event) {
+        System.out.println("Contexto de aplicación cerrado. Deteniendo TelegramListener.");
+        running = false;
     }
 
     void processResponse(String response) {
@@ -173,21 +185,13 @@ public class TelegramListener {
                                 transactionStorageService.storeSmsReferenceNumber(senderPhoneNumber, referenceNumber);
                                 transactionStorageService.storeAmountReceived(senderPhoneNumber, amountReceived);
 
-                                // Enviar solicitud al frontend para que el usuario ingrese el PIN y el número de referencia
                                 webSocketController.requestRefNumberAndTempPin(senderPhoneNumber);
 
                                 // Asociar el SmsMessage con la transacción
-                                Transaction matchingTransaction = transactions.get(0); // Puedes mejorar la lógica de selección
+                                //Transaction matchingTransaction = transactions.get(0); // Puedes mejorar la lógica de selección
 
                                 // Verificar si la transacción ya tiene un SmsMessage asociado
-                                if (matchingTransaction.getSmsMessage() == null) {
-                                    smsMessage.setTransaction(matchingTransaction);
-                                    smsMessageRepository.save(smsMessage);
-                                    System.out.println("Associated SmsMessage with Transaction ID: " + matchingTransaction.getId());
-                                } else {
-                                    System.out.println("Transaction ID: " + matchingTransaction.getId() + " already has an associated SmsMessage.");
-                                    // Opcional: Manejar el caso donde ya existe una asociación
-                                }
+
                             } else {
                                 System.out.println("No pending transactions found for phone number: " + senderPhoneNumber + " and amount: " + amountReceived);
 

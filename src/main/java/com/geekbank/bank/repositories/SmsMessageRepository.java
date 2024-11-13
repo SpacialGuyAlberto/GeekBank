@@ -16,7 +16,7 @@ public interface SmsMessageRepository extends JpaRepository<SmsMessage, Long> {
     List<SmsMessage> findBySenderPhoneNumber(String senderPhoneNumber);
 
     // Buscar por número de referencia
-    List<SmsMessage> findByReferenceNumber(String referenceNumber);
+    SmsMessage findByReferenceNumber(String referenceNumber);
 
     // Buscar mensajes dentro de un rango de fechas
     List<SmsMessage> findByReceivedAtBetween(LocalDateTime startDate, LocalDateTime endDate);

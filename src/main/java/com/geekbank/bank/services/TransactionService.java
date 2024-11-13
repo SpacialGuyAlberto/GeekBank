@@ -13,6 +13,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.geekbank.bank.repositories.TransactionRepository;
+import com.geekbank.bank.repositories.SmsMessageRepository;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -29,6 +30,8 @@ public class TransactionService {
     @Autowired
     private WebSocketController webSocketController;
     @Autowired
+    private SmsMessageRepository smsMessageRepository;
+    @Autowired
     private GiftCardRepository giftCardRepository;
     @Autowired
     private TransactionWebSocketController transactionWebSocketController;
@@ -42,7 +45,7 @@ public class TransactionService {
     @Autowired
     private CurrencyService currencyService; // Inyectar Currenc
 
-    private static final long EXPIRATION_MINUTES = 5;
+    private static final long EXPIRATION_MINUTES = 3;
 
     @Autowired
     private ManualVerificationWebSocketController manualVerificationWebSocketController;
@@ -55,9 +58,8 @@ public class TransactionService {
 
     private static Long generatePin() {
         Random random = new Random();
-        int pin = random.nextInt(9999) + 1;
-        String formattedPin = String.format("%04d", pin);
-        return Long.parseLong(formattedPin);
+        int pin = random.nextInt(9000) + 1000; // Genera un número entre 1000 y 9999
+        return (long) pin;
     }
 
     @Transactional
@@ -147,6 +149,16 @@ public class TransactionService {
                 updateTransactionStatus(transactionInDB.getId(), TransactionStatus.FAILED, "Monto recibido insuficiente.");
                 throw new RuntimeException("Monto recibido insuficiente.");
             }
+
+            SmsMessage smsMessage = smsMessageRepository.findByReferenceNumber(refNumber);
+            if (smsMessage == null) {
+                throw new RuntimeException("No se encontró un SMS con el número de referencia proporcionado.");
+            }
+
+            matchingTransaction.setSmsMessage(smsMessage);
+            smsMessage.setTransaction(matchingTransaction);
+            transactionRepository.save(matchingTransaction);
+            smsMessageRepository.save(smsMessage);
 
             if (transactionInDB.getManual()) {
                 updateTransactionStatus(transactionInDB.getId(), TransactionStatus.AWAITING_MANUAL_PROCESSING, "El pago esta hecho. Su transaccion debe ser procesada.");
@@ -337,6 +349,7 @@ public class TransactionService {
 
         for (Transaction transaction : pendingTransactions) {
             transaction.setStatus(TransactionStatus.EXPIRED);
+            updateTransactionStatus(transaction.getId(), TransactionStatus.EXPIRED, null);
             transactionRepository.save(transaction);
 
             transactionStorageService.removeTransactionById(transaction.getId());
