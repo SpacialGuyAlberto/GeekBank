@@ -75,7 +75,7 @@ public class SecurityConfig {
                                 "/api/sync/**", "/api/freefire/**", "/api/freefire/products",
                                 "/api/currency", "/api/recommendations/content-based/**",
                                 "/api/manual-orders/**",
-                                "/api/main-screen-gift-cards/**"
+                                "/api/main-screen-gift-cards/**", "api/transactions/verifyPayment"
 
                         ).permitAll()
                         .anyRequest().authenticated()

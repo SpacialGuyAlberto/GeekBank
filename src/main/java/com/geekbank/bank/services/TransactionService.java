@@ -4,16 +4,12 @@ import com.geekbank.bank.controllers.ManualVerificationWebSocketController;
 import com.geekbank.bank.controllers.TransactionWebSocketController;
 import com.geekbank.bank.controllers.WebSocketController;
 import com.geekbank.bank.models.*;
-import com.geekbank.bank.repositories.AccountRepository;
-import com.geekbank.bank.repositories.GiftCardRepository;
-import com.geekbank.bank.repositories.UserRepository;
+import com.geekbank.bank.repositories.*;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.geekbank.bank.repositories.TransactionRepository;
-import com.geekbank.bank.repositories.SmsMessageRepository;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -46,6 +42,8 @@ public class TransactionService {
     private CurrencyService currencyService; // Inyectar Currenc
 
     private static final long EXPIRATION_MINUTES = 3;
+    @Autowired
+    private UnmatchedPaymentRepository unmatchedPaymentRepository;
 
     @Autowired
     private ManualVerificationWebSocketController manualVerificationWebSocketController;
@@ -124,6 +122,94 @@ public class TransactionService {
         Transaction savedTransaction = transactionRepository.save(transaction);
         transactionStorageService.storePendingTransaction(savedTransaction);
         updateTransactionStatus(savedTransaction.getId(), TransactionStatus.PENDING, null);
+        return savedTransaction;
+    }
+
+    @Transactional
+    public Transaction verifyPaymentAndCreateOrder(String refNumber, String phoneNumber, OrderRequest orderRequest) {
+        // Buscar el pago no coincidente
+        UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumberAndPhoneNumber(refNumber, phoneNumber);
+
+        if (unmatchedPayment == null) {
+            throw new RuntimeException("Pago no encontrado con el número de referencia y teléfono proporcionados.");
+        }
+
+        // Validar que el monto recibido sea suficiente
+        double amountReceived = unmatchedPayment.getAmountReceived();
+        double orderAmount = orderRequest.getAmount();
+
+        if (amountReceived < orderAmount) {
+            throw new RuntimeException("El monto del pago es insuficiente para esta orden.");
+        }
+
+        // Determinar el tipo de transacción
+        TransactionType transactionType = TransactionType.PURCHASE;
+        if (orderRequest.getProducts() != null && !orderRequest.getProducts().isEmpty()) {
+            OrderRequest.Product firstProduct = orderRequest.getProducts().get(0);
+            if (firstProduct.getKinguinId() == -1) {
+                transactionType = TransactionType.BALANCE_PURCHASE;
+            }
+        }
+
+        // Crear la transacción sin PIN y con estado COMPLETED
+        Transaction transaction = new Transaction();
+        transaction.setAmountUsd(orderAmount);
+        double exchangeRate = currencyService.getExchangeRateUSDtoHNL();
+        transaction.setExchangeRate(exchangeRate);
+        transaction.setAmountHnl(currencyService.convertUsdToHnl(orderAmount, exchangeRate));
+
+        // Asignar usuario o invitado
+        if (orderRequest.getUserId() != null) {
+            User user = userRepository.findById(orderRequest.getUserId())
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado."));
+            transaction.setUser(user);
+        } else if (orderRequest.getGuestId() != null && !orderRequest.getGuestId().isEmpty()) {
+            transaction.setGuestId(orderRequest.getGuestId());
+        } else {
+            throw new RuntimeException("Debe proporcionar userId o guestId.");
+        }
+
+        transaction.setGameUserId(orderRequest.getGameUserId());
+        transaction.setManual(orderRequest.getManual() != null ? orderRequest.getManual() : false);
+        transaction.setExpiresAt(orderRequest.getManual() != null && orderRequest.getManual() ?
+                LocalDateTime.now().plusMinutes(600) :
+                LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES));
+        transaction.setType(transactionType);
+        transaction.setTimestamp(LocalDateTime.now());
+        transaction.setTransactionNumber(generateTransactionNumber());
+        transaction.setDescription("Description");
+        transaction.setPhoneNumber(phoneNumber);
+        transaction.setOrderRequestNumber(orderRequest.getOrderRequestId());
+        transaction.setTempPin(null);
+        transaction.setTempPin(null);
+        transaction.setStatus(TransactionStatus.COMPLETED);
+
+        if (orderRequest.getProducts() != null && orderRequest.getProducts().size() > 10) {
+            throw new IllegalArgumentException("No se pueden agregar más de 10 productos por transacción.");
+        }
+
+        List<TransactionProduct> transactionProducts = orderRequest.getProducts().stream().map(productRequest -> {
+            Long productId = (long) productRequest.getKinguinId();
+            TransactionProduct transactionProduct = new TransactionProduct();
+            transactionProduct.setTransaction(transaction);
+            transactionProduct.setProductId(productId);
+            transactionProduct.setQuantity(productRequest.getQty());
+            return transactionProduct;
+        }).collect(Collectors.toList());
+        transaction.setProducts(transactionProducts);
+
+        // Guardar la transacción
+        Transaction savedTransaction = transactionRepository.save(transaction);
+
+        // Actualizar estado
+        updateTransactionStatus(savedTransaction.getId(), TransactionStatus.COMPLETED, "Transacción completada automáticamente mediante verificación de pago.");
+
+        // Eliminar el pago no coincidente
+        unmatchedPaymentRepository.delete(unmatchedPayment);
+
+        // Notificar vía WebSocket
+        webSocketController.notifyTransactionStatus(phoneNumber, "COMPLETED", "Su transacción fue completada exitosamente.", savedTransaction.getTransactionNumber());
+
         return savedTransaction;
     }
 

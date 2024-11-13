@@ -1,8 +1,6 @@
 package com.geekbank.bank.controllers;
 
-import com.geekbank.bank.models.Transaction;
-import com.geekbank.bank.models.TransactionStatus;
-import com.geekbank.bank.models.TransactionVerificationRequest;
+import com.geekbank.bank.models.*;
 import com.geekbank.bank.repositories.TransactionRepository;
 import com.geekbank.bank.services.OrderRequestStorageService;
 import com.geekbank.bank.services.TransactionService;
@@ -14,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -123,6 +122,27 @@ public class TransactionController {
             return ResponseEntity.ok("Transacción rechazada exitosamente.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/verifyPayment")
+    public ResponseEntity<Map<String, String>> verifyPaymentAndCreateOrder(@RequestBody VerifyPaymentRequest request){
+        String refNumber = request.getRefNumber();
+        String phoneNumber = request.getPhoneNumber();
+        OrderRequest orderRequest = request.getOrderRequest();
+
+        try {
+            Transaction transaction = transactionService.verifyPaymentAndCreateOrder(refNumber, phoneNumber, orderRequest);
+
+            // Crear un mapa con el número de transacción
+            Map<String, String> response = new HashMap<>();
+            response.put("transactionNumber", transaction.getTransactionNumber());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e){
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
     }
 
