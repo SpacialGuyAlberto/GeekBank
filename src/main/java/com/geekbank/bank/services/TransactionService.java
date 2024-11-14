@@ -3,10 +3,12 @@ package com.geekbank.bank.services;
 import com.geekbank.bank.controllers.ManualVerificationWebSocketController;
 import com.geekbank.bank.controllers.TransactionWebSocketController;
 import com.geekbank.bank.controllers.WebSocketController;
+import com.geekbank.bank.dto.UnmatchedPaymentResponseDto;
 import com.geekbank.bank.models.*;
 import com.geekbank.bank.repositories.*;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -125,16 +127,58 @@ public class TransactionService {
         return savedTransaction;
     }
 
+    public ResponseEntity<UnmatchedPaymentResponseDto> verifyUnmatchedPaymentAmount(String referenceNumber, String phoneNumber, double expectedAmount) {
+        UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumberAndPhoneNumber(referenceNumber, phoneNumber);
+
+        if (unmatchedPayment == null) {
+            return ResponseEntity.status(404).body(null);
+        }
+
+        double receivedAmount = unmatchedPayment.getAmountReceived();
+        double difference = receivedAmount - expectedAmount;
+        String message;
+        List<String> options;
+
+        if (difference == 0) {
+            message = "El pago coincide con el monto esperado.";
+            options = null;  // No hay opciones adicionales cuando no hay diferencia
+        } else if (difference > 0) {
+            message = "Hay una diferencia en el monto del pago.";
+            options = Arrays.asList(
+                    "Apply the difference as a balance",
+                    difference > 1 ? "Return the difference" : "No se puede devolver la diferencia (debe ser mayor a 1)",
+                    "Adjust the payment to match the expected amount"
+            );
+        } else {
+            message = "El monto recibido es menor al monto esperado.";
+            options = Arrays.asList(
+                    "Quiero mi dinero de nuevo",
+                    "Combinar este pago con otro nuevo pago"
+            );
+        }
+
+        UnmatchedPaymentResponseDto response = new UnmatchedPaymentResponseDto(
+                unmatchedPayment,
+                receivedAmount,
+                expectedAmount,
+                difference,
+                message,
+                options
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+
+
     @Transactional
     public Transaction verifyPaymentAndCreateOrder(String refNumber, String phoneNumber, OrderRequest orderRequest) {
-        // Buscar el pago no coincidente
         UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumberAndPhoneNumber(refNumber, phoneNumber);
 
         if (unmatchedPayment == null) {
             throw new RuntimeException("Pago no encontrado con el número de referencia y teléfono proporcionados.");
         }
 
-        // Validar que el monto recibido sea suficiente
         double amountReceived = unmatchedPayment.getAmountReceived();
         double orderAmount = orderRequest.getAmount();
 
@@ -142,7 +186,6 @@ public class TransactionService {
             throw new RuntimeException("El monto del pago es insuficiente para esta orden.");
         }
 
-        // Determinar el tipo de transacción
         TransactionType transactionType = TransactionType.PURCHASE;
         if (orderRequest.getProducts() != null && !orderRequest.getProducts().isEmpty()) {
             OrderRequest.Product firstProduct = orderRequest.getProducts().get(0);
