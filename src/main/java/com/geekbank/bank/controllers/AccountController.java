@@ -1,6 +1,7 @@
 package com.geekbank.bank.controllers;
 
 import com.geekbank.bank.models.Account;
+import com.geekbank.bank.repositories.AccountRepository;
 import com.geekbank.bank.services.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -10,16 +11,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 
-import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/accounts")
 public class AccountController {
-
+    private final AccountRepository accountRepository;
     private final AccountService accountService;
     @Autowired
-    public AccountController(AccountService accountService) {
+    public AccountController(AccountRepository accountRepository, AccountService accountService) {
+        this.accountRepository = accountRepository;
         this.accountService = accountService;
     }
 
@@ -47,4 +48,14 @@ public class AccountController {
         accountService.deleteAccount(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
+    @PostMapping("/apply-balance/{id}")
+    public ResponseEntity<Account> applyBalance(@PathVariable("id") Long id, @RequestParam double amount){
+        Account account = accountService.getAccountsByUserId(id);
+        account.setBalance(account.getBalance() + amount);
+        // Save the updated account back to the database
+        accountRepository.save(account);
+        return new ResponseEntity<>(account, HttpStatus.OK);
+    }
+
 }
