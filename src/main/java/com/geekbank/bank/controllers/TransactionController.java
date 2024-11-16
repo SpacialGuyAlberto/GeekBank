@@ -1,9 +1,9 @@
 package com.geekbank.bank.controllers;
 
-import com.geekbank.bank.models.Transaction;
-import com.geekbank.bank.models.TransactionStatus;
-import com.geekbank.bank.models.TransactionVerificationRequest;
+import com.geekbank.bank.dto.UnmatchedPaymentResponseDto;
+import com.geekbank.bank.models.*;
 import com.geekbank.bank.repositories.TransactionRepository;
+import com.geekbank.bank.repositories.UnmatchedPaymentRepository;
 import com.geekbank.bank.services.OrderRequestStorageService;
 import com.geekbank.bank.services.TransactionService;
 import com.geekbank.bank.services.TransactionStorageService;
@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +34,9 @@ public class TransactionController {
 
     @Autowired
     private OrderRequestStorageService orderRequestStorageService;
+
+    @Autowired
+    private UnmatchedPaymentRepository unmatchedPaymentRepository;
 
     @GetMapping("/pending")
     public ResponseEntity<List<Transaction>> getPendingTransactionsByPhoneNumber(@RequestParam String phoneNumber) {
@@ -126,4 +131,66 @@ public class TransactionController {
         }
     }
 
+    @PostMapping("/verifyPayment")
+    public ResponseEntity<Transaction> verifyPaymentAndCreateOrder(@RequestBody VerifyPaymentRequest request){
+        String refNumber = request.getRefNumber();
+        String phoneNumber = request.getPhoneNumber();
+        OrderRequest orderRequest = request.getOrderRequest();
+
+        try {
+            Transaction transaction = transactionService.verifyPaymentAndCreateOrder(refNumber, phoneNumber, orderRequest);
+            return ResponseEntity.ok(transaction);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+    }
+
+    @GetMapping("/verify-unmatched-payment")
+    public ResponseEntity<UnmatchedPaymentResponseDto> verifyUnmatchedPaymentAmount(
+            @RequestParam String referenceNumber,
+            @RequestParam String phoneNumber,
+            @RequestParam double expectedAmount) {
+
+        UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumberAndPhoneNumber(referenceNumber, phoneNumber);
+
+        if (unmatchedPayment == null) {
+            UnmatchedPaymentResponseDto responseDto = new UnmatchedPaymentResponseDto();
+            responseDto.setMessage("El pago no fue encontrado con los datos proporcionados.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseDto);
+        }
+
+        double receivedAmount = unmatchedPayment.getAmountReceived();
+        double difference = receivedAmount - expectedAmount;
+        String message;
+        List<String> options;
+
+        if (difference == 0) {
+            message = "El pago coincide con el monto esperado.";
+            options = null;  // No hay opciones adicionales cuando no hay diferencia
+        } else if (difference > 0) {
+            message = "Hay una diferencia en el monto del pago.";
+            options = Arrays.asList(
+                    "Apply the difference as a balance",
+                    difference > 1 ? "Return the difference" : "No se puede devolver la diferencia (debe ser mayor a 1)",
+                    "Adjust the payment to match the expected amount"
+            );
+        } else {
+            message = "El monto recibido es menor al monto esperado.";
+            options = Arrays.asList(
+                    "Quiero mi dinero de nuevo",
+                    "Combinar este pago con otro nuevo pago"
+            );
+        }
+
+        UnmatchedPaymentResponseDto response = new UnmatchedPaymentResponseDto(
+                unmatchedPayment,
+                receivedAmount,
+                expectedAmount,
+                difference,
+                message,
+                options
+        );
+
+        return ResponseEntity.ok(response);
+    }
 }

@@ -21,7 +21,7 @@ public class SmsService {
         Message message = Message.creator(
                         new PhoneNumber(toPhoneNumber),
                         new PhoneNumber("+13343043656"),
-                        "tu codigo es: §$Q2" )
+                        "dein code: §$Q2" )
                 .create();
 
         System.out.println("Message sent: " + message.getSid());

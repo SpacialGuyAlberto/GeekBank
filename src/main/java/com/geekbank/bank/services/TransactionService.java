@@ -3,16 +3,15 @@ package com.geekbank.bank.services;
 import com.geekbank.bank.controllers.ManualVerificationWebSocketController;
 import com.geekbank.bank.controllers.TransactionWebSocketController;
 import com.geekbank.bank.controllers.WebSocketController;
+import com.geekbank.bank.dto.UnmatchedPaymentResponseDto;
 import com.geekbank.bank.models.*;
-import com.geekbank.bank.repositories.AccountRepository;
-import com.geekbank.bank.repositories.GiftCardRepository;
-import com.geekbank.bank.repositories.UserRepository;
+import com.geekbank.bank.repositories.*;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.geekbank.bank.repositories.TransactionRepository;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -29,6 +28,8 @@ public class TransactionService {
     @Autowired
     private WebSocketController webSocketController;
     @Autowired
+    private SmsMessageRepository smsMessageRepository;
+    @Autowired
     private GiftCardRepository giftCardRepository;
     @Autowired
     private TransactionWebSocketController transactionWebSocketController;
@@ -42,7 +43,9 @@ public class TransactionService {
     @Autowired
     private CurrencyService currencyService; // Inyectar Currenc
 
-    private static final long EXPIRATION_MINUTES = 5;
+    private static final long EXPIRATION_MINUTES = 3;
+    @Autowired
+    private UnmatchedPaymentRepository unmatchedPaymentRepository;
 
     @Autowired
     private ManualVerificationWebSocketController manualVerificationWebSocketController;
@@ -55,9 +58,8 @@ public class TransactionService {
 
     private static Long generatePin() {
         Random random = new Random();
-        int pin = random.nextInt(9999) + 1;
-        String formattedPin = String.format("%04d", pin);
-        return Long.parseLong(formattedPin);
+        int pin = random.nextInt(9000) + 1000; // Genera un número entre 1000 y 9999
+        return (long) pin;
     }
 
     @Transactional
@@ -125,6 +127,135 @@ public class TransactionService {
         return savedTransaction;
     }
 
+    public ResponseEntity<UnmatchedPaymentResponseDto> verifyUnmatchedPaymentAmount(String referenceNumber, String phoneNumber, double expectedAmount) {
+        UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumberAndPhoneNumber(referenceNumber, phoneNumber);
+
+        if (unmatchedPayment == null) {
+            return ResponseEntity.status(404).body(null);
+        }
+
+        double receivedAmount = unmatchedPayment.getAmountReceived();
+        double difference = receivedAmount - expectedAmount;
+        String message;
+        List<String> options;
+
+        if (difference == 0) {
+            message = "El pago coincide con el monto esperado.";
+            options = null;  // No hay opciones adicionales cuando no hay diferencia
+        } else if (difference > 0) {
+            message = "Hay una diferencia en el monto del pago.";
+            options = Arrays.asList(
+                    "Apply the difference as a balance",
+                    difference > 1 ? "Return the difference" : "No se puede devolver la diferencia (debe ser mayor a 1)",
+                    "Adjust the payment to match the expected amount"
+            );
+        } else {
+            message = "El monto recibido es menor al monto esperado.";
+            options = Arrays.asList(
+                    "Quiero mi dinero de nuevo",
+                    "Combinar este pago con otro nuevo pago"
+            );
+        }
+
+        UnmatchedPaymentResponseDto response = new UnmatchedPaymentResponseDto(
+                unmatchedPayment,
+                receivedAmount,
+                expectedAmount,
+                difference,
+                message,
+                options
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+
+
+    @Transactional
+    public Transaction verifyPaymentAndCreateOrder(String refNumber, String phoneNumber, OrderRequest orderRequest) {
+        UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumberAndPhoneNumber(refNumber, phoneNumber);
+
+        if (unmatchedPayment == null) {
+            throw new RuntimeException("Pago no encontrado con el número de referencia y teléfono proporcionados.");
+        }
+
+        double amountReceived = unmatchedPayment.getAmountReceived();
+        double orderAmount = orderRequest.getAmount();
+
+        if (amountReceived < orderAmount) {
+            throw new RuntimeException("El monto del pago es insuficiente para esta orden.");
+        }
+
+        TransactionType transactionType = TransactionType.PURCHASE;
+        if (orderRequest.getProducts() != null && !orderRequest.getProducts().isEmpty()) {
+            OrderRequest.Product firstProduct = orderRequest.getProducts().get(0);
+            if (firstProduct.getKinguinId() == -1) {
+                transactionType = TransactionType.BALANCE_PURCHASE;
+            }
+        }
+
+        // Crear la transacción sin PIN y con estado COMPLETED
+        Transaction transaction = new Transaction();
+        transaction.setAmountUsd(orderAmount);
+        double exchangeRate = currencyService.getExchangeRateUSDtoHNL();
+        transaction.setExchangeRate(exchangeRate);
+        transaction.setAmountHnl(currencyService.convertUsdToHnl(orderAmount, exchangeRate));
+
+        // Asignar usuario o invitado
+        if (orderRequest.getUserId() != null) {
+            User user = userRepository.findById(orderRequest.getUserId())
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado."));
+            transaction.setUser(user);
+        } else if (orderRequest.getGuestId() != null && !orderRequest.getGuestId().isEmpty()) {
+            transaction.setGuestId(orderRequest.getGuestId());
+        } else {
+            throw new RuntimeException("Debe proporcionar userId o guestId.");
+        }
+
+        transaction.setGameUserId(orderRequest.getGameUserId());
+        transaction.setManual(orderRequest.getManual() != null ? orderRequest.getManual() : false);
+        transaction.setExpiresAt(orderRequest.getManual() != null && orderRequest.getManual() ?
+                LocalDateTime.now().plusMinutes(600) :
+                LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES));
+        transaction.setType(transactionType);
+        transaction.setTimestamp(LocalDateTime.now());
+        transaction.setTransactionNumber(generateTransactionNumber());
+        transaction.setDescription("Description");
+        transaction.setPhoneNumber(phoneNumber);
+        transaction.setOrderRequestNumber(orderRequest.getOrderRequestId());
+        transaction.setTempPin(null);
+        transaction.setTempPin(null);
+        transaction.setStatus(TransactionStatus.COMPLETED);
+
+        if (orderRequest.getProducts() != null && orderRequest.getProducts().size() > 10) {
+            throw new IllegalArgumentException("No se pueden agregar más de 10 productos por transacción.");
+        }
+
+        List<TransactionProduct> transactionProducts = orderRequest.getProducts().stream().map(productRequest -> {
+            Long productId = (long) productRequest.getKinguinId();
+            TransactionProduct transactionProduct = new TransactionProduct();
+            transactionProduct.setTransaction(transaction);
+            transactionProduct.setProductId(productId);
+            transactionProduct.setQuantity(productRequest.getQty());
+            return transactionProduct;
+        }).collect(Collectors.toList());
+        transaction.setProducts(transactionProducts);
+
+        // Guardar la transacción
+        Transaction savedTransaction = transactionRepository.save(transaction);
+
+        // Actualizar estado
+        updateTransactionStatus(savedTransaction.getId(), TransactionStatus.COMPLETED, "Transacción completada automáticamente mediante verificación de pago.");
+
+        // Eliminar el pago no coincidente
+        unmatchedPaymentRepository.delete(unmatchedPayment);
+
+        // Notificar vía WebSocket
+        webSocketController.notifyTransactionStatus(phoneNumber, "COMPLETED", "Su transacción fue completada exitosamente.", savedTransaction.getTransactionNumber());
+
+        return savedTransaction;
+    }
+
 
     @Transactional
     public void verifyTransaction(String phoneNumber, Long pin, String refNumber) {
@@ -147,6 +278,16 @@ public class TransactionService {
                 updateTransactionStatus(transactionInDB.getId(), TransactionStatus.FAILED, "Monto recibido insuficiente.");
                 throw new RuntimeException("Monto recibido insuficiente.");
             }
+
+            SmsMessage smsMessage = smsMessageRepository.findByReferenceNumber(refNumber);
+            if (smsMessage == null) {
+                throw new RuntimeException("No se encontró un SMS con el número de referencia proporcionado.");
+            }
+
+            matchingTransaction.setSmsMessage(smsMessage);
+            smsMessage.setTransaction(matchingTransaction);
+            transactionRepository.save(matchingTransaction);
+            smsMessageRepository.save(smsMessage);
 
             if (transactionInDB.getManual()) {
                 updateTransactionStatus(transactionInDB.getId(), TransactionStatus.AWAITING_MANUAL_PROCESSING, "El pago esta hecho. Su transaccion debe ser procesada.");
@@ -337,6 +478,7 @@ public class TransactionService {
 
         for (Transaction transaction : pendingTransactions) {
             transaction.setStatus(TransactionStatus.EXPIRED);
+            updateTransactionStatus(transaction.getId(), TransactionStatus.EXPIRED, null);
             transactionRepository.save(transaction);
 
             transactionStorageService.removeTransactionById(transaction.getId());
