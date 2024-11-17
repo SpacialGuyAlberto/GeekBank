@@ -1,5 +1,7 @@
 package com.geekbank.bank.controllers;
 
+import com.geekbank.bank.exceptions.InsufficientBalanceException;
+import com.geekbank.bank.exceptions.ResourceNotFoundException;
 import com.geekbank.bank.models.*;
 import com.geekbank.bank.repositories.UserRepository;
 import com.geekbank.bank.services.*;
@@ -89,4 +91,55 @@ public class OrderController {
 
         return ResponseEntity.ok(responseMessage);
     }
+
+    @PostMapping("/purchase-with-balance")
+    public ResponseEntity<?> purchaseWithBalance(@RequestBody OrderRequest orderRequest) {
+        try {
+            if (orderRequest.getUserId() == null) {
+                return ResponseEntity.badRequest().body("El ID del usuario es requerido.");
+            }
+
+            if (orderRequest.getProducts() == null || orderRequest.getProducts().isEmpty()) {
+                return ResponseEntity.badRequest().body("Debe haber al menos un producto en la solicitud.");
+            }
+
+            orderRequest.setOrderRequestId();
+
+            Transaction transaction = transactionService.purchaseWithBalance(
+                    orderRequest.getUserId(),
+                    orderRequest.getOrderRequestId(),
+                    orderRequest.getProducts(),
+                    orderRequest.getPhoneNumber()
+            );
+
+            TransactionResponse response = new TransactionResponse();
+            response.setOrderRequestNumber(transaction.getOrderRequestNumber());
+            response.setTransactionNumber(transaction.getTransactionNumber());
+            response.setTransactionStatus(transaction.getStatus());
+
+            return ResponseEntity.ok(response);
+
+//            TransactionResponse response = new TransactionResponse();
+//            response.setOrderRequestNumber(orderRequest.getOrderRequestId());
+//            response.setTransactionNumber(savedTransaction.getTransactionNumber());
+//            response.setTempPin(savedTransaction.getTempPin());
+//            response.setTransactionStatus(TransactionStatus.PENDING);
+//            System.out.println("MANUAL TRANSACTION : " + orderRequest.getManual());
+//
+//            String transactionNumber = savedTransaction.getTransactionNumber();
+//            Long tempPin = savedTransaction.getTempPin();
+//            TransactionStatus transactionStatus = savedTransaction.getStatus();
+//            String responseMessage = "Order placed successfully: " + orderRequest.getOrderRequestId() + "\n Transaction number: "  + transactionNumber + "\n PIN" + tempPin.toString() + "\n Status" + transactionStatus.name();
+//
+//            return ResponseEntity.ok(responseMessage);
+
+        } catch (InsufficientBalanceException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Saldo insuficiente: " + e.getMessage());
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al procesar la compra: " + e.getMessage());
+        }
+    }
+
 }

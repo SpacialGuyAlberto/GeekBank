@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 @RestController
@@ -50,12 +51,26 @@ public class AccountController {
     }
 
     @PostMapping("/apply-balance/{id}")
-    public ResponseEntity<Account> applyBalance(@PathVariable("id") Long id, @RequestParam double amount){
-        Account account = accountService.getAccountsByUserId(id);
+    public ResponseEntity<Account> applyBalance(@PathVariable("id") Long id, @RequestParam Double amount) {
+        // Recuperar la cuenta utilizando el AccountService
+        Optional<Account> optionalAccount = accountService.getAccountsByUserId(id);
+
+        if (!optionalAccount.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        // Obtener la cuenta del Optional
+        Account account = optionalAccount.get();
+
+        // Actualizar el balance de la cuenta
         account.setBalance(account.getBalance() + amount);
-        // Save the updated account back to the database
-        accountRepository.save(account);
-        return new ResponseEntity<>(account, HttpStatus.OK);
+
+        // Guardar los cambios en el repositorio
+        Account updatedAccount = accountRepository.save(account);
+
+        return new ResponseEntity<>(updatedAccount, HttpStatus.OK);
     }
+
+
 
 }

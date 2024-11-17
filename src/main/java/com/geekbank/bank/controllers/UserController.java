@@ -140,7 +140,12 @@ public class UserController {
         Optional<User> userOptional = userRepository.findByActivationToken(token);
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-            Account account = accountService.getAccountsByUserId(user.getId());
+            Optional<Account> optionalAccount = accountService.getAccountsByUserId(user.getId());
+            if (!optionalAccount.isPresent()){
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+            }
+            Account account = optionalAccount.get();
             accountService.changeVerificationStatus(account.getId(), VerificationStatus.VERIFIED);
             user.setPassword(passwordEncoder.encode(newPassword));
             user.setEnabled(true);
