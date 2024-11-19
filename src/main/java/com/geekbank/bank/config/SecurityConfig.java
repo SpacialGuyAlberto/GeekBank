@@ -76,7 +76,7 @@ public class SecurityConfig {
                                 "/api/currency", "/api/recommendations/content-based/**",
                                 "/api/manual-orders/**",
                                 "/api/main-screen-gift-cards/**", "api/transactions/verifyPayment",
-                                "api/transactions/verify-unmatched-payment"
+                                "api/transactions/verify-unmatched-payment", "/api/paypal/**"
 
                         ).permitAll()
                         .anyRequest().authenticated()
