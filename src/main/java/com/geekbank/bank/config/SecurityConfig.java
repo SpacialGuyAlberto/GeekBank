@@ -55,7 +55,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/ws/**", "/api/transactions/{transactionId}", "/api/transactions/cancel/**").permitAll()
-                        .requestMatchers("/api/auth/registerUser",
+                        .requestMatchers("/api/auth/registerUser", "/api/auth/check-auth",
                                 "/api/auth/registerUserByAdmin", "/api/auth/activate",
                                 "/api/auth/validate-password","/api/auth/login",
                                 "/api/auth/google-login", "/api/auth/logout", "/api/auth/reset-password",
