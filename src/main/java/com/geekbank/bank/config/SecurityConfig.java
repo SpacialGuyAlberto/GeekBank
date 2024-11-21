@@ -1,8 +1,10 @@
 package com.geekbank.bank.config;
 
+import com.geekbank.bank.components.JwtAuthenticationFilter;
 import com.geekbank.bank.filters.JwtRequestFilter;
 import com.geekbank.bank.repositories.UserRepository;
 import com.geekbank.bank.services.UserDetailsServiceImpl;
+import com.geekbank.bank.util.JwtTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -40,10 +42,12 @@ public class SecurityConfig {
     private JwtRequestFilter jwtRequestFilter;
     @Value("${DOMAIN_ORIGIN_URL}")
     private String frontendUrl;
+    private final JwtTokenUtil jwtTokenUtil;
 
     private final UserDetailsServiceImpl userDetailsService;
 
-    public SecurityConfig(UserDetailsServiceImpl userDetailsService) {
+    public SecurityConfig(JwtTokenUtil jwtTokenUtil, UserDetailsServiceImpl userDetailsService) {
+        this.jwtTokenUtil = jwtTokenUtil;
         this.userDetailsService = userDetailsService;
     }
 
@@ -55,7 +59,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/ws/**", "/api/transactions/{transactionId}", "/api/transactions/cancel/**").permitAll()
-                        .requestMatchers("/api/auth/registerUser",
+                        .requestMatchers("/api/auth/registerUser", "/api/auth/check-auth",
                                 "/api/auth/registerUserByAdmin", "/api/auth/activate",
                                 "/api/auth/validate-password","/api/auth/login",
                                 "/api/auth/google-login", "/api/auth/logout", "/api/auth/reset-password",
@@ -76,7 +80,7 @@ public class SecurityConfig {
                                 "/api/currency", "/api/recommendations/content-based/**",
                                 "/api/manual-orders/**",
                                 "/api/main-screen-gift-cards/**", "api/transactions/verifyPayment",
-                                "api/transactions/verify-unmatched-payment", "/api/paypal/**"
+                                "api/transactions/verify-unmatched-payment", "/api/paypal/**", "/api/auth/check-auth"
 
                         ).permitAll()
                         .anyRequest().authenticated()
@@ -89,9 +93,15 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+//        http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(jwtTokenUtil, userDetailsService);
     }
 
     @Bean
