@@ -83,19 +83,16 @@ public class LoginController {
 
             User user = userService.findByEmail(loginRequest.getEmail()).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-            // Crear la cookie utilizando ResponseCookie
             ResponseCookie jwtCookie = ResponseCookie.from("jwtToken", jwtToken)
                     .httpOnly(true)
-                    .secure(true) // Asegúrate de que tu aplicación esté bajo HTTPS
+                    .secure(false)
                     .path("/")
                     .maxAge(Duration.ofDays(1))
-                    .sameSite("Strict") // O "Lax" según tus necesidades
+                    .sameSite("Lax")
                     .build();
 
-            // Agregar la cookie a la respuesta
             response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
 
-            // Devolver solo el userId en el cuerpo de la respuesta
             Map<String, String> responseBody = new HashMap<>();
             responseBody.put("userId", String.valueOf(user.getId()));
             return ResponseEntity.ok(responseBody);

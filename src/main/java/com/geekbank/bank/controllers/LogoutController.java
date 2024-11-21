@@ -35,7 +35,7 @@ public class LogoutController {
     public ResponseEntity<Void> logout(HttpServletResponse response) {
         Cookie jwtCookie = new Cookie("jwtToken", null);
         jwtCookie.setHttpOnly(true);
-        jwtCookie.setSecure(true);
+        jwtCookie.setSecure(false);
         jwtCookie.setPath("/");
         jwtCookie.setMaxAge(0); // Eliminar la cookie
         response.addCookie(jwtCookie);
