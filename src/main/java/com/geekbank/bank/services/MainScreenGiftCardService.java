@@ -27,11 +27,6 @@ public class MainScreenGiftCardService {
         this.kinguinService = kinguinService;
     }
 
-    /**
-     * Obtiene todos los elementos de tarjetas de regalo para la pantalla principal con sus detalles.
-     *
-     * @return Lista de MainScreenGiftCardItemDTO
-     */
     public List<MainScreenGiftCardItemDTO> getMainScreenGiftCardItems() {
         List<MainScreenGiftCardItem> mainScreenGiftCardItems = mainScreenGiftCardItemRepository.findAll();
         return mainScreenGiftCardItems.stream()
@@ -43,12 +38,6 @@ public class MainScreenGiftCardService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Agrega una lista de productos como elementos de tarjetas de regalo para la pantalla principal.
-     *
-     * @param productIds Lista de IDs de productos
-     * @return Lista de MainScreenGiftCardItem agregados
-     */
     public List<MainScreenGiftCardItem> addItems(List<Long> productIds) {
         List<MainScreenGiftCardItem> newItems = productIds.stream()
                 .map(productId -> {
@@ -61,15 +50,10 @@ public class MainScreenGiftCardService {
         return newItems;
     }
 
-    /**
-     * Elimina los elementos de tarjetas de regalo para la pantalla principal basados en una lista de IDs de productos.
-     *
-     * @param productIds Lista de IDs de productos a eliminar
-     */
     @Transactional
     public void removeItems(List<Long> productIds) {
         logger.debug("Intentando eliminar elementos de tarjetas de regalo con IDs de producto: {}", productIds);
-        mainScreenGiftCardItemRepository.deleteByProductIdIn(productIds);
+        mainScreenGiftCardItemRepository.deleteAll();
         List<MainScreenGiftCardItem> remainingItems = mainScreenGiftCardItemRepository.findByProductIdIn(productIds);
         if (remainingItems.isEmpty()) {
             logger.debug("Se eliminaron correctamente los elementos de tarjetas de regalo para los IDs de producto: {}", productIds);
