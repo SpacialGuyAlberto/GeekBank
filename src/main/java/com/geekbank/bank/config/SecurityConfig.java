@@ -63,6 +63,7 @@ public class SecurityConfig {
                                 "/api/auth/registerUserByAdmin", "/api/auth/activate",
                                 "/api/auth/validate-password","/api/auth/login",
                                 "/api/auth/google-login", "/api/auth/logout", "/api/auth/reset-password",
+                                "/api/accounts/**", "/api/accounts/apply-balance/",
                                 "/api/home", "/api/gift-cards/**",
                                 "/api/kinguin-gift-cards/**", "/api/users/**",
                                 "/api/public/**", "/api/cart", "/api/cart/**",

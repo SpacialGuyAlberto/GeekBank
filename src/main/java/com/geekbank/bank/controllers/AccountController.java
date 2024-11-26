@@ -1,6 +1,7 @@
 package com.geekbank.bank.controllers;
 
 import com.geekbank.bank.models.Account;
+import com.geekbank.bank.repositories.AccountRepository;
 import com.geekbank.bank.services.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -10,16 +11,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 
-import java.util.List;
+import java.math.BigDecimal;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/accounts")
 public class AccountController {
-
+    private final AccountRepository accountRepository;
     private final AccountService accountService;
     @Autowired
-    public AccountController(AccountService accountService) {
+    public AccountController(AccountRepository accountRepository, AccountService accountService) {
+        this.accountRepository = accountRepository;
         this.accountService = accountService;
     }
 
@@ -47,4 +49,28 @@ public class AccountController {
         accountService.deleteAccount(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
+    @PostMapping("/apply-balance/{id}")
+    public ResponseEntity<Account> applyBalance(@PathVariable("id") Long id, @RequestParam Double amount) {
+        // Recuperar la cuenta utilizando el AccountService
+        Optional<Account> optionalAccount = accountService.getAccountsByUserId(id);
+
+        if (!optionalAccount.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        // Obtener la cuenta del Optional
+        Account account = optionalAccount.get();
+
+        // Actualizar el balance de la cuenta
+        account.setBalance(account.getBalance() + amount);
+
+        // Guardar los cambios en el repositorio
+        Account updatedAccount = accountRepository.save(account);
+
+        return new ResponseEntity<>(updatedAccount, HttpStatus.OK);
+    }
+
+
+
 }

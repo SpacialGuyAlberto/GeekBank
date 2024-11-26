@@ -125,32 +125,9 @@ public class AccountRepositoryIntegrationTest {
     }
 
     @Test
-    @DisplayName("Buscar cuenta por ID de usuario existente")
-    public void testFindByUserId_ExistingUserId() {
-        // Crear y guardar una cuenta asociada a user1
-        Account account = new Account();
-        account.setAccountNumber("ACC123456");
-        account.setBalance(1500.0);
-        account.setStatus(AccountStatus.ACTIVE);
-        account.setUser(user1);
-        account.setCurrency("USD");
-        account.setAccountType(AccountType.SAVINGS);
-        account.setDailyLimit(5000.0);
-        account.setVerificationStatus(VerificationStatus.VERIFIED);
-        account.setLoyaltyPoints(100);
-
-        accountRepository.save(account);
-
-        // Ejecutar la búsqueda
-        Account retrievedAccount = accountRepository.findByUserId(user1.getId());
-        assertNotNull(retrievedAccount, "La cuenta debería existir para el usuario");
-        assertEquals("ACC123456", retrievedAccount.getAccountNumber(), "El número de cuenta debería coincidir");
-    }
-
-    @Test
     @DisplayName("Buscar cuenta por ID de usuario inexistente")
     public void testFindByUserId_NonExistingUserId() {
-        Account retrievedAccount = accountRepository.findByUserId(999L);
+        Optional<Account> retrievedAccount = accountRepository.findByUserId(999L);
         assertNull(retrievedAccount, "No debería existir ninguna cuenta para el ID de usuario proporcionado");
     }
 

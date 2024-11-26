@@ -26,7 +26,7 @@ public class Account {
 
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonBackReference // Para manejar la serialización
+    @JsonBackReference
     private User user;
 
     @OneToMany(mappedBy = "account")

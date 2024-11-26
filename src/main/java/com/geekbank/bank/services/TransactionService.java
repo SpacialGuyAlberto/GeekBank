@@ -12,7 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.geekbank.bank.exceptions.ResourceNotFoundException;
+import com.geekbank.bank.exceptions.InsufficientBalanceException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.PriorityBlockingQueue;
@@ -127,6 +128,83 @@ public class TransactionService {
         return savedTransaction;
     }
 
+    @Transactional
+    public Transaction purchaseWithBalance(Long userId, String orderRequestNumber, List<OrderRequest.Product> products, String phoneNumber) {
+        // 1. Recuperar el usuario
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + userId));
+
+        // 2. Calcular el costo total en USD
+        double totalAmountUsd = products.stream()
+                .mapToDouble(product -> product.getPrice() * product.getQty())
+                .sum();
+
+        // 3. Obtener la tasa de cambio USD a HNL
+        double exchangeRate = currencyService.getExchangeRateUSDtoHNL();
+
+        // 4. Convertir el monto a HNL
+        double totalAmountHnl = currencyService.convertUsdToHnl(totalAmountUsd, exchangeRate);
+
+        // 5. Recuperar la cuenta del usuario
+        Account account = accountRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cuenta no encontrada para el usuario con ID: " + userId));
+
+        // 6. Verificar si el saldo es suficiente
+        if (account.getBalance() < totalAmountUsd) {
+            throw new InsufficientBalanceException("Saldo insuficiente para realizar la compra.");
+        }
+
+        // 7. Deducir el monto del balance
+        account.setBalance(account.getBalance() - totalAmountUsd);
+        accountRepository.save(account);
+
+        // 8. Crear una nueva transacción
+        Transaction transaction = new Transaction();
+        transaction.setAmountUsd(totalAmountUsd);
+        transaction.setAmountHnl(totalAmountHnl);
+        transaction.setExchangeRate(exchangeRate);
+        transaction.setUser(user);
+        transaction.setManual(false);
+        transaction.setExpiresAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES));
+        transaction.setType(TransactionType.BALANCE_PURCHASE);
+        transaction.setTimestamp(LocalDateTime.now());
+        transaction.setTransactionNumber(generateTransactionNumber());
+        transaction.setDescription("Compra con balance");
+        transaction.setPhoneNumber(phoneNumber);
+        transaction.setOrderRequestNumber(orderRequestNumber);
+        transaction.setStatus(TransactionStatus.COMPLETED);
+        transaction.setTempPin(null);
+
+        // 9. Asociar los productos a la transacción
+        if (products != null && products.size() > 10) {
+            throw new IllegalArgumentException("No se pueden agregar más de 10 productos por transacción.");
+        }
+
+        List<TransactionProduct> transactionProducts = products.stream().map(productRequest -> {
+            Long productId = (long) productRequest.getKinguinId();
+            TransactionProduct transactionProduct = new TransactionProduct();
+            transactionProduct.setTransaction(transaction);
+            transactionProduct.setProductId(productId);
+            transactionProduct.setQuantity(productRequest.getQty());
+            return transactionProduct;
+        }).collect(Collectors.toList());
+
+        transaction.setProducts(transactionProducts);
+
+        // 10. Guardar la transacción en la base de datos
+        Transaction savedTransaction = transactionRepository.save(transaction);
+
+        // 11. Notificar al usuario vía WebSocket
+        webSocketController.notifyTransactionStatus(
+                phoneNumber,
+                TransactionStatus.COMPLETED.name(),
+                "Compra realizada exitosamente utilizando tu balance.",
+                savedTransaction.getTransactionNumber()
+        );
+
+        return savedTransaction;
+    }
+
     public ResponseEntity<UnmatchedPaymentResponseDto> verifyUnmatchedPaymentAmount(String referenceNumber, String phoneNumber, double expectedAmount) {
         UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumberAndPhoneNumber(referenceNumber, phoneNumber);
 
@@ -168,6 +246,7 @@ public class TransactionService {
 
         return ResponseEntity.ok(response);
     }
+
 
 
 

@@ -53,7 +53,7 @@ public class AccountService {
         return Optional.ofNullable(accountRepository.findByAccountNumber(accountNumber));
     }
 
-    public Account getAccountsByUserId(Long userId) {
+    public Optional<Account> getAccountsByUserId(Long userId) {
         return accountRepository.findByUserId(userId);
     }
 
