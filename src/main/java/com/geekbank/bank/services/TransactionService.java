@@ -64,7 +64,17 @@ public class TransactionService {
     }
 
     @Transactional
-    public Transaction createTransaction(User user, String guestId, Long gameUserId, String orderRequestNumber, double amountUSD, TransactionType type, String description, String phoneNumber, List<OrderRequest.Product> products, Boolean isManual) {
+    public Transaction createTransaction(User user,
+                                         String guestId,
+                                         Long gameUserId,
+                                         String orderRequestNumber,
+                                         double amountUSD,
+                                         TransactionType type,
+                                         String description,
+                                         String phoneNumber,
+                                         List<OrderRequest.Product> products,
+                                         Boolean isManual
+    ) {
         double exchangeRate = currencyService.getExchangeRateUSDtoHNL();
 
         double amountHNL = currencyService.convertUsdToHnl(amountUSD, exchangeRate);
@@ -205,50 +215,76 @@ public class TransactionService {
         return savedTransaction;
     }
 
-    public ResponseEntity<UnmatchedPaymentResponseDto> verifyUnmatchedPaymentAmount(String referenceNumber, String phoneNumber, double expectedAmount) {
-        UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumberAndPhoneNumber(referenceNumber, phoneNumber);
+    @Transactional
+    public Transaction createTransactionForVerifiedTigoPayment( OrderRequest orderRequest) {
+        UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumber(orderRequest.getRefNumber());
 
-        if (unmatchedPayment == null) {
-            return ResponseEntity.status(404).body(null);
+        if (!unmatchedPayment.isVerified()){
+            throw new RuntimeException("El pago encontrado no ha sido verificado.");
         }
 
-        double receivedAmount = unmatchedPayment.getAmountReceived();
-        double difference = receivedAmount - expectedAmount;
-        String message;
-        List<String> options;
+        double amountReceived = unmatchedPayment.getAmountReceived();
+        double orderAmount = orderRequest.getAmount();
 
-        if (difference == 0) {
-            message = "El pago coincide con el monto esperado.";
-            options = null;  // No hay opciones adicionales cuando no hay diferencia
-        } else if (difference > 0) {
-            message = "Hay una diferencia en el monto del pago.";
-            options = Arrays.asList(
-                    "Apply the difference as a balance",
-                    difference > 1 ? "Return the difference" : "No se puede devolver la diferencia (debe ser mayor a 1)",
-                    "Adjust the payment to match the expected amount"
-            );
+        TransactionType transactionType = TransactionType.PURCHASE;
+        if (orderRequest.getProducts() != null && !orderRequest.getProducts().isEmpty()) {
+            OrderRequest.Product firstProduct = orderRequest.getProducts().get(0);
+            if (firstProduct.getKinguinId() == -1) {
+                transactionType = TransactionType.BALANCE_PURCHASE;
+            }
+        }
+
+        Transaction transaction = new Transaction();
+        transaction.setAmountUsd(orderAmount);
+        double exchangeRate = currencyService.getExchangeRateUSDtoHNL();
+        transaction.setExchangeRate(exchangeRate);
+        transaction.setAmountHnl(currencyService.convertUsdToHnl(orderAmount, exchangeRate));
+
+        if (orderRequest.getUserId() != null) {
+            User user = userRepository.findById(orderRequest.getUserId())
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado."));
+            transaction.setUser(user);
+        } else if (orderRequest.getGuestId() != null && !orderRequest.getGuestId().isEmpty()) {
+            transaction.setGuestId(orderRequest.getGuestId());
         } else {
-            message = "El monto recibido es menor al monto esperado.";
-            options = Arrays.asList(
-                    "Quiero mi dinero de nuevo",
-                    "Combinar este pago con otro nuevo pago"
-            );
+            throw new RuntimeException("Debe proporcionar userId o guestId.");
         }
 
-        UnmatchedPaymentResponseDto response = new UnmatchedPaymentResponseDto(
-                unmatchedPayment,
-                receivedAmount,
-                expectedAmount,
-                difference,
-                message,
-                options
-        );
+        transaction.setGameUserId(orderRequest.getGameUserId());
+        transaction.setManual(orderRequest.getManual() != null ? orderRequest.getManual() : false);
+        transaction.setExpiresAt(orderRequest.getManual() != null && orderRequest.getManual() ?
+                LocalDateTime.now().plusMinutes(600) :
+                LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES));
+        transaction.setType(transactionType);
+        transaction.setTimestamp(LocalDateTime.now());
+        transaction.setTransactionNumber(generateTransactionNumber());
+        transaction.setDescription("Description");
+        transaction.setPhoneNumber(orderRequest.getPhoneNumber());
+        transaction.setOrderRequestNumber(orderRequest.getOrderRequestId());
+        transaction.setTempPin(null);
+        transaction.setTempPin(null);
+        transaction.setStatus(TransactionStatus.COMPLETED);
 
-        return ResponseEntity.ok(response);
+        if (orderRequest.getProducts() != null && orderRequest.getProducts().size() > 10) {
+            throw new IllegalArgumentException("No se pueden agregar más de 10 productos por transacción.");
+        }
+
+        List<TransactionProduct> transactionProducts = orderRequest.getProducts().stream().map(productRequest -> {
+            Long productId = (long) productRequest.getKinguinId();
+            TransactionProduct transactionProduct = new TransactionProduct();
+            transactionProduct.setTransaction(transaction);
+            transactionProduct.setProductId(productId);
+            transactionProduct.setQuantity(productRequest.getQty());
+            return transactionProduct;
+        }).collect(Collectors.toList());
+        transaction.setProducts(transactionProducts);
+
+        transaction.setStatus(TransactionStatus.COMPLETED);
+
+        Transaction savedTransaction = transactionRepository.save(transaction);
+
+        return savedTransaction;
     }
-
-
-
 
     @Transactional
     public Transaction verifyPaymentAndCreateOrder(String refNumber, String phoneNumber, OrderRequest orderRequest) {
@@ -320,7 +356,6 @@ public class TransactionService {
         }).collect(Collectors.toList());
         transaction.setProducts(transactionProducts);
 
-        // Guardar la transacción
         Transaction savedTransaction = transactionRepository.save(transaction);
 
         // Actualizar estado

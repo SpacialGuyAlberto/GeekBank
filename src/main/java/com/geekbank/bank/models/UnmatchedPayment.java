@@ -20,6 +20,8 @@ public class UnmatchedPayment {
     @Column(name = "differenceredeemed")
     private boolean differenceRedeemed = false;
 
+    @Column(name= "verified")
+    private boolean verified = false;
 
     @OneToOne
     @JoinColumn(name = "sms_message_id")
@@ -97,5 +99,12 @@ public class UnmatchedPayment {
 
     public void setDifferenceRedeemed(boolean differenceRedeemed) {
         this.differenceRedeemed = differenceRedeemed;
+    }
+    public boolean isVerified() {
+        return verified;
+    }
+
+    public void setVerified(boolean verified) {
+        this.verified = verified;
     }
 }

@@ -6,6 +6,7 @@ import com.geekbank.bank.models.*;
 import com.geekbank.bank.repositories.UnmatchedPaymentRepository;
 import com.geekbank.bank.repositories.UserRepository;
 import com.geekbank.bank.services.*;
+import org.aspectj.weaver.ast.Or;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +38,28 @@ public class OrderController {
     private SmsService smsService;
     @Autowired
     private UnmatchedPaymentRepository unmatchedPaymentRepository;
+
+
+
+    @PostMapping("/create-order-for-verified-tigo-payment")
+    public ResponseEntity<Transaction> placeOrderAndTransactionForTigoVerifiedPayment(@RequestBody OrderRequest orderRequest){
+        User user = null;
+
+        if (orderRequest.getUserId() != null){
+            user = userRepository.findById(orderRequest.getUserId())
+                    .orElse(null);
+        }
+
+        Transaction transaction = transactionService.createTransactionForVerifiedTigoPayment(orderRequest);
+
+        UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumber(orderRequest.getRefNumber());
+        if (!unmatchedPayment.isConsumed()){
+            unmatchedPayment.setConsumed(true);
+            unmatchedPaymentRepository.save(unmatchedPayment);
+        }
+
+        return ResponseEntity.ok(transaction);
+    }
 
 
     @PostMapping
