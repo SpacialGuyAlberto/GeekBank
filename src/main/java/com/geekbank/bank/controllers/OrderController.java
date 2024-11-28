@@ -3,6 +3,7 @@ package com.geekbank.bank.controllers;
 import com.geekbank.bank.exceptions.InsufficientBalanceException;
 import com.geekbank.bank.exceptions.ResourceNotFoundException;
 import com.geekbank.bank.models.*;
+import com.geekbank.bank.repositories.UnmatchedPaymentRepository;
 import com.geekbank.bank.repositories.UserRepository;
 import com.geekbank.bank.services.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,8 @@ public class OrderController {
 
     @Autowired
     private SmsService smsService;
+    @Autowired
+    private UnmatchedPaymentRepository unmatchedPaymentRepository;
 
 
     @PostMapping
@@ -88,6 +91,13 @@ public class OrderController {
         Long tempPin = savedTransaction.getTempPin();
         TransactionStatus transactionStatus = savedTransaction.getStatus();
         String responseMessage = "Order placed successfully: " + orderRequest.getOrderRequestId() + "\n Transaction number: "  + transactionNumber + "\n PIN" + tempPin.toString() + "\n Status" + transactionStatus.name();
+
+
+        UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumber(orderRequest.getRefNumber());
+        if (!unmatchedPayment.isConsumed()){
+            unmatchedPayment.setConsumed(true);
+            unmatchedPaymentRepository.save(unmatchedPayment);
+        }
 
         return ResponseEntity.ok(responseMessage);
     }

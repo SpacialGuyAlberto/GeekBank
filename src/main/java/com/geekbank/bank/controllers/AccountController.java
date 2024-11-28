@@ -1,7 +1,9 @@
 package com.geekbank.bank.controllers;
 
 import com.geekbank.bank.models.Account;
+import com.geekbank.bank.models.UnmatchedPayment;
 import com.geekbank.bank.repositories.AccountRepository;
+import com.geekbank.bank.repositories.UnmatchedPaymentRepository;
 import com.geekbank.bank.services.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,8 @@ import java.util.Optional;
 public class AccountController {
     private final AccountRepository accountRepository;
     private final AccountService accountService;
+    @Autowired
+    private UnmatchedPaymentRepository unmatchedPaymentRepository;
     @Autowired
     public AccountController(AccountRepository accountRepository, AccountService accountService) {
         this.accountRepository = accountRepository;
@@ -50,27 +54,66 @@ public class AccountController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+//    @PostMapping("/apply-balance/{id}")
+//    public ResponseEntity<Account> applyBalance(@PathVariable("id") Long id,
+//                                                @RequestParam Double amount,
+//                                                @RequestParam String paymentRefNumber) {
+//        Optional<Account> optionalAccount = accountService.getAccountsByUserId(id);
+//        Account account = optionalAccount.get();
+//
+//        UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumber(paymentRefNumber);
+//        if (!unmatchedPayment.isDifferenceRedeemed()){
+//            unmatchedPayment.setDifferenceRedeemed(true);
+//            unmatchedPaymentRepository.save(unmatchedPayment);
+//            if (!optionalAccount.isPresent()) {
+//                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+//            }
+//
+//
+//            account.setBalance(account.getBalance() + amount);
+//            Account updatedAccount = accountRepository.save(account);
+//            return new ResponseEntity<>(updatedAccount, HttpStatus.OK);
+//
+//        } else {
+//            return new ResponseEntity<>(account, HttpStatus.OK);
+//        }
+//    }
+
+
+
     @PostMapping("/apply-balance/{id}")
-    public ResponseEntity<Account> applyBalance(@PathVariable("id") Long id, @RequestParam Double amount) {
-        // Recuperar la cuenta utilizando el AccountService
+    public ResponseEntity<?> applyBalance(
+            @PathVariable("id") Long id,
+            @RequestParam Double amount,
+            @RequestParam String paymentRefNumber) {
+
         Optional<Account> optionalAccount = accountService.getAccountsByUserId(id);
 
         if (!optionalAccount.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("Cuenta no encontrada.", HttpStatus.NOT_FOUND);
         }
 
-        // Obtener la cuenta del Optional
         Account account = optionalAccount.get();
+        UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumber(paymentRefNumber);
 
-        // Actualizar el balance de la cuenta
-        account.setBalance(account.getBalance() + amount);
+        if (unmatchedPayment == null) {
+            return new ResponseEntity<>("No se encontró un pago con el número de referencia proporcionado.", HttpStatus.BAD_REQUEST);
+        }
 
-        // Guardar los cambios en el repositorio
-        Account updatedAccount = accountRepository.save(account);
+        if (!unmatchedPayment.isDifferenceRedeemed()) {
+            unmatchedPayment.setDifferenceRedeemed(true);
+            unmatchedPaymentRepository.save(unmatchedPayment);
 
-        return new ResponseEntity<>(updatedAccount, HttpStatus.OK);
+            account.setBalance(account.getBalance() + amount);
+            Account updatedAccount = accountRepository.save(account);
+
+            return new ResponseEntity<>(updatedAccount, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(
+                    "Un pago con ese número de referencia ya ha sido redimido. Por favor, ingrese otro número.",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
     }
-
-
 
 }
