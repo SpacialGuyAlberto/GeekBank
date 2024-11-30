@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
@@ -16,7 +17,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<FreeFireDiamondProduct> findByDenominationNotNull();
 
     // Obtener productos por nombre
-    List<Product> findByName(String name);
+    Product findByName(String name);
+    Optional<Product> findByProductId(Long productId);
     List<Product> findAll();
 
     // Obtener productos por rango de precio

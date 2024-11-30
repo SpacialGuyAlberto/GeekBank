@@ -1,6 +1,8 @@
 package com.geekbank.bank.services;
 
+import com.geekbank.bank.models.Product;
 import com.geekbank.bank.models.Transaction;
+import com.geekbank.bank.repositories.ProductRepository;
 import com.geekbank.bank.repositories.TransactionRepository;
 import com.twocaptcha.TwoCaptcha;
 import com.twocaptcha.captcha.HCaptcha;
@@ -17,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ManualOrderService {
@@ -35,6 +38,8 @@ public class ManualOrderService {
 
     private final TwoCaptcha solver;
     private Transaction transaction;
+    private Product product;
+    private ProductRepository productRepository;
 
     private TransactionRepository transactionRepository;
 
@@ -47,9 +52,12 @@ public class ManualOrderService {
      *
      * @return Mensaje de estado de la ejecución.
      */
+
     public String runManualOrder(String transactionNumber) {
 
         Transaction transaction = transactionRepository.findByTransactionNumber(transactionNumber);
+        Optional<Product> product = productRepository.findById(transaction.getProducts().get(0).getProductId());
+
         // Configurar ChromeOptions
         ChromeOptions options = new ChromeOptions();
         // Comenta o elimina esta línea para ver el navegador durante la depuración
