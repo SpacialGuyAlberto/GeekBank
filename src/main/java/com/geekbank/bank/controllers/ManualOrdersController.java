@@ -24,8 +24,8 @@ public class ManualOrdersController {
      *
      * @return Mensaje de estado de la ejecución.
      */
-    @PostMapping("/run")
-    public ResponseEntity<String> runManualOrder(@RequestBody String transactionNumber) {
+    @PostMapping("/run/{transactionNumber}")
+    public ResponseEntity<String> runManualOrder(@PathVariable String transactionNumber) {
         String result = manualOrderService.runManualOrder(transactionNumber);
         if (result.startsWith("Interacción completada")) {
             return ResponseEntity.ok(result);

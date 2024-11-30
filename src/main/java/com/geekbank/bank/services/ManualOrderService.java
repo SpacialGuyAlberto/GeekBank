@@ -10,6 +10,7 @@ import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -37,14 +38,19 @@ public class ManualOrderService {
     private final String FIXED_SITEKEY = "df2f3ec1-3c26-4daa-97f3-22b71daccb97";
 
     private final TwoCaptcha solver;
+
     private Transaction transaction;
     private Product product;
+
+    @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
     private TransactionRepository transactionRepository;
 
     public ManualOrderService(@Value("${captcha.api.key}") String captchaApiKey) {
         this.solver = new TwoCaptcha(captchaApiKey);
+        this.transaction = transaction;
     }
 
     /**
@@ -55,8 +61,14 @@ public class ManualOrderService {
 
     public String runManualOrder(String transactionNumber) {
 
-        Transaction transaction = transactionRepository.findByTransactionNumber(transactionNumber);
-        Optional<Product> product = productRepository.findById(transaction.getProducts().get(0).getProductId());
+        System.out.println("Transaction Number: " + transactionNumber);
+        Transaction transaction = transactionRepository.findTransactionByNumber(transactionNumber);
+        if (transaction == null) {
+            throw new IllegalArgumentException("Transaction not found for transaction number: " + transactionNumber);
+        }
+
+        Product product = productRepository.findByProductId(transaction.getProducts().get(0).getProductId());
+
 
         // Configurar ChromeOptions
         ChromeOptions options = new ChromeOptions();
@@ -152,7 +164,8 @@ public class ManualOrderService {
             System.out.println("Página de Free Fire cargada correctamente.");
 
             // Seleccionar "100 Diamantes + Bono 10"
-            seleccionarProducto(driver, wait, "100 Diamantes + Bono 10");
+//            seleccionarProducto(driver, wait, "100 Diamantes + Bono 10");
+            seleccionarProducto(driver, wait, product.getName());
 
             // Esperar a que la selección se procese
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".selection-tile__label")));
