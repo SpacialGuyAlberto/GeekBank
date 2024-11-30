@@ -1,5 +1,7 @@
 package com.geekbank.bank.services;
 
+import com.geekbank.bank.models.Transaction;
+import com.geekbank.bank.repositories.TransactionRepository;
 import com.twocaptcha.TwoCaptcha;
 import com.twocaptcha.captcha.HCaptcha;
 import org.openqa.selenium.*;
@@ -32,6 +34,9 @@ public class ManualOrderService {
     private final String FIXED_SITEKEY = "df2f3ec1-3c26-4daa-97f3-22b71daccb97";
 
     private final TwoCaptcha solver;
+    private Transaction transaction;
+
+    private TransactionRepository transactionRepository;
 
     public ManualOrderService(@Value("${captcha.api.key}") String captchaApiKey) {
         this.solver = new TwoCaptcha(captchaApiKey);
@@ -42,7 +47,9 @@ public class ManualOrderService {
      *
      * @return Mensaje de estado de la ejecución.
      */
-    public String runManualOrder() {
+    public String runManualOrder(String transactionNumber) {
+
+        Transaction transaction = transactionRepository.findByTransactionNumber(transactionNumber);
         // Configurar ChromeOptions
         ChromeOptions options = new ChromeOptions();
         // Comenta o elimina esta línea para ver el navegador durante la depuración

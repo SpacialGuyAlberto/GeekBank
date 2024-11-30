@@ -31,6 +31,8 @@ public class TransactionService {
     @Autowired
     private SmsMessageRepository smsMessageRepository;
     @Autowired
+    private final SendGridEmailService emailService;
+    @Autowired
     private GiftCardRepository giftCardRepository;
     @Autowired
     private TransactionWebSocketController transactionWebSocketController;
@@ -55,6 +57,10 @@ public class TransactionService {
             100,
             Comparator.comparing(Transaction::getTimestamp)
     );
+
+    public TransactionService(SendGridEmailService emailService) {
+        this.emailService = emailService;
+    }
 
 
     private static Long generatePin() {
@@ -279,11 +285,11 @@ public class TransactionService {
             return transactionProduct;
         }).collect(Collectors.toList());
         transaction.setProducts(transactionProducts);
-//        transaction.setStatus(TransactionStatus.COMPLETED);
         if (orderRequest.getManual() == true){
             transaction.setStatus(TransactionStatus.AWAITING_MANUAL_PROCESSING);
             Transaction savedTransaction = transactionRepository.save(transaction);
             processManualTransaction(savedTransaction);
+            this.emailService.sendNotificationEmail("enkiluzlbel@gmail.com");
         } else {
             transaction.setStatus(TransactionStatus.COMPLETED);
         }

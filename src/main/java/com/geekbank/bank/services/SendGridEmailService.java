@@ -46,6 +46,32 @@ public class SendGridEmailService {
         }
     }
 
+    public void sendNotificationEmail(String to) {
+        Email from = new Email("lalbertomurillo1996@gmail.com"); // Cambia esto a tu email
+        Email toEmail = new Email(to);
+        String subject = "Nueva transaccion manual solicitada";
+        String body = "Se ha solicitado una nueva transaccion manual. Por favor complete la transaccion.";
+        Content content = new Content("text/html", body);
+        Mail mail = new Mail(from, subject, toEmail, content);
+
+        SendGrid sg = new SendGrid(sendGridApiKey);
+        Request request = new Request();
+
+        try {
+            request.setMethod(Method.POST);
+            request.setEndpoint("mail/send");
+            request.setBody(mail.build());
+
+            Response response = sg.api(request);
+            System.out.println("Response Code: " + response.getStatusCode());
+            System.out.println("Response Body: " + response.getBody());
+            System.out.println("Response Headers: " + response.getHeaders());
+        } catch (IOException ex) {
+            System.err.println("Failed to send email to: " + to);
+            ex.printStackTrace();
+        }
+    }
+
     public void sendSetPasswordEmail(User user) {
         // Configurar las direcciones de email
         Email from = new Email("lalbertomurillo1996@gmail.com");
@@ -87,7 +113,4 @@ public class SendGridEmailService {
             ex.printStackTrace();
         }
     }
-
-
-
 }
