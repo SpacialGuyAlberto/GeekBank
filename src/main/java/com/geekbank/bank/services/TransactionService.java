@@ -263,7 +263,8 @@ public class TransactionService {
         transaction.setOrderRequestNumber(orderRequest.getOrderRequestId());
         transaction.setTempPin(null);
         transaction.setTempPin(null);
-        transaction.setStatus(TransactionStatus.COMPLETED);
+
+
 
         if (orderRequest.getProducts() != null && orderRequest.getProducts().size() > 10) {
             throw new IllegalArgumentException("No se pueden agregar más de 10 productos por transacción.");
@@ -278,8 +279,14 @@ public class TransactionService {
             return transactionProduct;
         }).collect(Collectors.toList());
         transaction.setProducts(transactionProducts);
-
-        transaction.setStatus(TransactionStatus.COMPLETED);
+//        transaction.setStatus(TransactionStatus.COMPLETED);
+        if (orderRequest.getManual() == true){
+            transaction.setStatus(TransactionStatus.AWAITING_MANUAL_PROCESSING);
+            Transaction savedTransaction = transactionRepository.save(transaction);
+            processManualTransaction(savedTransaction);
+        } else {
+            transaction.setStatus(TransactionStatus.COMPLETED);
+        }
 
         Transaction savedTransaction = transactionRepository.save(transaction);
 
@@ -547,10 +554,10 @@ public class TransactionService {
         return transactionRepository.findByStatus(TransactionStatus.AWAITING_MANUAL_PROCESSING);
     }
 
-    public List<ManualVerificationWebSocketController.ManualVerificationTransactionDto> fetchPendingForApprovalTransaction(){
+    public List<ManualVerificationWebSocketController.ManualVerificationTransactionDto> fetchPendingForApprovalTransaction() {
         List<Transaction> transactions = transactionRepository.findByStatus(TransactionStatus.AWAITING_MANUAL_PROCESSING);
         return transactions.stream()
-                .map( transaction -> new ManualVerificationWebSocketController.ManualVerificationTransactionDto(
+                .map(transaction -> new ManualVerificationWebSocketController.ManualVerificationTransactionDto(
                         transaction.getTransactionNumber(),
                         transaction.getAmountUsd(),
                         transaction.getAmountHnl(),
@@ -560,8 +567,10 @@ public class TransactionService {
                         transaction.getUser() != null ? transaction.getUser().getEmail() : transaction.getGuestId(),
                         transaction.getProducts()
                 ))
+                .sorted(Comparator.comparing(ManualVerificationWebSocketController.ManualVerificationTransactionDto::getTimestamp).reversed())
                 .collect(Collectors.toList());
     }
+
 
     public Transaction findByTransactionNumber(String transactionNumber){
         return transactionRepository.findByTransactionNumber(transactionNumber);
