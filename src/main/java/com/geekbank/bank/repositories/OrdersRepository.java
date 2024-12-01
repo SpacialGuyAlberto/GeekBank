@@ -28,7 +28,7 @@ public interface OrdersRepository extends JpaRepository<Orders, Long> {
 
     List<Orders> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
 
-    List<Orders> findByTransaction_Id(Long transactionId);
+    Orders findByTransaction_Id(Long transactionId);
 
     List<Orders> findByProductsContains(Product product);
 

@@ -1,7 +1,9 @@
 package com.geekbank.bank.services;
 
+import com.geekbank.bank.models.Orders;
 import com.geekbank.bank.models.Product;
 import com.geekbank.bank.models.Transaction;
+import com.geekbank.bank.repositories.OrdersRepository;
 import com.geekbank.bank.repositories.ProductRepository;
 import com.geekbank.bank.repositories.TransactionRepository;
 import com.twocaptcha.TwoCaptcha;
@@ -40,7 +42,11 @@ public class ManualOrderService {
     private final TwoCaptcha solver;
 
     private Transaction transaction;
+    private Orders order;
     private Product product;
+
+    @Autowired
+    private OrdersRepository ordersRepository;
 
     @Autowired
     private ProductRepository productRepository;
@@ -53,18 +59,21 @@ public class ManualOrderService {
         this.transaction = transaction;
     }
 
-    /**
-     * Ejecuta el proceso de pedido manual utilizando Selenium WebDriver.
-     *
-     * @return Mensaje de estado de la ejecución.
-     */
 
     public String runManualOrder(String transactionNumber) {
+
+
 
         System.out.println("Transaction Number: " + transactionNumber);
         Transaction transaction = transactionRepository.findTransactionByNumber(transactionNumber);
         if (transaction == null) {
             throw new IllegalArgumentException("Transaction not found for transaction number: " + transactionNumber);
+        }
+
+        Orders order = ordersRepository.findByTransaction_Id(transaction.getId());
+
+        if (transaction == null){
+            throw new IllegalArgumentException("Order not found with this transaction number: " + transactionNumber);
         }
 
         Product product = productRepository.findByProductId(transaction.getProducts().get(0).getProductId());
@@ -91,7 +100,7 @@ public class ManualOrderService {
         driver.manage().window().setSize(new Dimension(1920, 1080));
 
         String hCaptchaResponse = null;
-        boolean captchaResolved = false; // Indicador de resolución del captcha
+        boolean captchaResolved = false;
 
         try {
             // Navegar a la página principal
