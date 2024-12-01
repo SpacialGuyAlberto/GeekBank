@@ -1,8 +1,7 @@
 package com.geekbank.bank.services;
 
-import com.geekbank.bank.models.KinguinGiftCard;
-import com.geekbank.bank.models.OrderRequest;
-import com.geekbank.bank.models.OrderResponse;
+import com.geekbank.bank.models.*;
+import com.geekbank.bank.repositories.OrdersRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
@@ -12,12 +11,17 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import com.geekbank.bank.services.SmsService;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @Service
 public class OrderService {
+
+    @Autowired
+    private OrdersRepository ordersRepository;
 
     private static final String KINGUIN_ORDER_URL = "https://gateway.kinguin.net/esa/api/v1/order";
     private static final String API_KEY = "77d96c852356b1c654a80f424d67048f";
@@ -29,11 +33,25 @@ public class OrderService {
     private SmsService smsService;
 
 
+    public Orders createOrder(OrderRequest orderRequest, Transaction transaction){
+        Orders order = new Orders();
+        order.setOrderRequestId(orderRequest.getOrderRequestId());
+        order.setTransaction(transaction);
+        order.setUserId(order.getUserId());
+        order.setGameUserId(order.getGameUserId());
+        order.setProducts(transaction.getProducts());
+        order.setPhoneNumber(orderRequest.getPhoneNumber());
+        order.setGuestId(orderRequest.getGuestId());
+        order.setRefNumber(orderRequest.getRefNumber());
+        order.setAmount(orderRequest.getAmount());
+        order.setManual(orderRequest.getManual());
+        order.setCreatedAt(LocalDateTime.now());
+
+        return ordersRepository.save(order);
+    }
 
     public OrderResponse placeOrder(OrderRequest orderRequest) {
-        // Calcular el precio total aquí o usar el valor enviado desde el frontend
 
-        // Crear la solicitud para Kinguin API
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Api-Key", API_KEY);
         headers.set("Content-Type", "application/json");

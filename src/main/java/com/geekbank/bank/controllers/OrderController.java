@@ -51,6 +51,7 @@ public class OrderController {
         }
 
         Transaction transaction = transactionService.createTransactionForVerifiedTigoPayment(orderRequest);
+        Orders order = orderService.createOrder(orderRequest, transaction);
 
         UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumber(orderRequest.getRefNumber());
         if (!unmatchedPayment.isConsumed()){
