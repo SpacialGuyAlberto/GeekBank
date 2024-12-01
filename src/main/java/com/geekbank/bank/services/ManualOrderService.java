@@ -69,7 +69,7 @@ public class ManualOrderService {
         if (transaction == null) {
             throw new IllegalArgumentException("Transaction not found for transaction number: " + transactionNumber);
         }
-
+//
         Orders order = ordersRepository.findByTransaction_Id(transaction.getId());
 
         if (transaction == null){
@@ -173,7 +173,8 @@ public class ManualOrderService {
             System.out.println("Página de Free Fire cargada correctamente.");
 
             // Seleccionar "100 Diamantes + Bono 10"
-//            seleccionarProducto(driver, wait, "100 Diamantes + Bono 10");
+            seleccionarProducto(driver, wait, "100 Diamantes + Bono 10");
+//            System.out.println("PRODUCT NAME: " + product.getName());
             seleccionarProducto(driver, wait, product.getName());
 
             // Esperar a que la selección se procese
