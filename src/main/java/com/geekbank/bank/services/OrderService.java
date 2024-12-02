@@ -35,7 +35,6 @@ public class OrderService {
 
     public Orders createOrder(OrderRequest orderRequest, Transaction transaction){
         Orders order = new Orders();
-        order.setOrderRequestId(orderRequest.getOrderRequestId());
         order.setTransaction(transaction);
         order.setUserId(order.getUserId());
         order.setGameUserId(order.getGameUserId());

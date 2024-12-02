@@ -2,6 +2,7 @@ package com.geekbank.bank.models;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -12,7 +13,7 @@ public class Orders {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = true, unique = true)
     private String orderRequestId;
 
     @Column(nullable = true)
@@ -43,17 +44,15 @@ public class Orders {
     @JoinColumn(name = "transaction_id", nullable = true)
     private Transaction transaction;
 
-    @ManyToMany
-    @JoinTable(
-            name = "order_products",
-            joinColumns = @JoinColumn(name = "order_id"),
-            inverseJoinColumns = @JoinColumn(name = "product_id")
-    )
-    private List<TransactionProduct> products;
+    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<TransactionProduct> products = new ArrayList<>();
+
 
     public Orders() {
         this.createdAt = LocalDateTime.now();
+        this.products = new ArrayList<>();
     }
+
 
     // Getters y Setters
 
@@ -150,6 +149,7 @@ public class Orders {
     }
 
     public void setProducts(List<TransactionProduct> products) {
-        this.products = products;
+        this.products = new ArrayList<>(products); // Crea una nueva lista basada en la existente
     }
+
 }
