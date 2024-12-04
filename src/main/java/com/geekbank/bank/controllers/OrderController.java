@@ -3,8 +3,12 @@ package com.geekbank.bank.controllers;
 import com.geekbank.bank.exceptions.InsufficientBalanceException;
 import com.geekbank.bank.exceptions.ResourceNotFoundException;
 import com.geekbank.bank.models.*;
+import com.geekbank.bank.repositories.OrdersRepository;
+import com.geekbank.bank.repositories.TransactionRepository;
+import com.geekbank.bank.repositories.UnmatchedPaymentRepository;
 import com.geekbank.bank.repositories.UserRepository;
 import com.geekbank.bank.services.*;
+import org.aspectj.weaver.ast.Or;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +27,7 @@ public class OrderController {
 
     @Autowired
     private OrderService orderService;
+    Orders orders;
     @Autowired
     private UserRepository userRepository;
 
@@ -30,10 +35,40 @@ public class OrderController {
     private TransactionService transactionService;
 
     @Autowired
+    private TransactionRepository transactionRepository;
+
+    @Autowired
     private OrderRequestStorageService orderRequestStorageService;
 
     @Autowired
     private SmsService smsService;
+    @Autowired
+    private UnmatchedPaymentRepository unmatchedPaymentRepository;
+    @Autowired
+    private OrdersRepository ordersRepository;
+
+
+
+    @PostMapping("/create-order-for-verified-tigo-payment")
+    public ResponseEntity<Transaction> placeOrderAndTransactionForTigoVerifiedPayment(@RequestBody OrderRequest orderRequest){
+        User user = null;
+
+        if (orderRequest.getUserId() != null){
+            user = userRepository.findById(orderRequest.getUserId())
+                    .orElse(null);
+        }
+
+        Transaction transaction = transactionService.createTransactionForVerifiedTigoPayment(orderRequest);
+        orderService.createOrder(orderRequest, transaction);
+
+        UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumber(orderRequest.getRefNumber());
+        if (!unmatchedPayment.isConsumed()){
+            unmatchedPayment.setConsumed(true);
+            unmatchedPaymentRepository.save(unmatchedPayment);
+        }
+
+        return ResponseEntity.ok(transaction);
+    }
 
 
     @PostMapping
@@ -89,6 +124,13 @@ public class OrderController {
         TransactionStatus transactionStatus = savedTransaction.getStatus();
         String responseMessage = "Order placed successfully: " + orderRequest.getOrderRequestId() + "\n Transaction number: "  + transactionNumber + "\n PIN" + tempPin.toString() + "\n Status" + transactionStatus.name();
 
+
+        UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumber(orderRequest.getRefNumber());
+        if (!unmatchedPayment.isConsumed()){
+            unmatchedPayment.setConsumed(true);
+            unmatchedPaymentRepository.save(unmatchedPayment);
+        }
+
         return ResponseEntity.ok(responseMessage);
     }
 
@@ -119,19 +161,6 @@ public class OrderController {
 
             return ResponseEntity.ok(response);
 
-//            TransactionResponse response = new TransactionResponse();
-//            response.setOrderRequestNumber(orderRequest.getOrderRequestId());
-//            response.setTransactionNumber(savedTransaction.getTransactionNumber());
-//            response.setTempPin(savedTransaction.getTempPin());
-//            response.setTransactionStatus(TransactionStatus.PENDING);
-//            System.out.println("MANUAL TRANSACTION : " + orderRequest.getManual());
-//
-//            String transactionNumber = savedTransaction.getTransactionNumber();
-//            Long tempPin = savedTransaction.getTempPin();
-//            TransactionStatus transactionStatus = savedTransaction.getStatus();
-//            String responseMessage = "Order placed successfully: " + orderRequest.getOrderRequestId() + "\n Transaction number: "  + transactionNumber + "\n PIN" + tempPin.toString() + "\n Status" + transactionStatus.name();
-//
-//            return ResponseEntity.ok(responseMessage);
 
         } catch (InsufficientBalanceException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Saldo insuficiente: " + e.getMessage());
@@ -142,4 +171,14 @@ public class OrderController {
         }
     }
 
+    @GetMapping("/find-by-transaction/{transactionNumber}")
+    public ResponseEntity<Orders> fetchOrder(@PathVariable("transactionNumber") String transactionNumber) {
+        try {
+            Transaction transaction = transactionRepository.findByTransactionNumber(transactionNumber);
+            Orders orders = ordersRepository.findByTransaction_Id(transaction.getId());
+            return ResponseEntity.ok(orders);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }

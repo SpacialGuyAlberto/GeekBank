@@ -1,11 +1,18 @@
 package com.geekbank.bank.services;
 
+import com.geekbank.bank.models.Orders;
+import com.geekbank.bank.models.Product;
+import com.geekbank.bank.models.Transaction;
+import com.geekbank.bank.repositories.OrdersRepository;
+import com.geekbank.bank.repositories.ProductRepository;
+import com.geekbank.bank.repositories.TransactionRepository;
 import com.twocaptcha.TwoCaptcha;
 import com.twocaptcha.captcha.HCaptcha;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ManualOrderService {
@@ -33,16 +41,44 @@ public class ManualOrderService {
 
     private final TwoCaptcha solver;
 
+    private Transaction transaction;
+    private Orders order;
+    private Product product;
+
+    @Autowired
+    private OrdersRepository ordersRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
+    private TransactionRepository transactionRepository;
+
     public ManualOrderService(@Value("${captcha.api.key}") String captchaApiKey) {
         this.solver = new TwoCaptcha(captchaApiKey);
+        this.transaction = transaction;
     }
 
-    /**
-     * Ejecuta el proceso de pedido manual utilizando Selenium WebDriver.
-     *
-     * @return Mensaje de estado de la ejecución.
-     */
-    public String runManualOrder() {
+
+    public String runManualOrder(String transactionNumber) {
+
+
+
+        System.out.println("Transaction Number: " + transactionNumber);
+        Transaction transaction = transactionRepository.findTransactionByNumber(transactionNumber);
+        if (transaction == null) {
+            throw new IllegalArgumentException("Transaction not found for transaction number: " + transactionNumber);
+        }
+//
+        Orders order = ordersRepository.findByTransaction_Id(transaction.getId());
+
+        if (transaction == null){
+            throw new IllegalArgumentException("Order not found with this transaction number: " + transactionNumber);
+        }
+
+        Product product = productRepository.findByProductId(transaction.getProducts().get(0).getProductId());
+
+
         // Configurar ChromeOptions
         ChromeOptions options = new ChromeOptions();
         // Comenta o elimina esta línea para ver el navegador durante la depuración
@@ -64,7 +100,7 @@ public class ManualOrderService {
         driver.manage().window().setSize(new Dimension(1920, 1080));
 
         String hCaptchaResponse = null;
-        boolean captchaResolved = false; // Indicador de resolución del captcha
+        boolean captchaResolved = false;
 
         try {
             // Navegar a la página principal
@@ -138,6 +174,8 @@ public class ManualOrderService {
 
             // Seleccionar "100 Diamantes + Bono 10"
             seleccionarProducto(driver, wait, "100 Diamantes + Bono 10");
+//            System.out.println("PRODUCT NAME: " + product.getName());
+            seleccionarProducto(driver, wait, product.getName());
 
             // Esperar a que la selección se procese
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".selection-tile__label")));

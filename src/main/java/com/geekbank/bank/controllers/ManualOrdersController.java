@@ -1,5 +1,7 @@
 package com.geekbank.bank.controllers;
 
+import com.geekbank.bank.models.Orders;
+import com.geekbank.bank.models.Transaction;
 import com.geekbank.bank.services.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +16,10 @@ public class ManualOrdersController {
 
     @Autowired
     private ManualOrderService manualOrderService;
-
+    @Autowired
+    private OrderService orderService;
+    private Orders order;
+    private Transaction transaction;
     /**
      * Endpoint para ejecutar el script de Selenium.
      * Método: POST
@@ -22,9 +27,10 @@ public class ManualOrdersController {
      *
      * @return Mensaje de estado de la ejecución.
      */
-    @PostMapping("/run")
-    public ResponseEntity<String> runManualOrder() {
-        String result = manualOrderService.runManualOrder();
+    @PostMapping("/run/{transactionNumber}")
+    public ResponseEntity<String> runManualOrder(@PathVariable String transactionNumber) {
+
+        String result = manualOrderService.runManualOrder(transactionNumber);
         if (result.startsWith("Interacción completada")) {
             return ResponseEntity.ok(result);
         } else {

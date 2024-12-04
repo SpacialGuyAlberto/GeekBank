@@ -145,6 +145,9 @@ public class TransactionController {
         }
     }
 
+//    @PostMapping("/transaction-tigo-payment")
+//    public ResponseEntity<Transaction> createTransactionForTigoVerifiedPayment()
+
     @GetMapping("/verify-unmatched-payment")
     public ResponseEntity<UnmatchedPaymentResponseDto> verifyUnmatchedPaymentAmount(
             @RequestParam String referenceNumber,
@@ -166,9 +169,13 @@ public class TransactionController {
 
         if (difference == 0) {
             message = "El pago coincide con el monto esperado.";
-            options = null;  // No hay opciones adicionales cuando no hay diferencia
+            options = null;
+            unmatchedPayment.setVerified(true);
+            unmatchedPaymentRepository.save(unmatchedPayment);
         } else if (difference > 0) {
             message = "Hay una diferencia en el monto del pago.";
+            unmatchedPayment.setVerified(true);
+            unmatchedPaymentRepository.save(unmatchedPayment);
             options = Arrays.asList(
                     "Apply the difference as a balance",
                     difference > 1 ? "Return the difference" : "No se puede devolver la diferencia (debe ser mayor a 1)",

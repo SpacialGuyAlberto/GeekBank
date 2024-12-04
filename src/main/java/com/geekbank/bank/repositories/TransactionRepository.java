@@ -3,6 +3,8 @@ package com.geekbank.bank.repositories;
 import com.geekbank.bank.models.Transaction;
 import com.geekbank.bank.models.TransactionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -24,6 +26,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByStatusAndPhoneNumber(TransactionStatus status, String phoneNumber);
 
     Transaction findByTransactionNumber(String transactionNumber);
+
+
+    @Query("SELECT t FROM Transaction t WHERE t.transactionNumber = :transactionNumber")
+    Transaction findTransactionByNumber(@Param("transactionNumber") String transactionNumber);
 
     List<Transaction> findByStatusAndTimestampBefore(TransactionStatus status, LocalDateTime timestamp);
     List<Transaction> findByGameUserId(Long gameUserId);

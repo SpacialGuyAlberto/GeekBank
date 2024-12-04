@@ -197,6 +197,17 @@ public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> tokenData)
     return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        Cookie jwtCookie = new Cookie("jwtToken", null);
+        jwtCookie.setHttpOnly(true);
+        jwtCookie.setSecure(false);
+        jwtCookie.setPath("/");
+        jwtCookie.setMaxAge(0); // Eliminar la cookie
+        response.addCookie(jwtCookie);
+        return ResponseEntity.ok().build();
+    }
+
     public static class LoginRequest {
         private String email;
         private String password;

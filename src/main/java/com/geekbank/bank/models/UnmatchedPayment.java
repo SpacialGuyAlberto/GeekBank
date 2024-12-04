@@ -11,17 +11,22 @@ public class UnmatchedPayment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String phoneNumber;
     private double amountReceived;
     private String referenceNumber;
     private LocalDateTime receivedAt;
+    private boolean consumed = false;
+
+    @Column(name = "differenceredeemed")
+    private boolean differenceRedeemed = false;
+
+    @Column(name= "verified")
+    private boolean verified = false;
 
     @OneToOne
     @JoinColumn(name = "sms_message_id")
     private SmsMessage smsMessage;
 
-    // Constructores, getters y setters
 
     public UnmatchedPayment() {
     }
@@ -80,5 +85,26 @@ public class UnmatchedPayment {
 
     public void setSmsMessage(SmsMessage smsMessage) {
         this.smsMessage = smsMessage;
+    }
+    public boolean isConsumed() {
+        return consumed;
+    }
+
+    public void setConsumed(boolean consumed) {
+        this.consumed = consumed;
+    }
+    public boolean isDifferenceRedeemed() {
+        return differenceRedeemed;
+    }
+
+    public void setDifferenceRedeemed(boolean differenceRedeemed) {
+        this.differenceRedeemed = differenceRedeemed;
+    }
+    public boolean isVerified() {
+        return verified;
+    }
+
+    public void setVerified(boolean verified) {
+        this.verified = verified;
     }
 }

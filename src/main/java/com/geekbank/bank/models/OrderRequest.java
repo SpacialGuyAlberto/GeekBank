@@ -28,6 +28,7 @@ public class OrderRequest {
     private String phoneNumber;
     private List<Product> products;
     private Double amount;
+    private String refNumber;
 
 
     public void setCreatedAt(LocalDateTime createdAt) {
@@ -93,6 +94,13 @@ public class OrderRequest {
 
     public void setManual(Boolean manual) {
         this.manual = manual;
+    }
+    public String getRefNumber() {
+        return refNumber;
+    }
+
+    public void setRefNumber(String refNumber) {
+        this.refNumber = refNumber;
     }
 
     

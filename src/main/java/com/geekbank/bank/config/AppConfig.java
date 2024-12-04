@@ -1,5 +1,6 @@
 package com.geekbank.bank.config;
 
+import com.geekbank.bank.models.Transaction;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -18,5 +19,11 @@ public class AppConfig {
         factory.setConnectTimeout(5000); // 5 segundos
         factory.setReadTimeout(5000);    // 5 segundos
         return new RestTemplate(factory);
+    }
+
+    @Bean
+    public Transaction transaction() {
+        // Crear y devolver una instancia de Transaction
+        return new Transaction();
     }
 }

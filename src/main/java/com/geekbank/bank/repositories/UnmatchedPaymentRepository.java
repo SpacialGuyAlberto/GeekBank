@@ -14,7 +14,7 @@ public interface UnmatchedPaymentRepository extends JpaRepository<UnmatchedPayme
     List<UnmatchedPayment> findByPhoneNumber(String phoneNumber);
 
     // Buscar pagos no coincidentes por número de referencia
-    List<UnmatchedPayment> findByReferenceNumber(String referenceNumber);
+    UnmatchedPayment findByReferenceNumber(String referenceNumber);
 
     // Buscar pagos no coincidentes dentro de un rango de fechas
     List<UnmatchedPayment> findByReceivedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
