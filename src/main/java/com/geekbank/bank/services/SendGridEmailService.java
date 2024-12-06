@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.List;
 
 @Service
 public class SendGridEmailService {
@@ -71,6 +72,33 @@ public class SendGridEmailService {
             ex.printStackTrace();
         }
     }
+
+    public void sendPurchaseConfirmationEmail(String to, List<String> key) {
+        Email from = new Email("lalbertomurillo1996@gmail.com"); // Cambia esto a tu email
+        Email toEmail = new Email(to);
+        String subject = "Confirmacion de compra";
+        String body = "Compra exitosa de tus keys: " + key;
+        Content content = new Content("text/html", body);
+        Mail mail = new Mail(from, subject, toEmail, content);
+
+        SendGrid sg = new SendGrid(sendGridApiKey);
+        Request request = new Request();
+
+        try {
+            request.setMethod(Method.POST);
+            request.setEndpoint("mail/send");
+            request.setBody(mail.build());
+
+            Response response = sg.api(request);
+            System.out.println("Response Code: " + response.getStatusCode());
+            System.out.println("Response Body: " + response.getBody());
+            System.out.println("Response Headers: " + response.getHeaders());
+        } catch (IOException ex) {
+            System.err.println("Failed to send email to: " + to);
+            ex.printStackTrace();
+        }
+    }
+
 
     public void sendSetPasswordEmail(User user) {
         // Configurar las direcciones de email
