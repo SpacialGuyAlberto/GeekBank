@@ -29,16 +29,9 @@ public class OrderProcessingService {
 
             OrderRequest orderRequest = orderRequestStorageService.getOrderRequestByPhoneNumber(phoneNumber);
             if (orderRequest != null) {
-                OrderResponse orderResponse = orderService.placeOrder(orderRequest);
 
-                if (orderResponse != null) {
-                    // After successful order placement
-                    smsService.sendPaymentNotification(phoneNumber);
-                    orderRequestStorageService.removeOrderRequest(phoneNumber);
-                    // Download keys or any additional post-order process
-                } else {
-                    System.out.println("Order failed to process");
-                }
+
+
             } else {
                 System.out.println("No matching Order Request found.");
             }

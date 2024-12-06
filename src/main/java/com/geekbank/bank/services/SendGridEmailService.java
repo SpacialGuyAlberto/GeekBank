@@ -1,5 +1,6 @@
 package com.geekbank.bank.services;
 
+import com.geekbank.bank.models.Transaction;
 import com.geekbank.bank.models.User;
 import com.sendgrid.*;
 import com.sendgrid.helpers.mail.Mail;
@@ -73,11 +74,11 @@ public class SendGridEmailService {
         }
     }
 
-    public void sendPurchaseConfirmationEmail(String to, List<String> key) {
+    public void sendPurchaseConfirmationEmail(String to, List<String> key, Transaction transaction) {
         Email from = new Email("lalbertomurillo1996@gmail.com"); // Cambia esto a tu email
         Email toEmail = new Email(to);
         String subject = "Confirmacion de compra";
-        String body = "Compra exitosa de tus keys: " + key;
+        String body = "Compra exitosa de tus keys: " + key + "\n Tu numero de transaccion es: " + transaction.getTransactionNumber();
         Content content = new Content("text/html", body);
         Mail mail = new Mail(from, subject, toEmail, content);
 
