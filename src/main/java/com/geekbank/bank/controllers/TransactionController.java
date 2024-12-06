@@ -131,19 +131,6 @@ public class TransactionController {
         }
     }
 
-    @PostMapping("/verifyPayment")
-    public ResponseEntity<Transaction> verifyPaymentAndCreateOrder(@RequestBody VerifyPaymentRequest request){
-        String refNumber = request.getRefNumber();
-        String phoneNumber = request.getPhoneNumber();
-        OrderRequest orderRequest = request.getOrderRequest();
-
-        try {
-            Transaction transaction = transactionService.verifyPaymentAndCreateOrder(refNumber, phoneNumber, orderRequest);
-            return ResponseEntity.ok(transaction);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        }
-    }
 
 //    @PostMapping("/transaction-tigo-payment")
 //    public ResponseEntity<Transaction> createTransactionForTigoVerifiedPayment()

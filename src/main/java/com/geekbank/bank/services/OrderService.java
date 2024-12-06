@@ -25,10 +25,12 @@ public class OrderService {
 
     private static final String KINGUIN_ORDER_URL = "https://gateway.kinguin.net/esa/api/v1/order";
     private static final String API_KEY = "77d96c852356b1c654a80f424d67048f";
+    private static final String KEYS_ENDPOINT = "https://gateway.kinguin.net/esa/api/v2/order/";
 
     @Autowired
     private KinguinService kinguinService;
-
+    @Autowired
+    private SendGridEmailService sendGridEmailService;
     @Autowired
     private SmsService smsService;
 
@@ -70,10 +72,31 @@ public class OrderService {
         if (orderResponse != null && orderResponse.getOrderId() != null) {
             System.out.println("Order placed successfully with ID: " + orderResponse.getOrderId());
 
-//            List<String> keys = downloadKeys(orderResponse.getOrderId());
-//
-//            String phoneNumber = orderRequest.getPhoneNumber();
-//            smsService.sendKeysToPhoneNumber(phoneNumber, keys);
+            // Aquí implementamos el mecanismo de polling:
+            // Intentamos varias veces descargar las keys hasta que estén disponibles.
+            int maxRetries = 10; // Número máximo de intentos
+            long delayMillis = 5000; // Espera de 5 segundos entre intentos
+            List<Map<String, Object>> keysData = pollForKeys(orderResponse.getOrderId(), maxRetries, delayMillis);
+
+            if (!keysData.isEmpty()) {
+                // Extrae sólo el "serial" si es que quieres enviarlo como texto plano
+                // o envía toda la data JSON.
+                List<String> keys = new ArrayList<>();
+                for (Map<String, Object> keyObj : keysData) {
+                    String serial = (String) keyObj.get("serial");
+                    keys.add(serial);
+                }
+
+                // Enviar correo con las keys
+                sendGridEmailService.sendPurchaseConfirmationEmail("enkiluzlbel@gmail.com", keys);
+
+                // Opcional: enviar keys por SMS
+                //String phoneNumber = orderRequest.getPhoneNumber();
+                //smsService.sendKeysToPhoneNumber(phoneNumber, keys);
+            } else {
+                System.err.println("Keys were not available after multiple attempts.");
+            }
+
         } else {
             System.err.println("Order failed or did not return a valid Order ID.");
         }
@@ -81,25 +104,63 @@ public class OrderService {
         return orderResponse;
     }
 
-    public List<String> downloadKeys(String orderId) {
-        String url = "https://gateway.kinguin.net/esa/api/v2/order/" + orderId + "/keys";
+    /**
+     * Intenta descargar las keys varias veces, esperando cierto tiempo entre intentos.
+     * @param orderId
+     * @param maxRetries número máximo de intentos
+     * @param delayMillis tiempo de espera entre intentos en milisegundos
+     * @return Lista de keys si disponibles, o lista vacía si no se obtuvieron
+     */
+    private List<Map<String, Object>> pollForKeys(String orderId, int maxRetries, long delayMillis) {
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            List<Map<String, Object>> keys = tryDownloadKeys(orderId);
+            if (!keys.isEmpty()) {
+                return keys;
+            }
+            System.out.println("No keys available yet. Attempt " + attempt + " of " + maxRetries);
+            try {
+                Thread.sleep(delayMillis);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        return new ArrayList<>();
+    }
+
+    /**
+     * Intento de descarga de keys (simplemente llama al endpoint, si no hay keys, retorna lista vacía)
+     */
+    private List<Map<String, Object>> tryDownloadKeys(String orderId) {
+        RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Api-Key", API_KEY);
         headers.set("Content-Type", "application/json");
 
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<List<Map<String, String>>> response = restTemplate.exchange(
-                url, HttpMethod.GET, entity,
-                new ParameterizedTypeReference<List<Map<String, String>>>() {}
-        );
+        // Comenzamos desde la página 1
+        List<Map<String, Object>> allKeys = new ArrayList<>();
+        int page = 1;
+        boolean morePages = true;
 
-        List<String> keys = new ArrayList<>();
-        for (Map<String, String> keyData : response.getBody()) {
-            keys.add(keyData.get("serial"));
+        while (morePages) {
+            String url = KEYS_ENDPOINT + orderId + "/keys?page=" + page;
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
+                    url, HttpMethod.GET, entity,
+                    new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+            );
+
+            List<Map<String, Object>> keyObjects = response.getBody();
+            if (keyObjects == null || keyObjects.isEmpty()) {
+                morePages = false;
+            } else {
+                allKeys.addAll(keyObjects);
+                page++;
+            }
         }
 
-        return keys;
+        return allKeys;
     }
 
     public String getPhoneNumberByOrderId(String orderId) {
