@@ -2,6 +2,7 @@ package com.geekbank.bank.services;
 
 import com.geekbank.bank.models.*;
 import com.geekbank.bank.repositories.OrdersRepository;
+import com.geekbank.bank.repositories.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
@@ -10,7 +11,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import com.geekbank.bank.services.SmsService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -22,6 +22,8 @@ public class OrderService {
 
     @Autowired
     private OrdersRepository ordersRepository;
+    @Autowired
+    private TransactionRepository transactionRepository;
 
     private static final String KINGUIN_ORDER_URL = "https://gateway.kinguin.net/esa/api/v1/order";
     private static final String API_KEY = "77d96c852356b1c654a80f424d67048f";
@@ -51,7 +53,7 @@ public class OrderService {
         return ordersRepository.save(order);
     }
 
-    public OrderResponse placeOrder(OrderRequest orderRequest) {
+    public OrderResponse placeOrder(OrderRequest orderRequest, Transaction transaction) {
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Api-Key", API_KEY);
@@ -87,9 +89,10 @@ public class OrderService {
                     keys.add(serial);
                 }
 
+                transaction.setKeys(keys);
+                transactionRepository.save(transaction);
                 // Enviar correo con las keys
-                sendGridEmailService.sendPurchaseConfirmationEmail("enkiluzlbel@gmail.com", keys);
-
+                sendGridEmailService.sendPurchaseConfirmationEmail("enkiluzlbel@gmail.com", keys, transaction);
                 // Opcional: enviar keys por SMS
                 //String phoneNumber = orderRequest.getPhoneNumber();
                 //smsService.sendKeysToPhoneNumber(phoneNumber, keys);

@@ -3,12 +3,9 @@ package com.geekbank.bank.services;
 import com.geekbank.bank.controllers.ManualVerificationWebSocketController;
 import com.geekbank.bank.controllers.TransactionWebSocketController;
 import com.geekbank.bank.controllers.WebSocketController;
-import com.geekbank.bank.dto.UnmatchedPaymentResponseDto;
 import com.geekbank.bank.models.*;
 import com.geekbank.bank.repositories.*;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -285,18 +282,22 @@ public class TransactionService {
             return transactionProduct;
         }).collect(Collectors.toList());
         transaction.setProducts(transactionProducts);
-        if (orderRequest.getManual() == true){
+
+        if (transaction.getManual()) {
             transaction.setStatus(TransactionStatus.AWAITING_MANUAL_PROCESSING);
-            Transaction savedTransaction = transactionRepository.save(transaction);
-            processManualTransaction(savedTransaction);
-            this.emailService.sendNotificationEmail("enkiluzlbel@gmail.com");
         } else {
-            OrderResponse orderResponse = orderService.placeOrder(orderRequest);
-            System.out.println(orderResponse);
             transaction.setStatus(TransactionStatus.COMPLETED);
         }
 
         Transaction savedTransaction = transactionRepository.save(transaction);
+
+        if (transaction.getManual()) {
+            processManualTransaction(savedTransaction);
+            this.emailService.sendNotificationEmail("enkiluzlbel@gmail.com");
+        } else {
+            OrderResponse orderResponse = orderService.placeOrder(orderRequest, savedTransaction);
+            System.out.println(orderResponse);
+        }
 
         return savedTransaction;
     }

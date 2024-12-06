@@ -71,11 +71,15 @@ public class Transaction {
     @Column(nullable = true)
     private Long tempPin;
 
-
-
     @OneToOne(mappedBy = "transaction", cascade = CascadeType.ALL)
     @JsonManagedReference
     private SmsMessage smsMessage;
+
+    @ElementCollection
+    @CollectionTable(name = "transaction_keys", joinColumns = @JoinColumn(name = "transaction_id"))
+    @Column(name = "key")
+    private List<String> keys = new ArrayList<>();
+
 
 
     public Long getId() {
@@ -236,5 +240,13 @@ public class Transaction {
 
     public void setSmsMessage(SmsMessage smsMessage) {
         this.smsMessage = smsMessage;
+    }
+
+    public List<String> getKeys() {
+        return keys;
+    }
+
+    public void setKeys(List<String> keys) {
+        this.keys = keys;
     }
 }
