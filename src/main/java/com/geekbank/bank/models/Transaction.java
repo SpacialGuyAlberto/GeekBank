@@ -1,6 +1,7 @@
 package com.geekbank.bank.models;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.geekbank.bank.converters.ListToStringConverter;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -50,7 +51,6 @@ public class Transaction {
     @Column(nullable = true)
     private String guestId;
 
-
     @Column(nullable = true)
     private Long gameUserId;
 
@@ -75,11 +75,10 @@ public class Transaction {
     @JsonManagedReference
     private SmsMessage smsMessage;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "transaction_keys", joinColumns = @JoinColumn(name = "transaction_id"))
-    @Column(name = "key")
+    // Aquí usamos el convertidor
+    @Convert(converter = ListToStringConverter.class)
+    @Column(columnDefinition = "TEXT")
     private List<String> keys = new ArrayList<>();
-
 
     public Long getId() {
         return id;
@@ -103,6 +102,22 @@ public class Transaction {
 
     public void setAmountUsd(double amount) {
         this.amountUsd = amount;
+    }
+
+    public double getAmountHnl() {
+        return amountHnl;
+    }
+
+    public void setAmountHnl(double amountHnl) {
+        this.amountHnl = amountHnl;
+    }
+
+    public double getExchangeRate() {
+        return exchangeRate;
+    }
+
+    public void setExchangeRate(double exchangeRate) {
+        this.exchangeRate = exchangeRate;
     }
 
     public String getPhoneNumber() {
@@ -169,6 +184,14 @@ public class Transaction {
         this.guestId = guestId;
     }
 
+    public Long getGameUserId() {
+        return gameUserId;
+    }
+
+    public void setGameUserId(Long gameUserId) {
+        this.gameUserId = gameUserId;
+    }
+
     public Account getAccount() {
         return account;
     }
@@ -193,14 +216,6 @@ public class Transaction {
         this.expiresAt = expiresAt;
     }
 
-    public Long getGameUserId() {
-        return gameUserId;
-    }
-
-    public void setGameUserId(Long gameUserId) {
-        this.gameUserId = gameUserId;
-    }
-
     public Boolean getManual() {
         return isManual;
     }
@@ -208,29 +223,13 @@ public class Transaction {
     public void setManual(Boolean manual) {
         isManual = manual;
     }
+
     public Long getTempPin() {
         return tempPin;
     }
 
     public void setTempPin(Long tempPin) {
         this.tempPin = tempPin;
-    }
-
-
-    public double getAmountHnl() {
-        return amountHnl;
-    }
-
-    public void setAmountHnl(double amountHnl) {
-        this.amountHnl = amountHnl;
-    }
-
-    public double getExchangeRate() {
-        return exchangeRate;
-    }
-
-    public void setExchangeRate(double exchangeRate) {
-        this.exchangeRate = exchangeRate;
     }
 
     public SmsMessage getSmsMessage() {

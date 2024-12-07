@@ -36,7 +36,6 @@ public class OrderService {
     @Autowired
     private SmsService smsService;
 
-
     public Orders createOrder(OrderRequest orderRequest, Transaction transaction){
         Orders order = new Orders();
         order.setTransaction(transaction);
@@ -74,28 +73,24 @@ public class OrderService {
         if (orderResponse != null && orderResponse.getOrderId() != null) {
             System.out.println("Order placed successfully with ID: " + orderResponse.getOrderId());
 
-            // Aquí implementamos el mecanismo de polling:
-            // Intentamos varias veces descargar las keys hasta que estén disponibles.
-            int maxRetries = 10; // Número máximo de intentos
+            int maxRetries = 20; // Número máximo de intentos
             long delayMillis = 5000; // Espera de 5 segundos entre intentos
             List<Map<String, Object>> keysData = pollForKeys(orderResponse.getOrderId(), maxRetries, delayMillis);
 
             if (!keysData.isEmpty()) {
-                // Extrae sólo el "serial" si es que quieres enviarlo como texto plano
-                // o envía toda la data JSON.
                 List<String> keys = new ArrayList<>();
                 for (Map<String, Object> keyObj : keysData) {
                     String serial = (String) keyObj.get("serial");
                     keys.add(serial);
                 }
 
+                // Asigna directamente la lista de keys
                 transaction.setKeys(keys);
                 transactionRepository.save(transaction);
+
                 // Enviar correo con las keys
                 sendGridEmailService.sendPurchaseConfirmationEmail("enkiluzlbel@gmail.com", keys, transaction);
                 // Opcional: enviar keys por SMS
-                //String phoneNumber = orderRequest.getPhoneNumber();
-                //smsService.sendKeysToPhoneNumber(phoneNumber, keys);
             } else {
                 System.err.println("Keys were not available after multiple attempts.");
             }
@@ -107,13 +102,6 @@ public class OrderService {
         return orderResponse;
     }
 
-    /**
-     * Intenta descargar las keys varias veces, esperando cierto tiempo entre intentos.
-     * @param orderId
-     * @param maxRetries número máximo de intentos
-     * @param delayMillis tiempo de espera entre intentos en milisegundos
-     * @return Lista de keys si disponibles, o lista vacía si no se obtuvieron
-     */
     private List<Map<String, Object>> pollForKeys(String orderId, int maxRetries, long delayMillis) {
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             List<Map<String, Object>> keys = tryDownloadKeys(orderId);
@@ -131,16 +119,12 @@ public class OrderService {
         return new ArrayList<>();
     }
 
-    /**
-     * Intento de descarga de keys (simplemente llama al endpoint, si no hay keys, retorna lista vacía)
-     */
     private List<Map<String, Object>> tryDownloadKeys(String orderId) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Api-Key", API_KEY);
         headers.set("Content-Type", "application/json");
 
-        // Comenzamos desde la página 1
         List<Map<String, Object>> allKeys = new ArrayList<>();
         int page = 1;
         boolean morePages = true;
