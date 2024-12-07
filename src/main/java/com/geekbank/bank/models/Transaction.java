@@ -75,11 +75,10 @@ public class Transaction {
     @JsonManagedReference
     private SmsMessage smsMessage;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "transaction_keys", joinColumns = @JoinColumn(name = "transaction_id"))
     @Column(name = "key")
     private List<String> keys = new ArrayList<>();
-
 
 
     public Long getId() {
