@@ -32,8 +32,6 @@ public class ProductService {
         return productRepository.findByDenominationNotNull();
     }
 
-
-
     // Guardar un producto
     public Product saveProduct(Product product) {
         return productRepository.save(product);

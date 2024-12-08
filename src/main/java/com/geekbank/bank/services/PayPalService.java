@@ -15,7 +15,6 @@ public class PayPalService {
     private String clientId = "AWN0lCMoVrecKkOjVsrTCX6zG6Yjs2fE8RYupZMqND-pjJeEEbU0sNXS8l43DHSH2Q8omYqSnZ4RL9qC";
     private String clientSecret = "EKKOBZa80NAVE3IOPfEZM7AE4AEywq6RBQq8-Llbsv-VXx9bl9G6cEjcgLUPzs6sIpdjfmYvju-OHRQF";
     private String baseUrl = "https://api-m.sandbox.paypal.com";
-
     private ObjectMapper objectMapper = new ObjectMapper();
 
     /**
@@ -52,8 +51,6 @@ public class PayPalService {
 
         return accessToken;
     }
-
-
     /**
      * Crea una Orden de Pago
      */
@@ -105,9 +102,7 @@ public class PayPalService {
         Map<String, Object> responseMap = objectMapper.readValue(response, Map.class);
         return responseMap;
     }
-    /**
-     * Captura una Orden de Pago
-     */
+
     public Map<String, Object> captureOrder(String orderId) throws IOException {
         String accessToken = getAccessToken();
 
@@ -131,9 +126,6 @@ public class PayPalService {
         return responseMap;
     }
 
-    /**
-     * Crea un Payout (Envío de dinero)
-     */
     public Map<String, Object> createPayout() throws IOException {
         String accessToken = getAccessToken();
 

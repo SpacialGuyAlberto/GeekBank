@@ -35,7 +35,6 @@ public class TransactionService {
     private GiftCardRepository giftCardRepository;
     @Autowired
     private TransactionWebSocketController transactionWebSocketController;
-
     @Autowired
     private UserRepository userRepository;
     @Autowired
@@ -44,11 +43,9 @@ public class TransactionService {
     private AccountRepository accountRepository;
     @Autowired
     private CurrencyService currencyService; // Inyectar Currenc
-
     private static final long EXPIRATION_MINUTES = 3;
     @Autowired
     private UnmatchedPaymentRepository unmatchedPaymentRepository;
-
     @Autowired
     private ManualVerificationWebSocketController manualVerificationWebSocketController;
 
@@ -298,6 +295,8 @@ public class TransactionService {
             OrderResponse orderResponse = orderService.placeOrder(orderRequest, savedTransaction);
             System.out.println(orderResponse);
         }
+
+        webSocketController.sendTransactionStatus(savedTransaction.getStatus());
 
         return savedTransaction;
     }
