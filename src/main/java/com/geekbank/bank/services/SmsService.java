@@ -17,7 +17,8 @@ public class SmsService {
         Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
     }
 
-    public void sendPaymentNotification(String toPhoneNumber) {
+    public void sendPaymentNotification(String PhoneNumber) {
+        String toPhoneNumber = "+"+PhoneNumber;
         Message message = Message.creator(
                         new PhoneNumber(toPhoneNumber),
                         new PhoneNumber("+13343043656"),
@@ -28,8 +29,9 @@ public class SmsService {
     }
 
     public void sendKeysToPhoneNumber(String phoneNumber, List<String> key) {
+        String toPhoneNumber = "+"+phoneNumber;
         Message message = Message.creator(
-                        new PhoneNumber(phoneNumber),
+                        new PhoneNumber(toPhoneNumber),
                         new PhoneNumber("+13343043656"),
                         "tu codigo es: " + Arrays.toString(key.toArray()))
                 .create();

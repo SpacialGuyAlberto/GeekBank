@@ -166,7 +166,7 @@ public class TransactionController {
             options = Arrays.asList(
                     "Apply the difference as a balance",
                     difference > 1 ? "Return the difference" : "No se puede devolver la diferencia (debe ser mayor a 1)",
-                    "Adjust the payment to match the expected amount"
+                    "Pay Anyways"
             );
         } else {
             message = "El monto recibido es menor al monto esperado.";

@@ -1,5 +1,6 @@
 package com.geekbank.bank.controllers;
 
+import com.geekbank.bank.models.TransactionStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -17,6 +18,7 @@ public class WebSocketController {
     @Autowired
     private SimpUserRegistry simpUserRegistry;
     private final SimpMessagingTemplate messagingTemplate;
+    private TransactionStatus transactionStatus;
 
     public WebSocketController(SimpMessagingTemplate messagingTemplate) {
         this.messagingTemplate = messagingTemplate;
@@ -27,8 +29,15 @@ public class WebSocketController {
         payload.put("status", status);
         payload.put("message", message);
         payload.put("transactionId", transactionId);
-        messagingTemplate.convertAndSend("/topic/transaction-status/" + phoneNumber, payload);
+        messagingTemplate.convertAndSend("/topic/transaction-status2/" + phoneNumber, payload);
         System.out.println("Transaction update sent to WebSocket for phone number: " + phoneNumber + " | Status: " + status);
+    }
+
+    public void sendTransactionStatus(TransactionStatus status){
+        Map<String, String> payload = new HashMap<>();
+        payload.put("status", String.valueOf(status));
+        // Asegúrate de colocar un destino válido (por ejemplo, sin concatenar el payload)
+        messagingTemplate.convertAndSend("/topic/transaction-status", payload);
     }
 
     public void requestRefNumberAndTempPin(String phoneNumber) {

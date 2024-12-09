@@ -30,6 +30,9 @@ public class OrderRequest {
     private Double amount;
     private String refNumber;
 
+    private String email;
+
+    private Boolean sendKeyToSMS;
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
@@ -103,6 +106,21 @@ public class OrderRequest {
         this.refNumber = refNumber;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    public Boolean getSendKeyToSMS() {
+        return sendKeyToSMS;
+    }
+
+    public void setSendKeyToSMS(Boolean sendKeyToSMS) {
+        this.sendKeyToSMS = sendKeyToSMS;
+    }
+
     
     public OrderRequest() {
         this.createdAt = LocalDateTime.now();
@@ -137,5 +155,7 @@ public class OrderRequest {
         public void setPrice(double price) {
             this.price = price;
         }
+
+
     }
 }
