@@ -32,6 +32,8 @@ public class OrderRequest {
 
     private String email;
 
+    private Boolean sendKeyToSMS;
+
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
@@ -110,6 +112,13 @@ public class OrderRequest {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+    public Boolean getSendKeyToSMS() {
+        return sendKeyToSMS;
+    }
+
+    public void setSendKeyToSMS(Boolean sendKeyToSMS) {
+        this.sendKeyToSMS = sendKeyToSMS;
     }
 
     

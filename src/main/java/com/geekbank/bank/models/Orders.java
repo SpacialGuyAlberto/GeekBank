@@ -40,6 +40,11 @@ public class Orders {
     @Column(nullable = true)
     private String email;
 
+
+
+    @Column(nullable = true)
+    private Boolean sendKeyToSMS;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -159,6 +164,14 @@ public class Orders {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public Boolean getSendKeyToSMS() {
+        return sendKeyToSMS;
+    }
+
+    public void setSendKeyToSMS(Boolean sendKeyToSMS) {
+        this.sendKeyToSMS = sendKeyToSMS;
     }
 
 }
