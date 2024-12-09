@@ -37,6 +37,9 @@ public class Orders {
     @Column(nullable = true)
     private String refNumber;
 
+    @Column(nullable = true)
+    private String email;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -52,8 +55,6 @@ public class Orders {
         this.createdAt = LocalDateTime.now();
         this.products = new ArrayList<>();
     }
-
-
     // Getters y Setters
 
     public Long getId() {
@@ -150,6 +151,14 @@ public class Orders {
 
     public void setProducts(List<TransactionProduct> products) {
         this.products = new ArrayList<>(products); // Crea una nueva lista basada en la existente
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
 }

@@ -89,7 +89,10 @@ public class OrderService {
                 transactionRepository.save(transaction);
 
                 // Enviar correo con las keys
-                sendGridEmailService.sendPurchaseConfirmationEmail("enkiluzlbel@gmail.com", keys, transaction);
+                if (orderRequest.getEmail() != null) {
+                    sendGridEmailService.sendPurchaseConfirmationEmail(orderRequest.getEmail(), keys, transaction);
+                }
+
                 // Opcional: enviar keys por SMS
             } else {
                 System.err.println("Keys were not available after multiple attempts.");
