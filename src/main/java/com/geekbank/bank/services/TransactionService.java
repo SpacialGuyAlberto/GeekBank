@@ -302,6 +302,84 @@ public class TransactionService {
     }
 
     @Transactional
+    public Transaction createTransactionForPaypalAndCreditCard( OrderRequest orderRequest) {
+
+        double orderAmount = orderRequest.getAmount();
+
+        TransactionType transactionType = TransactionType.PURCHASE;
+        if (orderRequest.getProducts() != null && !orderRequest.getProducts().isEmpty()) {
+            OrderRequest.Product firstProduct = orderRequest.getProducts().get(0);
+            if (firstProduct.getKinguinId() == -1) {
+                transactionType = TransactionType.BALANCE_PURCHASE;
+            }
+        }
+
+        Transaction transaction = new Transaction();
+        transaction.setAmountUsd(orderAmount);
+        double exchangeRate = currencyService.getExchangeRateUSDtoHNL();
+        transaction.setExchangeRate(exchangeRate);
+        transaction.setAmountHnl(currencyService.convertUsdToHnl(orderAmount, exchangeRate));
+
+        if (orderRequest.getUserId() != null) {
+            User user = userRepository.findById(orderRequest.getUserId())
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado."));
+            transaction.setUser(user);
+        } else if (orderRequest.getGuestId() != null && !orderRequest.getGuestId().isEmpty()) {
+            transaction.setGuestId(orderRequest.getGuestId());
+        } else {
+            throw new RuntimeException("Debe proporcionar userId o guestId.");
+        }
+
+        transaction.setGameUserId(orderRequest.getGameUserId());
+        transaction.setManual(orderRequest.getManual() != null ? orderRequest.getManual() : false);
+        transaction.setExpiresAt(orderRequest.getManual() != null && orderRequest.getManual() ?
+                LocalDateTime.now().plusMinutes(600) :
+                LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES));
+        transaction.setType(transactionType);
+        transaction.setTimestamp(LocalDateTime.now());
+        transaction.setTransactionNumber(generateTransactionNumber());
+        transaction.setDescription("Description");
+        transaction.setPhoneNumber(orderRequest.getPhoneNumber());
+        transaction.setOrderRequestNumber(orderRequest.getOrderRequestId());
+        transaction.setTempPin(null);
+        transaction.setTempPin(null);
+
+        if (orderRequest.getProducts() != null && orderRequest.getProducts().size() > 10) {
+            throw new IllegalArgumentException("No se pueden agregar más de 10 productos por transacción.");
+        }
+
+        List<TransactionProduct> transactionProducts = orderRequest.getProducts().stream().map(productRequest -> {
+            Long productId = (long) productRequest.getKinguinId();
+            TransactionProduct transactionProduct = new TransactionProduct();
+            transactionProduct.setTransaction(transaction);
+            transactionProduct.setProductId(productId);
+            transactionProduct.setQuantity(productRequest.getQty());
+            return transactionProduct;
+        }).collect(Collectors.toList());
+        transaction.setProducts(transactionProducts);
+
+        if (transaction.getManual()) {
+            transaction.setStatus(TransactionStatus.AWAITING_MANUAL_PROCESSING);
+        } else {
+            transaction.setStatus(TransactionStatus.COMPLETED);
+        }
+
+        Transaction savedTransaction = transactionRepository.save(transaction);
+
+        if (transaction.getManual()) {
+            processManualTransaction(savedTransaction);
+            this.emailService.sendNotificationEmail("enkiluzlbel@gmail.com");
+        } else {
+            OrderResponse orderResponse = orderService.placeOrder(orderRequest, savedTransaction);
+            System.out.println(orderResponse);
+        }
+
+        webSocketController.sendTransactionStatus(savedTransaction.getStatus());
+
+        return savedTransaction;
+    }
+
+    @Transactional
     public void verifyTransaction(String phoneNumber, Long pin, String refNumber) {
         try {
             Transaction matchingTransaction = getMatchingTransaction(phoneNumber, pin);

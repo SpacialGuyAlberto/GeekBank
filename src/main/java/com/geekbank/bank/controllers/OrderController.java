@@ -69,6 +69,22 @@ public class OrderController {
 
         return ResponseEntity.ok(transaction);
     }
+
+    @PostMapping("/create-order-for-paypal-and-credit-card")
+    public ResponseEntity<Transaction> placeOrderAndTransactionForPaypalAndCreditCard(@RequestBody OrderRequest orderRequest){
+        User user = null;
+
+        if (orderRequest.getUserId() != null){
+            user = userRepository.findById(orderRequest.getUserId())
+                    .orElse(null);
+        }
+
+        Transaction transaction = transactionService.createTransactionForPaypalAndCreditCard(orderRequest);
+        orderService.createOrder(orderRequest, transaction);
+        return ResponseEntity.ok(transaction);
+    }
+
+
 //    @PostMapping
 //    public ResponseEntity<String> placeOrder(@RequestBody OrderRequest orderRequest) {
 //        User user = null;
