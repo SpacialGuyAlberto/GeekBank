@@ -40,7 +40,7 @@ public class CartController {
         if (user == null) {
             return ResponseEntity.status(401).build();
         }
-        return ResponseEntity.ok(cartService.addCartItem(user, request.getProductId(), request.getQuantity()));
+        return ResponseEntity.ok(cartService.addCartItem(user, request.getProductId(), request.getQuantity(), request.getPrice()));
     }
 
     @PutMapping()

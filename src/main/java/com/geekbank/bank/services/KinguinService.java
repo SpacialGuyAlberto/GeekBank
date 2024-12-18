@@ -19,6 +19,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -36,9 +39,20 @@ public class KinguinService {
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     @Autowired
+    private PricingService pricingService;
+    @Autowired
     private ObjectMapper objectMapper;
     @Autowired
     private GiftCardRepository giftCardRepository;
+
+
+    public List<KinguinGiftCard> applyGlobalMargin(List<KinguinGiftCard> giftCards) {
+        for (KinguinGiftCard card : giftCards) {
+            double finalPrice = pricingService.calculateSellingPrice(card.getPrice());
+            card.setPrice(finalPrice);
+        }
+        return giftCards;
+    }
 
     public List<KinguinGiftCard> fetchAllGiftCards() {
         List<KinguinGiftCard> allGiftCards = new ArrayList<>();
@@ -176,42 +190,89 @@ public class KinguinService {
 
         return giftCards;
     }
-    public List<KinguinGiftCard> fetchFilteredGiftCards(Map<String, String> filters) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Api-Key", apiKey);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
+//    public List<KinguinGiftCard> fetchFilteredGiftCards(Map<String, String> filters) {
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.set("X-Api-Key", apiKey);
+//        HttpEntity<String> entity = new HttpEntity<>(headers);
+//
+//        StringBuilder urlBuilder = new StringBuilder(apiUrl);
+//        urlBuilder.append("?");
+//
+//        for (Map.Entry<String, String> entry : filters.entrySet()) {
+//            if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+//                urlBuilder.append(entry.getKey())
+//                        .append("=")
+//                        .append(entry.getValue())
+//                        .append("&");
+//            }
+//        }
+//
+//        // Remueve el último "&" si existe
+//        String finalUrl = urlBuilder.toString();
+//        finalUrl = finalUrl.endsWith("&") ? finalUrl.substring(0, finalUrl.length() - 1) : finalUrl;
+//        System.out.println("Final URL: " + finalUrl);
+//
+//        // Realiza la solicitud HTTP
+//        ResponseEntity<JsonNode> response = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, JsonNode.class);
+//        JsonNode products = response.getBody();
+//
+//        List<KinguinGiftCard> giftCards = new ArrayList<>();
+//        if (products != null) {
+//            JsonNode productsSection = products.path("results");
+//            for (JsonNode product : productsSection) {
+//                giftCards.add(mapJsonToGiftCard(product));
+//            }
+//        }
+//
+//        return giftCards;
+//    }
+public List<KinguinGiftCard> fetchFilteredGiftCards(Map<String, String> filters) {
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("X-Api-Key", apiKey);
+    HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        StringBuilder urlBuilder = new StringBuilder(apiUrl);
-        urlBuilder.append("?");
+    StringBuilder urlBuilder = new StringBuilder(apiUrl);
+    urlBuilder.append("?");
 
-        for (Map.Entry<String, String> entry : filters.entrySet()) {
-            if (entry.getValue() != null && !entry.getValue().isEmpty()) {
-                urlBuilder.append(entry.getKey())
-                        .append("=")
-                        .append(entry.getValue())
-                        .append("&");
-            }
+    for (Map.Entry<String, String> entry : filters.entrySet()) {
+        if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+            urlBuilder.append(entry.getKey())
+                    .append("=")
+                    .append(entry.getValue())
+                    .append("&");
         }
-
-        // Remueve el último "&" si existe
-        String finalUrl = urlBuilder.toString();
-        finalUrl = finalUrl.endsWith("&") ? finalUrl.substring(0, finalUrl.length() - 1) : finalUrl;
-        System.out.println("Final URL: " + finalUrl);
-
-        // Realiza la solicitud HTTP
-        ResponseEntity<JsonNode> response = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, JsonNode.class);
-        JsonNode products = response.getBody();
-
-        List<KinguinGiftCard> giftCards = new ArrayList<>();
-        if (products != null) {
-            JsonNode productsSection = products.path("results");
-            for (JsonNode product : productsSection) {
-                giftCards.add(mapJsonToGiftCard(product));
-            }
-        }
-
-        return giftCards;
     }
+
+    // Remueve el último "&" si existe
+    String finalUrl = urlBuilder.toString();
+    finalUrl = finalUrl.endsWith("&") ? finalUrl.substring(0, finalUrl.length() - 1) : finalUrl;
+    System.out.println("Final URL: " + finalUrl);
+
+    // Realiza la solicitud HTTP
+    ResponseEntity<JsonNode> response = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, JsonNode.class);
+    JsonNode products = response.getBody();
+
+    List<KinguinGiftCard> giftCards = new ArrayList<>();
+    if (products != null) {
+        JsonNode productsSection = products.path("results");
+        for (JsonNode product : productsSection) {
+            giftCards.add(mapJsonToGiftCard(product));
+        }
+
+        // Formato de fecha esperado (ejemplo: 2023-11-01T12:30:00Z)
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+        // Ordenar por fecha descendente (de más reciente a más antiguo)
+        giftCards.sort((g1, g2) -> {
+            LocalDate d1 = LocalDate.parse(g1.getReleaseDate(), DateTimeFormatter.ISO_LOCAL_DATE);
+            LocalDate d2 = LocalDate.parse(g2.getReleaseDate(), DateTimeFormatter.ISO_LOCAL_DATE);
+            return d2.compareTo(d1); // Orden descendente
+        });
+
+    }
+
+    return giftCards;
+}
 
 
     @Cacheable("giftCards")

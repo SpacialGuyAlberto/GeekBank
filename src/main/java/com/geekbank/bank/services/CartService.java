@@ -42,12 +42,14 @@ public class CartService {
                 .collect(Collectors.toList());
     }
 
-    public CartItem addCartItem(User user, Long productId, int quantity) {
+    public CartItem addCartItem(User user, Long productId, int quantity, double price) {
         CartItem existingCartItem = cartItemRepository.findByUserAndProductId(user, productId);
+
         if (existingCartItem != null) {
             existingCartItem.setQuantity(existingCartItem.getQuantity() + quantity);
         } else {
             existingCartItem = new CartItem();
+            existingCartItem.setPrice(price);
             existingCartItem.setUser(user);
             existingCartItem.setProductId(productId);
             existingCartItem.setQuantity(quantity);
