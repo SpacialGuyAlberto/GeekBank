@@ -1,5 +1,6 @@
 package com.geekbank.bank.services;
 
+import com.geekbank.bank.controllers.WebSocketController;
 import com.geekbank.bank.models.*;
 import com.geekbank.bank.repositories.OrdersRepository;
 import com.geekbank.bank.repositories.TransactionRepository;
@@ -29,6 +30,8 @@ public class OrderService {
     private TransactionRepository transactionRepository;
     @Autowired
     private PdfGeneratorService pdfGeneratorService;
+    @Autowired
+    private WebSocketController webSocketController;
 
     private static final String KINGUIN_ORDER_URL = "https://gateway.kinguin.net/esa/api/v1/order";
     private static final String API_KEY = "77d96c852356b1c654a80f424d67048f";
@@ -80,9 +83,9 @@ public class OrderService {
         if (orderResponse != null && orderResponse.getOrderId() != null) {
             System.out.println("Order placed successfully with ID: " + orderResponse.getOrderId());
 
-            int maxRetries = 20; // Número máximo de intentos
+            int maxRetries = 1; // Número máximo de intentos
             long delayMillis = 5000; // Espera de 5 segundos entre intentos
-            List<Map<String, Object>> keysData = pollForKeys(orderResponse.getOrderId(), maxRetries, delayMillis);
+            List<Map<String, Object>> keysData = pollForKeys(orderResponse.getOrderId(), maxRetries, delayMillis, transaction);
 
             if (!keysData.isEmpty()) {
                 List<String> keys = new ArrayList<>();
@@ -117,6 +120,8 @@ public class OrderService {
                     String body = "<p>Gracias por tu compra.</p><p>Adjunto encontrarás tu recibo en PDF.</p>";
                     String filename = "receipt_" + transaction.getTransactionNumber() + ".pdf";
 
+
+
                     sendGridEmailService.sendEmailWithPdfAttachment(orderRequest.getEmail(), subject, body, pdfBytes, filename);
                 }
 
@@ -136,7 +141,8 @@ public class OrderService {
         return orderResponse;
     }
 
-    private List<Map<String, Object>> pollForKeys(String orderId, int maxRetries, long delayMillis) {
+
+    private List<Map<String, Object>> pollForKeys(String orderId, int maxRetries, long delayMillis, Transaction transaction) {
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             List<Map<String, Object>> keys = tryDownloadKeys(orderId);
             if (!keys.isEmpty()) {
@@ -147,11 +153,28 @@ public class OrderService {
                 Thread.sleep(delayMillis);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                break;
+                // Si se interrumpe, cancelamos la transacción y lanzamos excepción
+                cancelTransactionAndThrow(transaction, "Polling interrupted while waiting for keys.");
             }
         }
-        return new ArrayList<>();
+
+        // Si se agotan los intentos, cancela la transacción y lanza excepción
+        cancelTransactionAndThrow(transaction, "Keys not available after maximum attempts. Transaction has been cancelled.");
+        return new ArrayList<>(); // No se alcanza
     }
+
+
+    private void cancelTransactionAndThrow(Transaction transaction, String message) {
+        transaction.setStatus(TransactionStatus.CANCELLED);
+        transactionRepository.save(transaction);
+
+        // Enviar al frontend un mensaje indicando el error y la necesidad de reintentar
+        webSocketController.sendTransactionStatus(transaction.getStatus());
+
+        // Lanzar la excepción para detener el proceso
+        throw new RuntimeException(message);
+    }
+
 
     private List<Map<String, Object>> tryDownloadKeys(String orderId) {
         RestTemplate restTemplate = new RestTemplate();

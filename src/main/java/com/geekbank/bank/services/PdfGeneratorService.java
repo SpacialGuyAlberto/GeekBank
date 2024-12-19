@@ -15,14 +15,17 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class PdfGeneratorService {
 
     private static final String LOGO_URL = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTvQiHd1F1cj2hGKvE6tzoKqjcUgaQMYT3JLg&s";
+
     @Autowired
     KinguinService kinguinService;
+
     public void generateReceiptPdf(Receipt receipt, String outputPath) {
         try (PDDocument document = new PDDocument()) {
             PDPage page = new PDPage();
@@ -138,8 +141,6 @@ public class PdfGeneratorService {
             List<OrderRequest.Product> products = receipt.getProducts();
             if (products != null && !products.isEmpty()) {
                 // Encabezados de la tabla de productos
-
-
                 contentStream.beginText();
                 contentStream.setFont(PDType1Font.HELVETICA_BOLD, 12);
                 contentStream.newLineAtOffset(margin, yStart);
@@ -147,14 +148,15 @@ public class PdfGeneratorService {
                 contentStream.endText();
                 yStart -= 20;
 
-                // Dibujar encabezados de la tabla
                 float tableStartY = yStart;
                 float col1X = margin;
                 float col2X = margin + 150;
                 float col3X = margin + 250;
                 float col4X = margin + 350;
                 float rowHeight = 15;
+                float maxWidthDesc = (page.getMediaBox().getWidth() - margin) - col2X; // ancho para wrap
 
+                // Encabezados
                 contentStream.beginText();
                 contentStream.setFont(PDType1Font.HELVETICA_BOLD, 12);
                 contentStream.newLineAtOffset(col1X, tableStartY);
@@ -162,19 +164,16 @@ public class PdfGeneratorService {
                 contentStream.endText();
 
                 contentStream.beginText();
-                contentStream.setFont(PDType1Font.HELVETICA_BOLD, 12);
                 contentStream.newLineAtOffset(col2X, tableStartY);
                 contentStream.showText("Description");
                 contentStream.endText();
 
                 contentStream.beginText();
-                contentStream.setFont(PDType1Font.HELVETICA_BOLD, 12);
                 contentStream.newLineAtOffset(col3X, tableStartY);
                 contentStream.showText("Quantity");
                 contentStream.endText();
 
                 contentStream.beginText();
-                contentStream.setFont(PDType1Font.HELVETICA_BOLD, 12);
                 contentStream.newLineAtOffset(col4X, tableStartY);
                 contentStream.showText("Price (USD)");
                 contentStream.endText();
@@ -183,21 +182,32 @@ public class PdfGeneratorService {
                 drawLine(contentStream, margin, yStart, page.getMediaBox().getWidth() - margin);
                 yStart -= rowHeight;
 
-                // Filas de productos
                 contentStream.setFont(PDType1Font.HELVETICA, 12);
                 for (OrderRequest.Product product : products) {
                     KinguinGiftCard giftCard = kinguinService.fetchGiftCardById(String.valueOf(product.getKinguinId()));
+                    String productName = giftCard.getName();
 
+                    // Wrap del texto de productName
+                    List<String> wrappedLines = wrapText(productName, maxWidthDesc, 12, PDType1Font.HELVETICA);
+
+                    int maxLines = wrappedLines.size();
+                    if (maxLines < 1) maxLines = 1;
+
+                    // ID
                     contentStream.beginText();
                     contentStream.newLineAtOffset(col1X, yStart);
                     contentStream.showText(String.valueOf(product.getKinguinId()));
                     contentStream.endText();
 
-                    contentStream.beginText();
-                    contentStream.newLineAtOffset(col2X, yStart);
-                    contentStream.showText(String.valueOf(giftCard.getName()));
-                    contentStream.endText();
+                    // Imprimir las líneas envueltas del productName
+                    for (int i = 0; i < wrappedLines.size(); i++) {
+                        contentStream.beginText();
+                        contentStream.newLineAtOffset(col2X, yStart - (i * rowHeight));
+                        contentStream.showText(wrappedLines.get(i));
+                        contentStream.endText();
+                    }
 
+                    // Cantidad y Precio en la primera línea
                     contentStream.beginText();
                     contentStream.newLineAtOffset(col3X, yStart);
                     contentStream.showText(String.valueOf(product.getQty()));
@@ -208,7 +218,7 @@ public class PdfGeneratorService {
                     contentStream.showText("$" + String.format("%.2f", product.getPrice()));
                     contentStream.endText();
 
-                    yStart -= rowHeight;
+                    yStart -= (rowHeight * maxLines) + 5; // espacio entre productos
                 }
 
                 yStart -= 20;
@@ -225,6 +235,41 @@ public class PdfGeneratorService {
             contentStream.endText();
 
         }
+    }
+
+    private List<String> wrapText(String text, float width, float fontSize, PDType1Font font) throws IOException {
+        List<String> lines = new ArrayList<>();
+        if (text == null) {
+            lines.add("");
+            return lines;
+        }
+
+        String[] words = text.split(" ");
+        StringBuilder currentLine = new StringBuilder();
+
+        float spaceWidth = font.getStringWidth(" ") / 1000f * fontSize;
+        float currentWidth = 0;
+
+        for (String word : words) {
+            float wordWidth = font.getStringWidth(word) / 1000f * fontSize;
+            if (currentWidth + wordWidth + spaceWidth > width && currentLine.length() > 0) {
+                lines.add(currentLine.toString());
+                currentLine.setLength(0);
+                currentWidth = 0;
+            }
+            if (currentWidth > 0) {
+                currentLine.append(" ");
+                currentWidth += spaceWidth;
+            }
+            currentLine.append(word);
+            currentWidth += wordWidth;
+        }
+
+        if (currentLine.length() > 0) {
+            lines.add(currentLine.toString());
+        }
+
+        return lines;
     }
 
     private void drawLine(PDPageContentStream contentStream, float startX, float y, float endX) throws IOException {
