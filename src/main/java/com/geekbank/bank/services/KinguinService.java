@@ -22,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -260,14 +261,35 @@ public List<KinguinGiftCard> fetchFilteredGiftCards(Map<String, String> filters)
         }
 
         // Formato de fecha esperado (ejemplo: 2023-11-01T12:30:00Z)
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME; // Ajustado al formato real
+
 
         // Ordenar por fecha descendente (de más reciente a más antiguo)
         giftCards.sort((g1, g2) -> {
-            LocalDate d1 = LocalDate.parse(g1.getReleaseDate(), DateTimeFormatter.ISO_LOCAL_DATE);
-            LocalDate d2 = LocalDate.parse(g2.getReleaseDate(), DateTimeFormatter.ISO_LOCAL_DATE);
-            return d2.compareTo(d1); // Orden descendente
+            try {
+                String rd1 = g1.getReleaseDate();
+                String rd2 = g2.getReleaseDate();
+
+                // Manejar releaseDate vacías o nulas
+                if (rd1 == null || rd1.isEmpty()) {
+                    return 1; // Considerar g1 como más antiguo
+                }
+                if (rd2 == null || rd2.isEmpty()) {
+                    return -1; // Considerar g2 como más antiguo
+                }
+
+                // Parsear las fechas correctamente
+                LocalDateTime d1 = LocalDateTime.parse(rd1, DateTimeFormatter.ISO_DATE_TIME);
+                LocalDateTime d2 = LocalDateTime.parse(rd2, DateTimeFormatter.ISO_DATE_TIME);
+
+                return d2.compareTo(d1); // Orden descendente
+            } catch (DateTimeParseException e) {
+                // Manejar excepciones de parseo
+                System.err.println("Error al parsear releaseDate: " + e.getMessage());
+                return 0; // Considerar iguales en caso de error
+            }
         });
+
 
     }
 
