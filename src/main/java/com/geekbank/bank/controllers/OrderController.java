@@ -165,7 +165,8 @@ public class OrderController {
                     orderRequest.getUserId(),
                     orderRequest.getOrderRequestId(),
                     orderRequest.getProducts(),
-                    orderRequest.getPhoneNumber()
+                    orderRequest.getPhoneNumber(),
+                    orderRequest
             );
 
             TransactionResponse response = new TransactionResponse();

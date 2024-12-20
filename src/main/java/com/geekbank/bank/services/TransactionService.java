@@ -148,7 +148,7 @@ public class TransactionService {
     }
 
     @Transactional
-    public Transaction purchaseWithBalance(Long userId, String orderRequestNumber, List<OrderRequest.Product> products, String phoneNumber) {
+    public Transaction purchaseWithBalance(Long userId, String orderRequestNumber, List<OrderRequest.Product> products, String phoneNumber, OrderRequest orderRequest) {
         // 1. Recuperar el usuario
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + userId));
@@ -210,9 +210,18 @@ public class TransactionService {
 
         transaction.setProducts(transactionProducts);
 
-        // 10. Guardar la transacción en la base de datos
         Transaction savedTransaction = transactionRepository.save(transaction);
         salesMetricsService.onTransactionCompleted(transaction);
+
+
+
+        if (transaction.getManual()) {
+            processManualTransaction(savedTransaction);
+            this.emailService.sendNotificationEmail("enkiluzlbel@gmail.com");
+        } else {
+            OrderResponse orderResponse = orderService.placeOrder(orderRequest, savedTransaction);
+            System.out.println(orderResponse);
+        }
 
         // 11. Notificar al usuario vía WebSocket
         webSocketController.notifyTransactionStatus(
