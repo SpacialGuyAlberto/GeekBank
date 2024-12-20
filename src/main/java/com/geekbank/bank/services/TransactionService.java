@@ -233,9 +233,7 @@ public class TransactionService {
             throw new RuntimeException("El pago encontrado no ha sido verificado.");
         }
 
-        // Recalcular el monto basado en el margen
         double orderAmount = orderRequest.getAmount();
-
         double amountReceived = unmatchedPayment.getAmountReceived();
 
         TransactionType transactionType = TransactionType.PURCHASE;
@@ -250,7 +248,8 @@ public class TransactionService {
         transaction.setAmountUsd(orderAmount);
         double exchangeRate = currencyService.getExchangeRateUSDtoHNL();
         transaction.setExchangeRate(exchangeRate);
-        transaction.setAmountHnl(currencyService.convertUsdToHnl(orderAmount, exchangeRate));
+//        transaction.setAmountHnl(currencyService.convertUsdToHnl(orderAmount, exchangeRate));
+        transaction.setAmountHnl(orderAmount);
 
         if (orderRequest.getUserId() != null) {
             User user = userRepository.findById(orderRequest.getUserId())

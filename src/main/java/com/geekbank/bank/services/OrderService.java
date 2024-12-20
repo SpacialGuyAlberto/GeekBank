@@ -83,7 +83,7 @@ public class OrderService {
         if (orderResponse != null && orderResponse.getOrderId() != null) {
             System.out.println("Order placed successfully with ID: " + orderResponse.getOrderId());
 
-            int maxRetries = 1; // Número máximo de intentos
+            int maxRetries = 20; // Número máximo de intentos
             long delayMillis = 5000; // Espera de 5 segundos entre intentos
             List<Map<String, Object>> keysData = pollForKeys(orderResponse.getOrderId(), maxRetries, delayMillis, transaction);
 
