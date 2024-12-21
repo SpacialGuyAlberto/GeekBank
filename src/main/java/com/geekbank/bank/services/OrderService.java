@@ -120,8 +120,7 @@ public class OrderService {
                     String body = "<p>Gracias por tu compra.</p><p>Adjunto encontrarás tu recibo en PDF.</p>";
                     String filename = "receipt_" + transaction.getTransactionNumber() + ".pdf";
 
-
-
+                    sendGridEmailService.sendPurchaseConfirmationEmail(orderRequest.getEmail(), keys, transaction);
                     sendGridEmailService.sendEmailWithPdfAttachment(orderRequest.getEmail(), subject, body, pdfBytes, filename);
                 }
 
