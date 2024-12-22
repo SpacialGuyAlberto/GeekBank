@@ -138,10 +138,9 @@ public class TransactionController {
     @GetMapping("/verify-unmatched-payment")
     public ResponseEntity<UnmatchedPaymentResponseDto> verifyUnmatchedPaymentAmount(
             @RequestParam String referenceNumber,
-            @RequestParam String phoneNumber,
             @RequestParam double expectedAmount) {
 
-        UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumberAndPhoneNumber(referenceNumber, phoneNumber);
+        UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumber(referenceNumber);
 
         if (unmatchedPayment == null) {
             UnmatchedPaymentResponseDto responseDto = new UnmatchedPaymentResponseDto();
