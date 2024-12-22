@@ -48,6 +48,13 @@ public class TransactionService {
     private UnmatchedPaymentRepository unmatchedPaymentRepository;
     @Autowired
     private ManualVerificationWebSocketController manualVerificationWebSocketController;
+    @Autowired
+    private PricingService pricingService;
+    @Autowired
+    private SalesMetricsService salesMetricsService;
+    @Autowired
+    private PdfGeneratorService pdfGeneratorService;
+
 
     private PriorityBlockingQueue<Transaction> manualVerificationQueue = new PriorityBlockingQueue<>(
             100,
@@ -141,7 +148,7 @@ public class TransactionService {
     }
 
     @Transactional
-    public Transaction purchaseWithBalance(Long userId, String orderRequestNumber, List<OrderRequest.Product> products, String phoneNumber) {
+    public Transaction purchaseWithBalance(Long userId, String orderRequestNumber, List<OrderRequest.Product> products, String phoneNumber, OrderRequest orderRequest) {
         // 1. Recuperar el usuario
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + userId));
@@ -203,8 +210,18 @@ public class TransactionService {
 
         transaction.setProducts(transactionProducts);
 
-        // 10. Guardar la transacción en la base de datos
         Transaction savedTransaction = transactionRepository.save(transaction);
+        salesMetricsService.onTransactionCompleted(transaction);
+
+
+
+        if (transaction.getManual()) {
+            processManualTransaction(savedTransaction);
+            this.emailService.sendNotificationEmail("enkiluzlbel@gmail.com");
+        } else {
+            OrderResponse orderResponse = orderService.placeOrder(orderRequest, savedTransaction);
+            System.out.println(orderResponse);
+        }
 
         // 11. Notificar al usuario vía WebSocket
         webSocketController.notifyTransactionStatus(
@@ -218,15 +235,15 @@ public class TransactionService {
     }
 
     @Transactional
-    public Transaction createTransactionForVerifiedTigoPayment( OrderRequest orderRequest) {
+    public Transaction createTransactionForVerifiedTigoPayment(OrderRequest orderRequest) {
         UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumber(orderRequest.getRefNumber());
 
         if (!unmatchedPayment.isVerified()){
             throw new RuntimeException("El pago encontrado no ha sido verificado.");
         }
 
-        double amountReceived = unmatchedPayment.getAmountReceived();
         double orderAmount = orderRequest.getAmount();
+        double amountReceived = unmatchedPayment.getAmountReceived();
 
         TransactionType transactionType = TransactionType.PURCHASE;
         if (orderRequest.getProducts() != null && !orderRequest.getProducts().isEmpty()) {
@@ -240,7 +257,8 @@ public class TransactionService {
         transaction.setAmountUsd(orderAmount);
         double exchangeRate = currencyService.getExchangeRateUSDtoHNL();
         transaction.setExchangeRate(exchangeRate);
-        transaction.setAmountHnl(currencyService.convertUsdToHnl(orderAmount, exchangeRate));
+//        transaction.setAmountHnl(currencyService.convertUsdToHnl(orderAmount, exchangeRate));
+        transaction.setAmountHnl(orderAmount);
 
         if (orderRequest.getUserId() != null) {
             User user = userRepository.findById(orderRequest.getUserId())
@@ -263,7 +281,6 @@ public class TransactionService {
         transaction.setDescription("Description");
         transaction.setPhoneNumber(orderRequest.getPhoneNumber());
         transaction.setOrderRequestNumber(orderRequest.getOrderRequestId());
-        transaction.setTempPin(null);
         transaction.setTempPin(null);
 
         if (orderRequest.getProducts() != null && orderRequest.getProducts().size() > 10) {
@@ -284,9 +301,13 @@ public class TransactionService {
             transaction.setStatus(TransactionStatus.AWAITING_MANUAL_PROCESSING);
         } else {
             transaction.setStatus(TransactionStatus.COMPLETED);
+
         }
 
         Transaction savedTransaction = transactionRepository.save(transaction);
+        if (transaction.getStatus() == TransactionStatus.COMPLETED){
+            salesMetricsService.onTransactionCompleted(transaction);
+        }
 
         if (transaction.getManual()) {
             processManualTransaction(savedTransaction);
@@ -304,7 +325,12 @@ public class TransactionService {
     @Transactional
     public Transaction createTransactionForPaypalAndCreditCard( OrderRequest orderRequest) {
 
-        double orderAmount = orderRequest.getAmount();
+        double orderAmount = orderRequest.getProducts().stream()
+                .mapToDouble(p -> {
+                    double finalPrice = pricingService.calculateSellingPrice(p.getPrice());
+                    return finalPrice * p.getQty();
+                })
+                .sum();
 
         TransactionType transactionType = TransactionType.PURCHASE;
         if (orderRequest.getProducts() != null && !orderRequest.getProducts().isEmpty()) {
@@ -341,7 +367,6 @@ public class TransactionService {
         transaction.setDescription("Description");
         transaction.setPhoneNumber(orderRequest.getPhoneNumber());
         transaction.setOrderRequestNumber(orderRequest.getOrderRequestId());
-        transaction.setTempPin(null);
         transaction.setTempPin(null);
 
         if (orderRequest.getProducts() != null && orderRequest.getProducts().size() > 10) {
@@ -479,7 +504,9 @@ public class TransactionService {
         account.setBalance(account.getBalance() + transactionInDB.getAmountUsd());
         accountRepository.save(account);
 
+
         updateTransactionStatus(transactionInDB.getId(), TransactionStatus.COMPLETED, null);
+        salesMetricsService.onTransactionCompleted(transactionInDB);
         System.out.println("Balance actualizado para el usuario: " + user.getEmail());
     }
 
@@ -497,6 +524,7 @@ public class TransactionService {
 
     private void processProductPurchase(Transaction transactionInDB) {
         updateTransactionStatus(transactionInDB.getId(), TransactionStatus.COMPLETED, null);
+        salesMetricsService.onTransactionCompleted(transactionInDB);
         System.out.println("Transacción de compra de producto completada. Transaction ID: " + transactionInDB.getTransactionNumber());
     }
 
@@ -624,6 +652,7 @@ public class TransactionService {
         processTransaction(transaction, transaction.getAmountHnl());
 
         updateTransactionStatus(transaction.getId(), TransactionStatus.COMPLETED, "Transacción aprobada manualmente.");
+        salesMetricsService.onTransactionCompleted(transaction);
     };
 
     @Transactional

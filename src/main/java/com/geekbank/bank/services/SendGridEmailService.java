@@ -4,12 +4,14 @@ import com.geekbank.bank.models.Transaction;
 import com.geekbank.bank.models.User;
 import com.sendgrid.*;
 import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Attachments;
 import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
 
 @Service
@@ -142,4 +144,40 @@ public class SendGridEmailService {
             ex.printStackTrace();
         }
     }
+
+    public void sendEmailWithPdfAttachment(String to, String subject, String body, byte[] pdfBytes, String filename) {
+        Email from = new Email("lalbertomurillo1996@gmail.com"); // Cambia esto a tu email
+        Email toEmail = new Email(to);
+        Content content = new Content("text/html", body);
+        Mail mail = new Mail(from, subject, toEmail, content);
+
+        // Codificar el PDF en Base64
+        String encodedPdf = Base64.getEncoder().encodeToString(pdfBytes);
+
+        Attachments attachments = new Attachments();
+        attachments.setContent(encodedPdf);
+        attachments.setType("application/pdf");
+        attachments.setFilename(filename);
+        attachments.setDisposition("attachment");
+
+        mail.addAttachments(attachments);
+
+        SendGrid sg = new SendGrid(sendGridApiKey);
+        Request request = new Request();
+
+        try {
+            request.setMethod(Method.POST);
+            request.setEndpoint("mail/send");
+            request.setBody(mail.build());
+
+            Response response = sg.api(request);
+            System.out.println("Response Code: " + response.getStatusCode());
+            System.out.println("Response Body: " + response.getBody());
+            System.out.println("Response Headers: " + response.getHeaders());
+        } catch (IOException ex) {
+            System.err.println("Failed to send email with attachment to: " + to);
+            ex.printStackTrace();
+        }
+    }
+
 }

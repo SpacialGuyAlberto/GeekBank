@@ -81,6 +81,11 @@ dependencies {
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
     implementation 'javax.activation:activation:1.1.1'
 
+    implementation 'net.sf.jasperreports:jasperreports:6.20.0'
+    implementation 'com.lowagie:itext:2.1.7'
+
+    implementation 'org.apache.pdfbox:pdfbox:2.0.29'
+
 
     implementation 'org.json:json:20210307'
 

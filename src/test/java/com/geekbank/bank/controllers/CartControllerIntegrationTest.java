@@ -85,7 +85,7 @@ public class CartControllerIntegrationTest {
         cartItem.setId(1L);
 
         when(userService.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
-        when(cartService.addCartItem(user, 1L, 2)).thenReturn(cartItem);
+        when(cartService.addCartItem(user, 1L, 2,45.6)).thenReturn(cartItem);
 
         mockMvc.perform(post("/api/cart")
                         .principal(authentication)
@@ -94,7 +94,7 @@ public class CartControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(cartItem.getId()));
 
-        verify(cartService, times(1)).addCartItem(user, 1L, 2);
+        verify(cartService, times(1)).addCartItem(user, 1L, 2, 45.6);
     }
 
     @Test

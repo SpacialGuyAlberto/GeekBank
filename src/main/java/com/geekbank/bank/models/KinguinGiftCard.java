@@ -7,6 +7,8 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class KinguinGiftCard implements GiftCard {
 
+    private static final double EXCHANGE_RATE_TO_HNL = 26.5;
+
     private boolean isHighlight;
 
     public String getName() {
@@ -52,6 +54,9 @@ public class KinguinGiftCard implements GiftCard {
 
     @JsonProperty("price")
     private double price;
+
+    @JsonProperty("priceHNL")
+    private double priceHNL;
 
     @JsonProperty("cheapestOfferId")
     private List<String> cheapestOfferId;
@@ -175,7 +180,12 @@ public class KinguinGiftCard implements GiftCard {
     }
 
     public void setPrice(double price) {
-        this.price = price;
+        this.price = price + (price * 0.10); // Precio con 25% extra redondeado
+        this.priceHNL = Math.round(convertToLempiras(this.price));   // Calcula el precio en HNL al establecer el precio
+    }
+
+    public double getPriceHNL() {
+        return this.priceHNL;
     }
 
     public void setCheapestOfferId(List<String> cheapestOfferId) {
@@ -332,6 +342,10 @@ public class KinguinGiftCard implements GiftCard {
         return this.publishers;
     }
 
+    private double convertToLempiras(double priceUSD) {
+        return Math.round(priceUSD * EXCHANGE_RATE_TO_HNL);
+    }
+
 
     // Getters and Setters...
 
@@ -478,6 +492,7 @@ public class KinguinGiftCard implements GiftCard {
             return price;
         }
 
+
         public void setPrice(double price) {
             this.price = price;
         }
@@ -485,7 +500,6 @@ public class KinguinGiftCard implements GiftCard {
         public void setQty(int qty) {
             this.qty = qty;
         }
-
         public int getTextQty() {
             return textQty;
         }
@@ -602,7 +616,7 @@ public class KinguinGiftCard implements GiftCard {
 
     @Override
     public double getPrice() {
-        return price;
+        return Math.round(price) + Math.round(price * 0.25);
     }
 
     @Override
@@ -630,6 +644,7 @@ public class KinguinGiftCard implements GiftCard {
                 ", qty=" + qty +
                 ", textQty=" + textQty +
                 ", price=" + price +
+                ", priceHNL=" + priceHNL +
                 ", cheapestOfferId=" + cheapestOfferId +
                 ", isPreorder=" + isPreorder +
                 ", regionalLimitations='" + regionalLimitations + '\'' +
