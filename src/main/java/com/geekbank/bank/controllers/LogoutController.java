@@ -10,7 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/basic")
+@RequestMapping("/basic")
 public class LogoutController {
 
     private final JwtBlacklistService jwtBlacklistService;
