@@ -14,7 +14,7 @@ import java.util.Map;
 
 @Order(1)
 @Controller
-@RequestMapping("/api/home")
+@RequestMapping("/home")
 public class HomeController {
 
     @GetMapping

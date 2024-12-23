@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/gift-cards")
+@RequestMapping("/gift-cards")
 public class GiftCardController {
 
     @GetMapping("/free-fire")

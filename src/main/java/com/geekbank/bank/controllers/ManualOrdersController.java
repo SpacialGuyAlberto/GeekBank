@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
  * Controlador para manejar las órdenes manuales.
  */
 @RestController
-@RequestMapping("/api/manual-orders")
+@RequestMapping("/manual-orders")
 public class ManualOrdersController {
 
     @Autowired
