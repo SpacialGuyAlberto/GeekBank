@@ -133,6 +133,7 @@ public class SecurityConfig {
         config.setAllowCredentials(true);
         config.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://astralisbank.com"));
         config.addAllowedOrigin("http://astralisbank.com:3000");
+        config.addAllowedOrigin("https://astralisbank.com");
         config.addAllowedOrigin(frontendUrl);
         config.setAllowedMethods(Arrays.asList("GET","POST"));
         config.addAllowedHeader("*");
