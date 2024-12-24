@@ -32,6 +32,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.Arrays;
 
 @Configuration
@@ -40,71 +42,98 @@ public class SecurityConfig {
 
     @Autowired
     private JwtRequestFilter jwtRequestFilter;
+
     @Value("${DOMAIN_ORIGIN_URL}")
     private String frontendUrl;
-    private final JwtTokenUtil jwtTokenUtil;
 
+    private final JwtTokenUtil jwtTokenUtil;
     private final UserDetailsServiceImpl userDetailsService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     public SecurityConfig(JwtTokenUtil jwtTokenUtil, UserDetailsServiceImpl userDetailsService) {
         this.jwtTokenUtil = jwtTokenUtil;
         this.userDetailsService = userDetailsService;
     }
 
-    @Autowired
-    private UserRepository userRepository;
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/ws/**", "/api/transactions/{transactionId}", "/api/transactions/cancel/**").permitAll()
-                        .requestMatchers("/api/auth/registerUser", "/api/auth/check-auth",
+                        // Rutas públicas (permitAll)
+                        .requestMatchers(
+                                "/api/ws/**",
+                                "/api/transactions/{transactionId}",
+                                "/api/transactions/cancel/**",
+                                "/api/auth/registerUser", "/api/auth/check-auth",
                                 "/api/auth/registerUserByAdmin", "/api/auth/activate",
-                                "/api/auth/validate-password","/api/auth/login",
-                                "/api/auth/google-login", "/api/auth/logout", "/api/auth/reset-password",
-                                "/api/accounts/**", "/api/accounts/apply-balance/",
-                                "/api/home", "/api/gift-cards/**",
-                                "/api/kinguin-gift-cards/**", "/api/users/**",
-                                "/api/public/**", "/api/cart", "/api/cart/**",
-                                "/api/telegram/**", "/api/kinguin/**",
+                                "/api/auth/validate-password", "/api/auth/login",
+                                "/api/auth/google-login", "/api/auth/logout",
+                                "/api/auth/reset-password", "/api/accounts/**",
+                                "/api/accounts/apply-balance/", "/api/home",
+                                "/api/gift-cards/**", "/api/kinguin-gift-cards/**",
+                                "/api/users/**", "/api/public/**", "/api/cart",
+                                "/api/cart/**", "/api/telegram/**", "/api/kinguin/**",
                                 "/api/users/user-details", "/api/users/${userId}",
-                                "/api/orders", "/api/orders/**",
-                                "/api/highlights/**", "/api/highlights",
-                                "/api/users/update-user-details",
-                                "/api/users/**", "/api/transactions",
-                                "/api/transactions/**", "/api/transactions/cancel/**",
-                                "/api/wish-list", "/api/wish-list/**",
-                                "/api/wish-list/${wishedItemId}", "/api/feedbacks/**",
-                                "/api/recommendations/**", "/api/recommendations/user/${userId}",
-                                "/api/sync/**", "/api/freefire/**", "/api/freefire/products",
+                                "/api/orders", "/api/orders/**", "/api/highlights/**",
+                                "/api/highlights", "/api/users/update-user-details",
+                                "/api/users/**", "/api/transactions", "/api/transactions/**",
+                                "/api/transactions/cancel/**", "/api/wish-list",
+                                "/api/wish-list/**", "/api/wish-list/${wishedItemId}",
+                                "/api/feedbacks/**", "/api/recommendations/**",
+                                "/api/recommendations/user/${userId}", "/api/sync/**",
+                                "/api/freefire/**", "/api/freefire/products",
                                 "/api/currency", "/api/recommendations/content-based/**",
-                                "/api/manual-orders/**",
-                                "/api/main-screen-gift-cards/**", "api/transactions/verifyPayment",
-                                "api/transactions/verify-unmatched-payment", "/api/paypal/**", "/api/auth/check-auth"
-
+                                "/api/manual-orders/**", "/api/main-screen-gift-cards/**",
+                                "api/transactions/verifyPayment",
+                                "api/transactions/verify-unmatched-payment",
+                                "/api/paypal/**", "/api/auth/check-auth"
                         ).permitAll()
+                        // Cualquier otra ruta requiere autenticación
                         .anyRequest().authenticated()
                 )
-                .oauth2Login(oauth2Login -> oauth2Login
-                        .defaultSuccessUrl("/api/home", true)
-                        .userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint.oidcUserService(oidcUserService()))
-                )
+
+                // ***** Si no quieres redirecciones a login, COMENTA o QUITA oauth2Login() *****
+                // .oauth2Login(oauth2Login -> oauth2Login
+                //     .defaultSuccessUrl("/api/home", true)
+                //     .userInfoEndpoint(userInfoEndpoint ->
+                //         userInfoEndpoint.oidcUserService(oidcUserService()))
+                // )
+
+                // Deshabilitar CSRF (opcional en aplicaciones REST).
                 .csrf(csrf -> csrf.disable())
+
+                // Configura CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                // Devuelve 401 en lugar de 302 cuando no haya auth
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.sendError(
+                                    HttpServletResponse.SC_UNAUTHORIZED,
+                                    authException.getMessage()
+                            );
+                        })
+                )
+
+                // Sessions stateless (JWT)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-//        http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+        // Inserta el filtro que valida JWT antes del UsernamePasswordAuthenticationFilter
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    // Filtro que maneja el JWT
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(jwtTokenUtil, userDetailsService);
     }
 
+    // Configuración para login con Google (si quisieras usar oauth2Login)
     @Bean
     public ClientRegistrationRepository clientRegistrationRepository() {
         return new InMemoryClientRegistrationRepository(googleClientRegistration());
@@ -126,64 +155,66 @@ public class SecurityConfig {
                 .build();
     }
 
+    // Configuración CORS
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://astralisbank.com"));
+        // Orígenes permitidos:
+        config.setAllowedOrigins(Arrays.asList(
+                "http://localhost:4200",
+                "http://astralisbank.com"
+        ));
         config.addAllowedOrigin("http://astralisbank.com:3000");
         config.addAllowedOrigin("https://astralisbank.com");
+        // Permite el valor de tu variable de entorno (si aplica)
         config.addAllowedOrigin(frontendUrl);
+
+        // Métodos permitidos
         config.setAllowedMethods(Arrays.asList("GET","POST"));
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        // Aplica esta configuración a todas las rutas
         source.registerCorsConfiguration("/**", config);
         return source;
     }
-
-//    @Bean
-//    public CorsConfigurationSource corsConfigurationSource() {
-//        CorsConfiguration config = new CorsConfiguration();
-//        config.setAllowCredentials(true);
-//        config.addAllowedOrigin("http://localhost:4200"); // O usa "*" para permitir todos los orígenes
-//        config.addAllowedHeader("*");
-//        config.addAllowedMethod("*");
-//
-//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        source.registerCorsConfiguration("/**", config);
-//        return source;
-//    }
 
     @Bean
     public OidcUserService oidcUserService() {
         return new OidcUserService();
     }
 
+    // Manager de autenticación
     @Bean
     public AuthenticationManager authenticationManager(
             UserDetailsService userDetailsService,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder
+    ) {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
         authenticationProvider.setUserDetailsService(userDetailsService);
         authenticationProvider.setPasswordEncoder(passwordEncoder);
-
         return new ProviderManager(authenticationProvider);
     }
 
+    // Carga el servicio de usuarios
     @Bean
     public UserDetailsService userDetailsService() {
         return new UserDetailsServiceImpl(userRepository);
     }
 
+    // Encoder para las contraseñas
     @Bean
     public PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
+    // Decoder para tokens JWT de Google (si quisieras validar ID token, etc.)
     @Bean
     public JwtDecoder jwtDecoder() {
-        return NimbusJwtDecoder.withJwkSetUri("https://www.googleapis.com/oauth2/v3/certs").build();
+        return NimbusJwtDecoder
+                .withJwkSetUri("https://www.googleapis.com/oauth2/v3/certs")
+                .build();
     }
 }
