@@ -67,7 +67,7 @@ public class SecurityConfig {
                                 "/home", "/gift-cards/**",
                                 "/kinguin-gift-cards/**", "/users/**",
                                 "/public/**", "/cart", "/cart/**",
-                                "/telegram/**", "/kinguin/**",
+                                "/telegram/**", "/api/kinguin/**",
                                 "/users/user-details", "/users/${userId}",
                                 "/orders", "/orders/**",
                                 "/highlights/**", "/highlights",
