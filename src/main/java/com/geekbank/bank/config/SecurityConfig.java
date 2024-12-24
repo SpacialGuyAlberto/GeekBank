@@ -58,30 +58,30 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/ws/**", "/transactions/{transactionId}", "/transactions/cancel/**").permitAll()
-                        .requestMatchers("/auth/registerUser", "/auth/check-auth",
-                                "/auth/registerUserByAdmin", "/auth/activate",
-                                "/auth/validate-password","/auth/login",
-                                "/auth/google-login", "/auth/logout", "/auth/reset-password",
-                                "/accounts/**", "/accounts/apply-balance/",
-                                "/home", "/gift-cards/**",
-                                "/kinguin-gift-cards/**", "/users/**",
-                                "/public/**", "/cart", "/cart/**",
-                                "/telegram/**", "/api/kinguin/**",
-                                "/users/user-details", "/users/${userId}",
-                                "/orders", "/orders/**",
-                                "/highlights/**", "/highlights",
-                                "/users/update-user-details",
-                                "/users/**", "/transactions",
-                                "/transactions/**", "/transactions/cancel/**",
-                                "/wish-list", "/wish-list/**",
-                                "/wish-list/${wishedItemId}", "/feedbacks/**",
-                                "/recommendations/**", "/recommendations/user/${userId}",
-                                "/sync/**", "/freefire/**", "/freefire/products",
-                                "/currency", "/recommendations/content-based/**",
-                                "/manual-orders/**",
-                                "/main-screen-gift-cards/**", "/transactions/verifyPayment",
-                                "/transactions/verify-unmatched-payment", "/paypal/**", "/auth/check-auth"
+                        .requestMatchers("/api/ws/**", "/api/transactions/{transactionId}", "/api/transactions/cancel/**").permitAll()
+                        .requestMatchers("/api/auth/registerUser", "/api/auth/check-auth",
+                                "/api/auth/registerUserByAdmin", "/api/auth/activate",
+                                "/api/auth/validate-password","/api/auth/login",
+                                "/api/auth/google-login", "/api/auth/logout", "/api/auth/reset-password",
+                                "/api/accounts/**", "/api/accounts/apply-balance/",
+                                "/api/home", "/api/gift-cards/**",
+                                "/api/kinguin-gift-cards/**", "/api/users/**",
+                                "/api/public/**", "/api/cart", "/api/cart/**",
+                                "/api/telegram/**", "/api/kinguin/**",
+                                "/api/users/user-details", "/api/users/${userId}",
+                                "/api/orders", "/api/orders/**",
+                                "/api/highlights/**", "/api/highlights",
+                                "/api/users/update-user-details",
+                                "/api/users/**", "/api/transactions",
+                                "/api/transactions/**", "/api/transactions/cancel/**",
+                                "/api/wish-list", "/api/wish-list/**",
+                                "/api/wish-list/${wishedItemId}", "/api/feedbacks/**",
+                                "/api/recommendations/**", "/api/recommendations/user/${userId}",
+                                "/api/sync/**", "/api/freefire/**", "/api/freefire/products",
+                                "/api/currency", "/api/recommendations/content-based/**",
+                                "/api/manual-orders/**",
+                                "/api/main-screen-gift-cards/**", "api/transactions/verifyPayment",
+                                "api/transactions/verify-unmatched-payment", "/api/paypal/**", "/api/auth/check-auth"
 
                         ).permitAll()
                         .anyRequest().authenticated()
@@ -131,7 +131,7 @@ public class SecurityConfig {
 
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(Arrays.asList("http://localhost:4200", "https://astralisbank.com"));
+        config.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://astralisbank.com"));
         config.addAllowedOrigin("http://astralisbank.com:3000");
         config.addAllowedOrigin("https://astralisbank.com");
         config.addAllowedOrigin(frontendUrl);
