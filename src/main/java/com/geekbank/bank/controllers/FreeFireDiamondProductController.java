@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/freefire")
+@RequestMapping("/api/freefire")
 public class FreeFireDiamondProductController {
 
     private final ProductService productService;

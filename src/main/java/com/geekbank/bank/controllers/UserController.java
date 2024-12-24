@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;

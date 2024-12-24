@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/accounts")
+@RequestMapping("/api/accounts")
 public class AccountController {
     private final AccountRepository accountRepository;
     private final AccountService accountService;

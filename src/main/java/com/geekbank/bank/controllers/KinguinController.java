@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/kinguin")
+@RequestMapping("/api/kinguin")
 public class KinguinController {
 
     @Autowired

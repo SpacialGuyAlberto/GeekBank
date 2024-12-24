@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/sync")
+@RequestMapping("/api/sync")
 public class SyncController {
 
     @Autowired
