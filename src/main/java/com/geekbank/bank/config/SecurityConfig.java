@@ -59,14 +59,37 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/ws/**", "/api/transactions/{transactionId}", "/api/transactions/cancel/**").permitAll()
-                        .requestMatchers("/api/**"
+                        .requestMatchers("/api/auth/registerUser", "/api/auth/check-auth",
+                                "/api/auth/registerUserByAdmin", "/api/auth/activate",
+                                "/api/auth/validate-password","/api/auth/login",
+                                "/api/auth/google-login", "/api/auth/logout", "/api/auth/reset-password",
+                                "/api/accounts/**", "/api/accounts/apply-balance/",
+                                "/api/home", "/api/gift-cards/**",
+                                "/api/kinguin-gift-cards/**", "/api/users/**",
+                                "/api/public/**", "/api/cart", "/api/cart/**",
+                                "/api/telegram/**", "/api/kinguin/**",
+                                "/api/users/user-details", "/api/users/${userId}",
+                                "/api/orders", "/api/orders/**",
+                                "/api/highlights/**", "/api/highlights",
+                                "/api/users/update-user-details",
+                                "/api/users/**", "/api/transactions",
+                                "/api/transactions/**", "/api/transactions/cancel/**",
+                                "/api/wish-list", "/api/wish-list/**",
+                                "/api/wish-list/${wishedItemId}", "/api/feedbacks/**",
+                                "/api/recommendations/**", "/api/recommendations/user/${userId}",
+                                "/api/sync/**", "/api/freefire/**", "/api/freefire/products",
+                                "/api/currency", "/api/recommendations/content-based/**",
+                                "/api/manual-orders/**",
+                                "/api/main-screen-gift-cards/**", "api/transactions/verifyPayment",
+                                "api/transactions/verify-unmatched-payment", "/api/paypal/**", "/api/auth/check-auth"
+
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-//                .oauth2Login(oauth2Login -> oauth2Login
-//                        .defaultSuccessUrl("/api/home", true)
-//                        .userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint.oidcUserService(oidcUserService()))
-//                )
+                .oauth2Login(oauth2Login -> oauth2Login
+                        .defaultSuccessUrl("/api/home", true)
+                        .userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint.oidcUserService(oidcUserService()))
+                )
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -108,7 +131,8 @@ public class SecurityConfig {
 
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(Arrays.asList("http://localhost:4200", "https://astralisbank.com"));
+        config.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://astralisbank.com"));
+        config.addAllowedOrigin("http://astralisbank.com:3000");
         config.addAllowedOrigin("https://astralisbank.com");
         config.addAllowedOrigin(frontendUrl);
         config.setAllowedMethods(Arrays.asList("GET","POST"));
