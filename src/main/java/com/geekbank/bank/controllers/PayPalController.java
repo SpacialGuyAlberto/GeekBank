@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/paypal")
+@RequestMapping("/api/paypal")
 public class PayPalController {
 
     private final PayPalService payPalService;

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/main-screen-gift-cards")
+@RequestMapping("/api/main-screen-gift-cards")
 public class MainScreenGiftCardController {
 
     private final MainScreenGiftCardService mainScreenGiftCardService;

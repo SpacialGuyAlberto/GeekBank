@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/highlights")
+@RequestMapping("/api/highlights")
 public class HighlightController {
 
     private final HighlightService highlightService;

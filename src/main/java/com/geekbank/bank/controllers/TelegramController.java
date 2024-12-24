@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/telegram")
+@RequestMapping("/api/telegram")
 public class TelegramController {
 
     private final SmsService smsService;

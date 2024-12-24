@@ -29,7 +29,7 @@ import java.util.UUID;
 @Order(1)
 @CrossOrigin(origins = "${DOMAIN_ORIGIN_URL}")
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 public class RegisterController {
     private static final Logger logger = LoggerFactory
             .getLogger(RegisterController.class);

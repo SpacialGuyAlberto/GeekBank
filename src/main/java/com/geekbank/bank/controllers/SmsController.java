@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/sms")
+@RequestMapping("/api/sms")
 public class SmsController {
 
     private final SmsService smsService;
