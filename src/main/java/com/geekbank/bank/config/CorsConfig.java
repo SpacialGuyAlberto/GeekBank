@@ -22,7 +22,10 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         config.addAllowedOrigin(domainUrl);
-        config.addAllowedOrigin("https://astralisbank.com");// Aquí se permite la URL del frontend
+        config.setAllowedOrigins(Arrays.asList(
+                "http://localhost:4200",
+                "https://astralisbank.com"
+        ));// Aquí se permite la URL del frontend
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         config.setExposedHeaders(List.of("Authorization"));
