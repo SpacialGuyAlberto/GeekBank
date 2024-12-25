@@ -159,19 +159,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(Arrays.asList("https://astralisbank.com", "http://localhost:4200"));
         config.setAllowCredentials(true);
-        // Orígenes permitidos:
-        config.setAllowedOrigins(Arrays.asList(
-                "http://localhost:4200",
-                "http://astralisbank.com"
-        ));
-        config.addAllowedOrigin("http://astralisbank.com:3000");
-        config.addAllowedOrigin("https://astralisbank.com");
-        // Permite el valor de tu variable de entorno (si aplica)
+        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.addAllowedOrigin(frontendUrl);
-
-        // Métodos permitidos
-        config.setAllowedMethods(Arrays.asList("GET","POST"));
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
 
