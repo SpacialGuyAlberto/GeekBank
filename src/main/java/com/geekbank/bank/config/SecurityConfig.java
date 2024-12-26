@@ -65,6 +65,7 @@ public class SecurityConfig {
                         // Rutas públicas (permitAll)
                         .requestMatchers(
                                 "/api/ws/**",
+                                "/api/auth/**",
                                 "/api/transactions/{transactionId}",
                                 "/api/transactions/cancel/**",
                                 "/api/auth/registerUser", "/api/auth/check-auth",

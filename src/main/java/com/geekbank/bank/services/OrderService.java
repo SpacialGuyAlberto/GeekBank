@@ -105,8 +105,8 @@ public class OrderService {
                     // Creamos el receipt
                     Receipt receipt = new Receipt(
                             transaction.getTransactionNumber(),
+                            String.valueOf(orderRequest.getUserId()),
                             orderRequest.getEmail(),
-                            "Carepija",
                             transaction.getAmountHnl(), // Puedes usar amountUsd si lo prefieres
                             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
                             orderRequest.getProducts() // Pasar la lista de productos del OrderRequest
