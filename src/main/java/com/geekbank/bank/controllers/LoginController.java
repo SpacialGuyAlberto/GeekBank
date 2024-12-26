@@ -174,28 +174,40 @@ public class LoginController {
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body("El método GET no está permitido para /login");
     }
 
-@PostMapping("/google-login")
-public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> tokenData) {
-    String token = tokenData.get("token");
-    Jwt decodedToken = jwtDecoder.decode(token);
+    @PostMapping("/google-login")
+    public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> tokenData, HttpServletResponse response) {
+        String token = tokenData.get("token");
+        Jwt decodedToken = jwtDecoder.decode(token);
 
-    String email = decodedToken.getClaim("email");
-    User user = userService.findByEmail(email).orElseGet(() -> {
-        User newUser = new User();
-        newUser.setEmail(email);
-        newUser.setName(decodedToken.getClaim("name"));
-        newUser.setPassword("");
-        userService.createUser(newUser);
-        return newUser;
-    });
+        String email = decodedToken.getClaim("email");
+        User user = userService.findByEmail(email).orElseGet(() -> {
+            User newUser = new User();
+            newUser.setEmail(email);
+            newUser.setName(decodedToken.getClaim("name"));
+            newUser.setPassword("");
+            userService.createUser(newUser);
+            return newUser;
+        });
 
-    UserDetailsImpl userDetails = new UserDetailsImpl(user);
-    String jwtToken = jwtTokenUtil.generateToken(userDetails);
-    Map<String, Object> response = new HashMap<>();
-    response.put("token", jwtToken);
-    response.put("userId", user.getId());
-    return ResponseEntity.ok(response);
+        UserDetailsImpl userDetails = new UserDetailsImpl(user);
+        String jwtToken = jwtTokenUtil.generateToken(userDetails);
+
+        // Crear y configurar la cookie JWT
+        ResponseCookie jwtCookie = ResponseCookie.from("jwtToken", jwtToken)
+                .httpOnly(true)
+                .secure(true) // Cambiar a 'true' en producción
+                .path("/")
+                .maxAge(Duration.ofDays(1))
+                .sameSite("Lax")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
+
+        Map<String, Object> responseBody = new HashMap<>();
+        responseBody.put("userId", user.getId());
+        return ResponseEntity.ok(responseBody);
     }
+
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletResponse response) {

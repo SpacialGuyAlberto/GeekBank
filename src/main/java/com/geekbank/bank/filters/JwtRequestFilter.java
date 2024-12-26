@@ -14,6 +14,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
@@ -25,6 +27,25 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
+
+    private static final List<String> EXCLUDE_URLS = Arrays.asList(
+            "/api/auth/login",
+            "/api/auth/registerUser",
+            "/api/auth/google-login",
+            "/api/auth/registerUserByAdmin",
+            "/api/auth/activate",
+            "/api/auth/validate-password",
+            "/api/auth/logout",
+            "/api/auth/reset-password"
+            // Agrega otros endpoints públicos según sea necesario
+    );
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        return EXCLUDE_URLS.stream().anyMatch(path::equalsIgnoreCase);
+    }
+
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
