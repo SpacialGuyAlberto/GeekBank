@@ -213,8 +213,6 @@ public class TransactionService {
         Transaction savedTransaction = transactionRepository.save(transaction);
         salesMetricsService.onTransactionCompleted(transaction);
 
-
-
         if (transaction.getManual()) {
             processManualTransaction(savedTransaction);
             this.emailService.sendNotificationEmail("enkiluzlbel@gmail.com");
