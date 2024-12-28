@@ -24,7 +24,7 @@ public class SendGridEmailService {
     private String domainUrl;
 
     public void sendActivationEmail(String to, String token) {
-        Email from = new Email("lalbertomurillo1996@gmail.com"); // Cambia esto a tu email
+        Email from = new Email("info@astralisbank.com"); // Cambia esto a tu email
         Email toEmail = new Email(to);
         String subject = "Email de activación";
         String activationLink = domainUrl + "/activate?token=" + token;
@@ -51,7 +51,7 @@ public class SendGridEmailService {
     }
 
     public void sendNotificationEmail(String to) {
-        Email from = new Email("lalbertomurillo1996@gmail.com"); // Cambia esto a tu email
+        Email from = new Email("info@astralisbank.com"); // Cambia esto a tu email
         Email toEmail = new Email(to);
         String subject = "Nueva transaccion manual solicitada";
         String body = "Se ha solicitado una nueva transaccion manual. Por favor complete la transaccion.";
@@ -77,7 +77,7 @@ public class SendGridEmailService {
     }
 
     public void sendPurchaseConfirmationEmail(String to, List<String> key, Transaction transaction) {
-        Email from = new Email("lalbertomurillo1996@gmail.com"); // Cambia esto a tu email
+        Email from = new Email("info@astralisbank.com"); // Cambia esto a tu email
         Email toEmail = new Email(to);
         String subject = "Confirmacion de compra";
         String body = "Compra exitosa de tus keys: " + key + "\n Tu numero de transaccion es: " + transaction.getTransactionNumber();
@@ -105,7 +105,7 @@ public class SendGridEmailService {
 
     public void sendSetPasswordEmail(User user) {
         // Configurar las direcciones de email
-        Email from = new Email("lalbertomurillo1996@gmail.com");
+        Email from = new Email("info@astralisbank.com");
         Email toEmail = new Email(user.getEmail());
 
         // Asunto del email
@@ -146,7 +146,7 @@ public class SendGridEmailService {
     }
 
     public void sendEmailWithPdfAttachment(String to, String subject, String body, byte[] pdfBytes, String filename) {
-        Email from = new Email("lalbertomurillo1996@gmail.com"); // Cambia esto a tu email
+        Email from = new Email("info@astralisbank.com"); // Cambia esto a tu email
         Email toEmail = new Email(to);
         Content content = new Content("text/html", body);
         Mail mail = new Mail(from, subject, toEmail, content);

@@ -7,4 +7,5 @@ public interface GiftCard {
     double getPrice();
     String getExpirationDate();
     void redeem();
+
 }
