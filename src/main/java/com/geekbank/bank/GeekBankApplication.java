@@ -43,6 +43,9 @@ public class GeekBankApplication  {
         System.setProperty("SPRING_SENDGRID_API_KEY", dotenv.get("SPRING_SENDGRID_API_KEY"));
         System.setProperty("DOMAIN_URL", dotenv.get("DOMAIN_URL"));
         System.setProperty("DOMAIN_ORIGIN_URL", dotenv.get("DOMAIN_ORIGIN_URL"));
+        System.setProperty("PAYPAL_CLIENT_ID", dotenv.get("PAYPAL_CLIENT_ID"));
+        System.setProperty("PAYPAL_CLIENT_SECRET", dotenv.get("PAYPAL_CLIENT_SECRET"));
+        System.setProperty("PAYPAL_BASE_URL", dotenv.get("PAYPAL_BASE_URL"));
         // Inicia la aplicación Spring Boot
         SpringApplication.run(GeekBankApplication.class, args);
     }

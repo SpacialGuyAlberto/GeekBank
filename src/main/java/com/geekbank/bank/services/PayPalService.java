@@ -7,14 +7,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.Base64;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 public class PayPalService {
 
-    private String clientId = "AWN0lCMoVrecKkOjVsrTCX6zG6Yjs2fE8RYupZMqND-pjJeEEbU0sNXS8l43DHSH2Q8omYqSnZ4RL9qC";
-    private String clientSecret = "EKKOBZa80NAVE3IOPfEZM7AE4AEywq6RBQq8-Llbsv-VXx9bl9G6cEjcgLUPzs6sIpdjfmYvju-OHRQF";
-    private String baseUrl = "https://api-m.sandbox.paypal.com";
+    @Value("${PAYPAL_CLIENT_ID}")
+    private String clientId;
+
+    @Value("${PAYPAL_CLIENT_SECRET}")
+    private String clientSecret;
+
+    @Value("${PAYPAL_BASE_URL}")
+    private String baseUrl;
     private ObjectMapper objectMapper = new ObjectMapper();
 
     /**
