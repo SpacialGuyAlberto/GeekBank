@@ -82,7 +82,7 @@ public class PdfGeneratorService {
             contentStream.beginText();
             contentStream.setFont(PDType1Font.HELVETICA_BOLD, 20);
             contentStream.newLineAtOffset(margin, yStart);
-            contentStream.showText("GeekBank");
+            contentStream.showText("Astralisbank");
             contentStream.endText();
             yStart -= 30;
 
@@ -90,7 +90,7 @@ public class PdfGeneratorService {
             contentStream.beginText();
             contentStream.setFont(PDType1Font.HELVETICA_BOLD, 16);
             contentStream.newLineAtOffset(margin, yStart);
-            contentStream.showText("Official Receipt");
+            contentStream.showText("Factura de compra");
             contentStream.endText();
             yStart -= 20;
 
@@ -106,15 +106,15 @@ public class PdfGeneratorService {
             contentStream.setFont(PDType1Font.HELVETICA_BOLD, 12);
             contentStream.setLeading(textLeading);
             contentStream.newLineAtOffset(leftColumnX, yStart);
-            contentStream.showText("Customer Name:");
+            contentStream.showText("Nombre del cliente:");
             contentStream.newLine();
-            contentStream.showText("Customer Email:");
+            contentStream.showText("Email del cliente:");
             contentStream.newLine();
-            contentStream.showText("Transaction ID:");
+            contentStream.showText("Numero de transaccion");
             contentStream.newLine();
-            contentStream.showText("Amount (USD):");
+            contentStream.showText("Precio (USD)");
             contentStream.newLine();
-            contentStream.showText("Date:");
+            contentStream.showText("Fecha:");
             contentStream.endText();
 
             contentStream.beginText();
