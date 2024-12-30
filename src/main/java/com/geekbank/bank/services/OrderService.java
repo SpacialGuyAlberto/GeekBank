@@ -83,7 +83,7 @@ public class OrderService {
         if (orderResponse != null && orderResponse.getOrderId() != null) {
             System.out.println("Order placed successfully with ID: " + orderResponse.getOrderId());
 
-            int maxRetries = 20; // Número máximo de intentos
+            int maxRetries = 60; // Número máximo de intentos
             long delayMillis = 5000; // Espera de 5 segundos entre intentos
             List<Map<String, Object>> keysData = pollForKeys(orderResponse.getOrderId(), maxRetries, delayMillis, transaction);
 
@@ -100,7 +100,6 @@ public class OrderService {
 
                 Optional<User> user = userRepository.findByEmail(orderRequest.getEmail());
 
-
                 if (orderRequest.getEmail() != null) {
                     // Creamos el receipt
                     Receipt receipt = new Receipt(
@@ -112,22 +111,18 @@ public class OrderService {
                             orderRequest.getProducts() // Pasar la lista de productos del OrderRequest
                     );
 
-                    // Generar el PDF en memoria
                     byte[] pdfBytes = pdfGeneratorService.generateReceiptPdfBytes(receipt);
 
-                    // Enviar email con el PDF adjunto
                     String subject = "Recibo de tu compra - " + transaction.getTransactionNumber();
                     String body = "<p>Gracias por tu compra.</p><p>Adjunto encontrarás tu recibo en PDF.</p>";
                     String filename = "receipt_" + transaction.getTransactionNumber() + ".pdf";
 
-                    sendGridEmailService.sendPurchaseConfirmationEmail(orderRequest.getEmail(), keys, transaction);
-                    sendGridEmailService.sendEmailWithPdfAttachment(orderRequest.getEmail(), subject, body, pdfBytes, filename);
-                }
+                    sendGridEmailService.sendEmail(orderRequest.getEmail(), subject, "Compra exitosa", keys, transaction, pdfBytes, filename);
 
+                }
                 if (orderRequest.getPhoneNumber() != null && orderRequest.getSendKeyToSMS()) {
                     smsService.sendKeysToPhoneNumber(orderRequest.getPhoneNumber(), keys);
                 }
-
                 // Opcional: enviar keys por SMS
             } else {
                 System.err.println("Keys were not available after multiple attempts.");

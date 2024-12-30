@@ -76,32 +76,6 @@ public class SendGridEmailService {
         }
     }
 
-    public void sendPurchaseConfirmationEmail(String to, List<String> key, Transaction transaction) {
-        Email from = new Email("info@astralisbank.com"); // Cambia esto a tu email
-        Email toEmail = new Email(to);
-        String subject = "Confirmacion de compra";
-        String body = "Compra exitosa de tus keys: " + key + "\n Tu numero de transaccion es: " + transaction.getTransactionNumber();
-        Content content = new Content("text/html", body);
-        Mail mail = new Mail(from, subject, toEmail, content);
-
-        SendGrid sg = new SendGrid(sendGridApiKey);
-        Request request = new Request();
-
-        try {
-            request.setMethod(Method.POST);
-            request.setEndpoint("mail/send");
-            request.setBody(mail.build());
-
-            Response response = sg.api(request);
-            System.out.println("Response Code: " + response.getStatusCode());
-            System.out.println("Response Body: " + response.getBody());
-            System.out.println("Response Headers: " + response.getHeaders());
-        } catch (IOException ex) {
-            System.err.println("Failed to send email to: " + to);
-            ex.printStackTrace();
-        }
-    }
-
 
     public void sendSetPasswordEmail(User user) {
         // Configurar las direcciones de email
@@ -179,5 +153,77 @@ public class SendGridEmailService {
             ex.printStackTrace();
         }
     }
+
+    public void sendPurchaseConfirmationEmail(String to, List<String> key, Transaction transaction) {
+        Email from = new Email("info@astralisbank.com"); // Cambia esto a tu email
+        Email toEmail = new Email(to);
+        String subject = "Confirmacion de compra";
+        String body = "Compra exitosa de tus keys: " + key + "\n Tu numero de transaccion es: " + transaction.getTransactionNumber();
+        Content content = new Content("text/html", body);
+        Mail mail = new Mail(from, subject, toEmail, content);
+
+        SendGrid sg = new SendGrid(sendGridApiKey);
+        Request request = new Request();
+
+        try {
+            request.setMethod(Method.POST);
+            request.setEndpoint("mail/send");
+            request.setBody(mail.build());
+
+            Response response = sg.api(request);
+            System.out.println("Response Code: " + response.getStatusCode());
+            System.out.println("Response Body: " + response.getBody());
+            System.out.println("Response Headers: " + response.getHeaders());
+        } catch (IOException ex) {
+            System.err.println("Failed to send email to: " + to);
+            ex.printStackTrace();
+        }
+    }
+
+
+    public void sendEmail(String to, String subject, String body, List<String> key, Transaction transaction, byte[] pdfBytes, String filename) {
+        Email from = new Email("info@astralisbank.com"); // Cambia esto a tu email
+        Email toEmail = new Email(to);
+
+        // Crea el contenido del email
+        String finalBody = body;
+        if (key != null && transaction != null) {
+            finalBody += "\n\nCompra exitosa de tus claves: " + key + "\n Tu numero de transaccion es: " + transaction.getTransactionNumber();
+        }
+
+        Content content = new Content("text/html", finalBody);
+        Mail mail = new Mail(from, subject, toEmail, content);
+
+        // Si se proporciona un archivo PDF, se adjunta
+        if (pdfBytes != null) {
+            String encodedPdf = Base64.getEncoder().encodeToString(pdfBytes);
+
+            Attachments attachments = new Attachments();
+            attachments.setContent(encodedPdf);
+            attachments.setType("application/pdf");
+            attachments.setFilename(filename);
+            attachments.setDisposition("attachment");
+
+            mail.addAttachments(attachments);
+        }
+
+        SendGrid sg = new SendGrid(sendGridApiKey);
+        Request request = new Request();
+
+        try {
+            request.setMethod(Method.POST);
+            request.setEndpoint("mail/send");
+            request.setBody(mail.build());
+
+            Response response = sg.api(request);
+            System.out.println("Response Code: " + response.getStatusCode());
+            System.out.println("Response Body: " + response.getBody());
+            System.out.println("Response Headers: " + response.getHeaders());
+        } catch (IOException ex) {
+            System.err.println("Failed to send email to: " + to);
+            ex.printStackTrace();
+        }
+    }
+
 
 }
