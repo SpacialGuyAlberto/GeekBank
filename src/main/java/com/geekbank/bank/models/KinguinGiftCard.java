@@ -180,7 +180,7 @@ public class KinguinGiftCard implements GiftCard {
     }
 
     public void setPrice(double price) {
-        this.price = price + (price * 0.10); // Precio con 25% extra redondeado
+        this.price = price + (price * 0.10);
         this.priceHNL = Math.round(convertToLempiras(this.price));   // Calcula el precio en HNL al establecer el precio
     }
 

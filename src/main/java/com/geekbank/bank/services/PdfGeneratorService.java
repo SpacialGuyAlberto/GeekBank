@@ -175,7 +175,7 @@ public class PdfGeneratorService {
 
                 contentStream.beginText();
                 contentStream.newLineAtOffset(col4X, tableStartY);
-                contentStream.showText("Price (USD)");
+                contentStream.showText("Price (HNL)");
                 contentStream.endText();
 
                 yStart = tableStartY - 20;

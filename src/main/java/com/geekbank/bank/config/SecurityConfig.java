@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -92,6 +93,9 @@ public class SecurityConfig {
                                 "api/transactions/verify-unmatched-payment",
                                 "/api/paypal/**", "/api/auth/check-auth", "/api/visits/**", "/api/metrics/**"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/activation-details").hasAnyRole("ADMIN", "SUPPORT")
+                        .requestMatchers(HttpMethod.DELETE, "/api/activation-details/**").hasAnyRole("ADMIN", "SUPPORT")
+                        .requestMatchers(HttpMethod.GET, "/api/activation-details/**").hasAnyRole("ADMIN", "SUPPORT")
                         // Cualquier otra ruta requiere autenticación
                         .anyRequest().authenticated()
                 )
@@ -105,6 +109,7 @@ public class SecurityConfig {
 
                 // Deshabilitar CSRF (opcional en aplicaciones REST).
                 .csrf(csrf -> csrf.disable())
+
 
                 // Configura CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))

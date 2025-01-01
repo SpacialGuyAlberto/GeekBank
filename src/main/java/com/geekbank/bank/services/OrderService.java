@@ -5,46 +5,51 @@ import com.geekbank.bank.models.*;
 import com.geekbank.bank.repositories.OrdersRepository;
 import com.geekbank.bank.repositories.TransactionRepository;
 import com.geekbank.bank.repositories.UserRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class OrderService {
 
     @Autowired
     private OrdersRepository ordersRepository;
+
     @Autowired
     private TransactionRepository transactionRepository;
+
     @Autowired
     private PdfGeneratorService pdfGeneratorService;
+
     @Autowired
     private WebSocketController webSocketController;
 
-    private static final String KINGUIN_ORDER_URL = "https://gateway.kinguin.net/esa/api/v1/order";
-    private static final String API_KEY = "77d96c852356b1c654a80f424d67048f";
-    private static final String KEYS_ENDPOINT = "https://gateway.kinguin.net/esa/api/v2/order/";
+    @Autowired
+    private KinguinService kinguinService; // si lo usas
 
     @Autowired
-    private KinguinService kinguinService;
-    @Autowired
     private SendGridEmailService sendGridEmailService;
+
     @Autowired
     private SmsService smsService;
+
     @Autowired
     private UserRepository userRepository;
+
+    // *** Inyectamos el nuevo servicio ***
+    @Autowired
+    private KeyPollingService keyPollingService;
+
+    // *** Constantes o endpoints de tu API ***
+    private static final String KINGUIN_ORDER_URL = "https://gateway.kinguin.net/esa/api/v1/order";
+    private static final String API_KEY = "77d96c852356b1c654a80f424d67048f";
 
     public Orders createOrder(OrderRequest orderRequest, Transaction transaction){
         Orders order = new Orders();
@@ -64,12 +69,15 @@ public class OrderService {
 
     public OrderResponse placeOrder(OrderRequest orderRequest, Transaction transaction) {
 
+        // Prepara los headers
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Api-Key", API_KEY);
         headers.set("Content-Type", "application/json");
 
+        // Envuelve el orderRequest
         HttpEntity<OrderRequest> entity = new HttpEntity<>(orderRequest, headers);
 
+        // Llama a la API de Kinguin para crear la orden
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<OrderResponse> response = restTemplate.exchange(
                 KINGUIN_ORDER_URL,
@@ -83,125 +91,26 @@ public class OrderService {
         if (orderResponse != null && orderResponse.getOrderId() != null) {
             System.out.println("Order placed successfully with ID: " + orderResponse.getOrderId());
 
-            int maxRetries = 60; // Número máximo de intentos
-            long delayMillis = 5000; // Espera de 5 segundos entre intentos
-            List<Map<String, Object>> keysData = pollForKeys(orderResponse.getOrderId(), maxRetries, delayMillis, transaction);
+            // 1. Guardamos la transacción con estado PROCESSING
+            transaction.setStatus(TransactionStatus.PROCESSING);
+            webSocketController.sendTransactionStatus(transaction.getStatus());
 
-            if (!keysData.isEmpty()) {
-                List<String> keys = new ArrayList<>();
-                for (Map<String, Object> keyObj : keysData) {
-                    String serial = (String) keyObj.get("serial");
-                    keys.add(serial);
-                }
+            // Opcional: guardar el orderId de Kinguin en la transacción para referencia
+            transaction.setExternalOrderId(orderResponse.getOrderId());
+            transactionRepository.save(transaction);
 
-                // Asigna directamente la lista de keys
-                transaction.setKeys(keys);
-                transactionRepository.save(transaction);
+            // 2. Lanzamos el Thread de polling indefinido en el KeyPollingService
+            keyPollingService.pollKeysIndefinitely(orderResponse.getOrderId(), transaction, orderRequest);
 
-                Optional<User> user = userRepository.findByEmail(orderRequest.getEmail());
-
-                if (orderRequest.getEmail() != null) {
-                    // Creamos el receipt
-                    Receipt receipt = new Receipt(
-                            transaction.getTransactionNumber(),
-                            String.valueOf(orderRequest.getUserId()),
-                            orderRequest.getEmail(),
-                            transaction.getAmountHnl(), // Puedes usar amountUsd si lo prefieres
-                            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-                            orderRequest.getProducts() // Pasar la lista de productos del OrderRequest
-                    );
-
-                    byte[] pdfBytes = pdfGeneratorService.generateReceiptPdfBytes(receipt);
-
-                    String subject = "Recibo de tu compra - " + transaction.getTransactionNumber();
-                    String body = "<p>Gracias por tu compra.</p><p>Adjunto encontrarás tu recibo en PDF.</p>";
-                    String filename = "receipt_" + transaction.getTransactionNumber() + ".pdf";
-
-                    sendGridEmailService.sendEmail(orderRequest.getEmail(), subject, "Compra exitosa", keys, transaction, pdfBytes, filename);
-
-                }
-                if (orderRequest.getPhoneNumber() != null && orderRequest.getSendKeyToSMS()) {
-                    smsService.sendKeysToPhoneNumber(orderRequest.getPhoneNumber(), keys);
-                }
-                // Opcional: enviar keys por SMS
-            } else {
-                System.err.println("Keys were not available after multiple attempts.");
-            }
-
+            // 3. Retornamos respuesta inmediata al cliente
+            return orderResponse;
         } else {
             System.err.println("Order failed or did not return a valid Order ID.");
+            throw new RuntimeException("Error placing order with Kinguin");
         }
-
-        return orderResponse;
     }
 
-
-    private List<Map<String, Object>> pollForKeys(String orderId, int maxRetries, long delayMillis, Transaction transaction) {
-        for (int attempt = 1; attempt <= maxRetries; attempt++) {
-            List<Map<String, Object>> keys = tryDownloadKeys(orderId);
-            if (!keys.isEmpty()) {
-                return keys;
-            }
-            System.out.println("No keys available yet. Attempt " + attempt + " of " + maxRetries);
-            try {
-                Thread.sleep(delayMillis);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                // Si se interrumpe, cancelamos la transacción y lanzamos excepción
-                cancelTransactionAndThrow(transaction, "Polling interrupted while waiting for keys.");
-            }
-        }
-
-        // Si se agotan los intentos, cancela la transacción y lanza excepción
-        cancelTransactionAndThrow(transaction, "Keys not available after maximum attempts. Transaction has been cancelled.");
-        return new ArrayList<>(); // No se alcanza
-    }
-
-
-    private void cancelTransactionAndThrow(Transaction transaction, String message) {
-        transaction.setStatus(TransactionStatus.CANCELLED);
-        transactionRepository.save(transaction);
-
-        // Enviar al frontend un mensaje indicando el error y la necesidad de reintentar
-        webSocketController.sendTransactionStatus(transaction.getStatus());
-
-        // Lanzar la excepción para detener el proceso
-        throw new RuntimeException(message);
-    }
-
-
-    private List<Map<String, Object>> tryDownloadKeys(String orderId) {
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Api-Key", API_KEY);
-        headers.set("Content-Type", "application/json");
-
-        List<Map<String, Object>> allKeys = new ArrayList<>();
-        int page = 1;
-        boolean morePages = true;
-
-        while (morePages) {
-            String url = KEYS_ENDPOINT + orderId + "/keys?page=" + page;
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-
-            ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
-                    url, HttpMethod.GET, entity,
-                    new ParameterizedTypeReference<List<Map<String, Object>>>() {}
-            );
-
-            List<Map<String, Object>> keyObjects = response.getBody();
-            if (keyObjects == null || keyObjects.isEmpty()) {
-                morePages = false;
-            } else {
-                allKeys.addAll(keyObjects);
-                page++;
-            }
-        }
-
-        return allKeys;
-    }
-
-    public String getPhoneNumberByOrderId(String orderId) {
-        return "El número de teléfono asociado a la orden";
-    }
+    // Resto de métodos...
+    // (pollForKeys, cancelTransactionAndThrow, etc. pueden quedar obsoletos
+    //  si tu nueva lógica ya no los usa)
 }
