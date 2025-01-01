@@ -61,11 +61,11 @@ public class OrderController {
         Transaction transaction = transactionService.createTransactionForVerifiedTigoPayment(orderRequest);
         orderService.createOrder(orderRequest, transaction);
 
-        UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumber(orderRequest.getRefNumber());
-        if (!unmatchedPayment.isConsumed()){
-            unmatchedPayment.setConsumed(true);
-            unmatchedPaymentRepository.save(unmatchedPayment);
-        }
+//        UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumber(orderRequest.getRefNumber());
+//        if (!unmatchedPayment.isConsumed()){
+//            unmatchedPayment.setConsumed(true);
+//            unmatchedPaymentRepository.save(unmatchedPayment);
+//        }
 
         return ResponseEntity.ok(transaction);
     }

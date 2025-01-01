@@ -3,14 +3,15 @@ package com.geekbank.bank.services;
 import com.geekbank.bank.controllers.ManualVerificationWebSocketController;
 import com.geekbank.bank.controllers.TransactionWebSocketController;
 import com.geekbank.bank.controllers.WebSocketController;
+import com.geekbank.bank.exceptions.InsufficientBalanceException;
+import com.geekbank.bank.exceptions.ResourceNotFoundException;
 import com.geekbank.bank.models.*;
 import com.geekbank.bank.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.geekbank.bank.exceptions.ResourceNotFoundException;
-import com.geekbank.bank.exceptions.InsufficientBalanceException;
+
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.PriorityBlockingQueue;
@@ -21,40 +22,57 @@ public class TransactionService {
 
     @Autowired
     private TransactionRepository transactionRepository;
+
     @Autowired
     OrderService orderService;
+
     @Autowired
     private TransactionStorageService transactionStorageService;
+
     @Autowired
     private WebSocketController webSocketController;
+
     @Autowired
     private SmsMessageRepository smsMessageRepository;
+
     @Autowired
     private final SendGridEmailService emailService;
+
     @Autowired
     private GiftCardRepository giftCardRepository;
+
     @Autowired
     private TransactionWebSocketController transactionWebSocketController;
+
     @Autowired
     private UserRepository userRepository;
+
     @Autowired
     private OrderRequestStorageService orderRequestStorageService;
+
     @Autowired
     private AccountRepository accountRepository;
+
     @Autowired
-    private CurrencyService currencyService; // Inyectar Currenc
-    private static final long EXPIRATION_MINUTES = 3;
+    private CurrencyService currencyService;
+
     @Autowired
     private UnmatchedPaymentRepository unmatchedPaymentRepository;
+
     @Autowired
     private ManualVerificationWebSocketController manualVerificationWebSocketController;
+
     @Autowired
     private PricingService pricingService;
+
     @Autowired
     private SalesMetricsService salesMetricsService;
+
     @Autowired
     private PdfGeneratorService pdfGeneratorService;
 
+    // Tiempo por defecto para expiración (minutos)
+    private static final long EXPIRATION_MINUTES = 3;
 
     private PriorityBlockingQueue<Transaction> manualVerificationQueue = new PriorityBlockingQueue<>(
             100,
@@ -65,29 +83,37 @@ public class TransactionService {
         this.emailService = emailService;
     }
 
+    // --------------------------------------------------------------
+    //   MÉTODOS DE CREACIÓN / PROCESAMIENTO DE TRANSACCIONES
+    // --------------------------------------------------------------
 
+    // Genera un PIN aleatorio de 4 dígitos
     private static Long generatePin() {
         Random random = new Random();
-        int pin = random.nextInt(9000) + 1000; // Genera un número entre 1000 y 9999
+        int pin = random.nextInt(9000) + 1000; // entre 1000 y 9999
         return (long) pin;
     }
 
+    /**
+     * Crea una transacción “genérica” con datos básicos (pendiente de pago).
+     */
     @Transactional
-    public Transaction createTransaction(User user,
-                                         String guestId,
-                                         Long gameUserId,
-                                         String orderRequestNumber,
-                                         double amountUSD,
-                                         TransactionType type,
-                                         String description,
-                                         String phoneNumber,
-                                         List<OrderRequest.Product> products,
-                                         Boolean isManual
+    public Transaction createTransaction(
+            User user,
+            String guestId,
+            Long gameUserId,
+            String orderRequestNumber,
+            double amountUSD,
+            TransactionType type,
+            String description,
+            String phoneNumber,
+            List<OrderRequest.Product> products,
+            Boolean isManual
     ) {
         double exchangeRate = currencyService.getExchangeRateUSDtoHNL();
-
         double amountHNL = currencyService.convertUsdToHnl(amountUSD, exchangeRate);
 
+        // Construye la transacción
         Transaction transaction = new Transaction();
         transaction.setAmountUsd(amountUSD);
         transaction.setAmountHnl(amountHNL);
@@ -101,11 +127,12 @@ public class TransactionService {
             throw new IllegalArgumentException("Either userId or guestId must be provided");
         }
 
-        if (gameUserId != null){
+        if (gameUserId != null) {
             transaction.setGameUserId(gameUserId);
         }
 
-        if (isManual != null){
+        // Manejo de “manual”
+        if (isManual != null) {
             transaction.setManual(isManual);
             transaction.setExpiresAt(LocalDateTime.now().plusMinutes(isManual ? 600 : EXPIRATION_MINUTES));
         } else {
@@ -122,68 +149,81 @@ public class TransactionService {
         transaction.setPhoneNumber(phoneNumber);
         transaction.setOrderRequestNumber(orderRequestNumber);
         transaction.setTempPin(generatePin());
+        // Inicia en estado PENDING (si aún no se ha pagado)
         transaction.setStatus(TransactionStatus.PENDING);
 
-
+        // Validar cantidad máxima de productos
         if (products != null && products.size() > 10) {
             throw new IllegalArgumentException("No se pueden agregar más de 10 productos por transacción.");
         }
-
+        // Asocia productos
         List<TransactionProduct> transactionProducts = products.stream().map(productRequest -> {
             Long productId = (long) productRequest.getKinguinId();
             TransactionProduct transactionProduct = new TransactionProduct();
             transactionProduct.setTransaction(transaction);
             transactionProduct.setProductId(productId);
             transactionProduct.setQuantity(productRequest.getQty());
-
             return transactionProduct;
         }).collect(Collectors.toList());
-
         transaction.setProducts(transactionProducts);
 
+        // Guarda en DB
         Transaction savedTransaction = transactionRepository.save(transaction);
+
+        // Lo agrega a “pending transactions” en tu almacenamiento temporal
         transactionStorageService.storePendingTransaction(savedTransaction);
+
+        // Notifica (opcional)
         updateTransactionStatus(savedTransaction.getId(), TransactionStatus.PENDING, null);
         return savedTransaction;
     }
 
+    /**
+     * Compra con balance interno.
+     * Si NO hace llamada a Kinguin, se puede completar inmediatamente.
+     * Si sí hace llamada a Kinguin, ponerla en PROCESSING y luego completarla en KeyPollingService.
+     */
     @Transactional
-    public Transaction purchaseWithBalance(Long userId, String orderRequestNumber, List<OrderRequest.Product> products, String phoneNumber, OrderRequest orderRequest) {
-        // 1. Recuperar el usuario
+    public Transaction purchaseWithBalance(
+            Long userId,
+            String orderRequestNumber,
+            List<OrderRequest.Product> products,
+            String phoneNumber,
+            OrderRequest orderRequest
+    ) {
+        // 1. Usuario
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + userId));
 
-        // 2. Calcular el costo total en USD
+        // 2. Monto total en USD
         double totalAmountUsd = products.stream()
                 .mapToDouble(product -> product.getPrice() * product.getQty())
                 .sum();
 
-        // 3. Obtener la tasa de cambio USD a HNL
+        // 3. Tasa de cambio
         double exchangeRate = currencyService.getExchangeRateUSDtoHNL();
-
-        // 4. Convertir el monto a HNL
         double totalAmountHnl = currencyService.convertUsdToHnl(totalAmountUsd, exchangeRate);
 
-        // 5. Recuperar la cuenta del usuario
+        // 4. Cuenta del usuario
         Account account = accountRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cuenta no encontrada para el usuario con ID: " + userId));
 
-        // 6. Verificar si el saldo es suficiente
+        // 5. Verificar saldo
         if (account.getBalance() < totalAmountUsd) {
             throw new InsufficientBalanceException("Saldo insuficiente para realizar la compra.");
         }
 
-        // 7. Deducir el monto del balance
+        // 6. Deducir saldo
         account.setBalance(account.getBalance() - totalAmountUsd);
         accountRepository.save(account);
 
-        // 8. Crear una nueva transacción
+        // 7. Crear transacción
         Transaction transaction = new Transaction();
         transaction.setAmountUsd(totalAmountUsd);
         transaction.setAmountHnl(totalAmountHnl);
         transaction.setExchangeRate(exchangeRate);
         transaction.setUser(user);
-        transaction.setManual(false);
+        transaction.setManual(false);  // asumiendo no es manual
         transaction.setExpiresAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES));
         transaction.setType(TransactionType.BALANCE_PURCHASE);
         transaction.setTimestamp(LocalDateTime.now());
@@ -191,14 +231,16 @@ public class TransactionService {
         transaction.setDescription("Compra con balance");
         transaction.setPhoneNumber(phoneNumber);
         transaction.setOrderRequestNumber(orderRequestNumber);
+        // **Importante**: Si vas a llamar a Kinguin, pon PROCESSING en lugar de COMPLETED
+        // transaction.setStatus(TransactionStatus.PROCESSING);
         transaction.setStatus(TransactionStatus.COMPLETED);
         transaction.setTempPin(null);
 
-        // 9. Asociar los productos a la transacción
+        // 8. Validar productos
         if (products != null && products.size() > 10) {
             throw new IllegalArgumentException("No se pueden agregar más de 10 productos por transacción.");
         }
-
+        // 9. Asociar productos
         List<TransactionProduct> transactionProducts = products.stream().map(productRequest -> {
             Long productId = (long) productRequest.getKinguinId();
             TransactionProduct transactionProduct = new TransactionProduct();
@@ -207,21 +249,20 @@ public class TransactionService {
             transactionProduct.setQuantity(productRequest.getQty());
             return transactionProduct;
         }).collect(Collectors.toList());
-
         transaction.setProducts(transactionProducts);
 
         Transaction savedTransaction = transactionRepository.save(transaction);
-        salesMetricsService.onTransactionCompleted(transaction);
 
-        if (transaction.getManual()) {
-            processManualTransaction(savedTransaction);
-            this.emailService.sendNotificationEmail("enkiluzlbel@gmail.com");
-        } else {
-            OrderResponse orderResponse = orderService.placeOrder(orderRequest, savedTransaction);
-            System.out.println(orderResponse);
-        }
+        // Si no necesitas keys, la transacción puede quedar COMPLETED de inmediato
+        // (aquí se asume que no invocas a Kinguin).
+        salesMetricsService.onTransactionCompleted(savedTransaction);
 
-        // 11. Notificar al usuario vía WebSocket
+        // Si SÍ necesitas keys, haz:
+        //    transaction.setStatus(TransactionStatus.PROCESSING);
+        //    transactionRepository.save(savedTransaction);
+        //    orderService.placeOrder(orderRequest, savedTransaction);
+
+        // Notificamos al front
         webSocketController.notifyTransactionStatus(
                 phoneNumber,
                 TransactionStatus.COMPLETED.name(),
@@ -232,11 +273,16 @@ public class TransactionService {
         return savedTransaction;
     }
 
+    /**
+     * Transacción creada cuando se verifica un pago Tigo (unmatchedPayment verificado).
+     * Si la transacción NO es manual, la ponemos en PROCESSING y hacemos placeOrder.
+     * Cuando KeyPollingService entregue las keys y correo, se marca COMPLETED.
+     */
     @Transactional
     public Transaction createTransactionForVerifiedTigoPayment(OrderRequest orderRequest) {
+        // 1. Busca el unmatchedPayment
         UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumber(orderRequest.getRefNumber());
-
-        if (!unmatchedPayment.isVerified()){
+        if (!unmatchedPayment.isVerified()) {
             throw new RuntimeException("El pago encontrado no ha sido verificado.");
         }
 
@@ -255,7 +301,6 @@ public class TransactionService {
         transaction.setAmountUsd(orderAmount);
         double exchangeRate = currencyService.getExchangeRateUSDtoHNL();
         transaction.setExchangeRate(exchangeRate);
-//        transaction.setAmountHnl(currencyService.convertUsdToHnl(orderAmount, exchangeRate));
         transaction.setAmountHnl(orderAmount);
 
         if (orderRequest.getUserId() != null) {
@@ -270,9 +315,9 @@ public class TransactionService {
 
         transaction.setGameUserId(orderRequest.getGameUserId());
         transaction.setManual(orderRequest.getManual() != null ? orderRequest.getManual() : false);
-        transaction.setExpiresAt(orderRequest.getManual() != null && orderRequest.getManual() ?
-                LocalDateTime.now().plusMinutes(600) :
-                LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES));
+        transaction.setExpiresAt(transaction.getManual()
+                ? LocalDateTime.now().plusMinutes(600)
+                : LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES));
         transaction.setType(transactionType);
         transaction.setTimestamp(LocalDateTime.now());
         transaction.setTransactionNumber(generateTransactionNumber());
@@ -281,10 +326,12 @@ public class TransactionService {
         transaction.setOrderRequestNumber(orderRequest.getOrderRequestId());
         transaction.setTempPin(null);
 
+        // Validar productos
         if (orderRequest.getProducts() != null && orderRequest.getProducts().size() > 10) {
             throw new IllegalArgumentException("No se pueden agregar más de 10 productos por transacción.");
         }
 
+        // Asocia productos
         List<TransactionProduct> transactionProducts = orderRequest.getProducts().stream().map(productRequest -> {
             Long productId = (long) productRequest.getKinguinId();
             TransactionProduct transactionProduct = new TransactionProduct();
@@ -295,34 +342,38 @@ public class TransactionService {
         }).collect(Collectors.toList());
         transaction.setProducts(transactionProducts);
 
+        // Estado inicial: si es manual => AWAITING_MANUAL_PROCESSING
+        // si no => PROCESSING (porque vamos a descargar keys de Kinguin)
         if (transaction.getManual()) {
             transaction.setStatus(TransactionStatus.AWAITING_MANUAL_PROCESSING);
         } else {
-            transaction.setStatus(TransactionStatus.COMPLETED);
-
+            transaction.setStatus(TransactionStatus.PROCESSING);
         }
 
         Transaction savedTransaction = transactionRepository.save(transaction);
-        if (transaction.getStatus() == TransactionStatus.COMPLETED){
-            salesMetricsService.onTransactionCompleted(transaction);
-        }
 
-        if (transaction.getManual()) {
-            processManualTransaction(savedTransaction);
-            this.emailService.sendNotificationEmail("enkiluzlbel@gmail.com");
-        } else {
+        // Si es manual => no llamamos a placeOrder.
+        // Si no, placeOrder => KeyPollingService marcará COMPLETED al entregar keys.
+        if (!transaction.getManual()) {
             OrderResponse orderResponse = orderService.placeOrder(orderRequest, savedTransaction);
             System.out.println(orderResponse);
+        } else {
+            processManualTransaction(savedTransaction);
+            this.emailService.sendNotificationEmail("enkiluzlbel@gmail.com");
         }
 
+        // Notificar (ahora en PROCESSING o AWAITING_MANUAL_PROCESSING)
         webSocketController.sendTransactionStatus(savedTransaction.getStatus());
-
         return savedTransaction;
     }
 
+    /**
+     * Creación de transacción para Paypal / Tarjeta.
+     * Mismo patrón: si no es manual => PROCESSING y se invoca placeOrder.
+     * KeyPollingService completará la transacción.
+     */
     @Transactional
-    public Transaction createTransactionForPaypalAndCreditCard( OrderRequest orderRequest) {
-
+    public Transaction createTransactionForPaypalAndCreditCard(OrderRequest orderRequest) {
         double orderAmount = orderRequest.getProducts().stream()
                 .mapToDouble(p -> {
                     double finalPrice = pricingService.calculateSellingPrice(p.getPrice());
@@ -356,9 +407,9 @@ public class TransactionService {
 
         transaction.setGameUserId(orderRequest.getGameUserId());
         transaction.setManual(orderRequest.getManual() != null ? orderRequest.getManual() : false);
-        transaction.setExpiresAt(orderRequest.getManual() != null && orderRequest.getManual() ?
-                LocalDateTime.now().plusMinutes(600) :
-                LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES));
+        transaction.setExpiresAt(transaction.getManual()
+                ? LocalDateTime.now().plusMinutes(600)
+                : LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES));
         transaction.setType(transactionType);
         transaction.setTimestamp(LocalDateTime.now());
         transaction.setTransactionNumber(generateTransactionNumber());
@@ -370,7 +421,6 @@ public class TransactionService {
         if (orderRequest.getProducts() != null && orderRequest.getProducts().size() > 10) {
             throw new IllegalArgumentException("No se pueden agregar más de 10 productos por transacción.");
         }
-
         List<TransactionProduct> transactionProducts = orderRequest.getProducts().stream().map(productRequest -> {
             Long productId = (long) productRequest.getKinguinId();
             TransactionProduct transactionProduct = new TransactionProduct();
@@ -381,26 +431,36 @@ public class TransactionService {
         }).collect(Collectors.toList());
         transaction.setProducts(transactionProducts);
 
+        // Estado inicial
         if (transaction.getManual()) {
             transaction.setStatus(TransactionStatus.AWAITING_MANUAL_PROCESSING);
         } else {
-            transaction.setStatus(TransactionStatus.COMPLETED);
+            transaction.setStatus(TransactionStatus.PROCESSING);
+            UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumber(orderRequest.getRefNumber());
+            if (!unmatchedPayment.isConsumed()){
+                unmatchedPayment.setConsumed(true);
+                unmatchedPaymentRepository.save(unmatchedPayment);
+            }
         }
 
         Transaction savedTransaction = transactionRepository.save(transaction);
 
-        if (transaction.getManual()) {
-            processManualTransaction(savedTransaction);
-            this.emailService.sendNotificationEmail("enkiluzlbel@gmail.com");
-        } else {
+        // placeOrder solo si no es manual
+        if (!transaction.getManual()) {
             OrderResponse orderResponse = orderService.placeOrder(orderRequest, savedTransaction);
             System.out.println(orderResponse);
+        } else {
+            processManualTransaction(savedTransaction);
+            this.emailService.sendNotificationEmail("enkiluzlbel@gmail.com");
         }
 
         webSocketController.sendTransactionStatus(savedTransaction.getStatus());
-
         return savedTransaction;
     }
+
+    // --------------------------------------------------------------
+    //   VERIFICACIONES / PROCESAMIENTO POSTERIOR
+    // --------------------------------------------------------------
 
     @Transactional
     public void verifyTransaction(String phoneNumber, Long pin, String refNumber) {
@@ -413,11 +473,10 @@ public class TransactionService {
                 throw new RuntimeException("No se encontró el monto recibido para este número de teléfono.");
             }
 
-            Optional<Transaction> optionalTransactionInDB = Optional.ofNullable(transactionRepository.findByTransactionNumber(matchingTransaction.getTransactionNumber()));
-            if (!optionalTransactionInDB.isPresent()) {
+            Transaction transactionInDB = transactionRepository.findByTransactionNumber(matchingTransaction.getTransactionNumber());
+            if (transactionInDB == null) {
                 throw new RuntimeException("Transacción no encontrada en la base de datos.");
             }
-            Transaction transactionInDB = optionalTransactionInDB.get();
 
             if (amountReceived < transactionInDB.getAmountHnl()) {
                 updateTransactionStatus(transactionInDB.getId(), TransactionStatus.FAILED, "Monto recibido insuficiente.");
@@ -434,11 +493,18 @@ public class TransactionService {
             transactionRepository.save(matchingTransaction);
             smsMessageRepository.save(smsMessage);
 
+            // Si es manual => AWAITING_MANUAL_PROCESSING
+            // Sino => procesamos de una vez (lo que hace processTransaction)
             if (transactionInDB.getManual()) {
-                updateTransactionStatus(transactionInDB.getId(), TransactionStatus.AWAITING_MANUAL_PROCESSING, "El pago esta hecho. Su transaccion debe ser procesada.");
-
+                updateTransactionStatus(transactionInDB.getId(), TransactionStatus.AWAITING_MANUAL_PROCESSING,
+                        "El pago está hecho. Su transacción debe ser procesada manualmente.");
                 transactionStorageService.addManualTransaction(transactionInDB);
-                webSocketController.notifyTransactionStatus(phoneNumber, TransactionStatus.AWAITING_MANUAL_PROCESSING.name(), "Pendiente de procesamiento manual.", transactionInDB.getTransactionNumber());
+                webSocketController.notifyTransactionStatus(
+                        phoneNumber,
+                        TransactionStatus.AWAITING_MANUAL_PROCESSING.name(),
+                        "Pendiente de procesamiento manual.",
+                        transactionInDB.getTransactionNumber()
+                );
 
                 if (Boolean.TRUE.equals(transactionInDB.getManual())) {
                     manualVerificationWebSocketController.sendManualVerificationTransaction(transactionInDB);
@@ -446,6 +512,7 @@ public class TransactionService {
 
                 System.out.println("Transacción manual agregada a la lista de espera. Transaction ID: " + transactionInDB.getTransactionNumber());
             } else {
+                // No manual => la procesamos
                 processTransaction(transactionInDB, amountReceived);
                 cleanUpAfterSuccess(phoneNumber, matchingTransaction);
             }
@@ -455,10 +522,11 @@ public class TransactionService {
         }
     }
 
-
+    /**
+     * Obtiene la transacción pendiente (con un PIN) que coincida con el teléfono y pin.
+     */
     private Transaction getMatchingTransaction(String phoneNumber, Long pin) {
         List<Transaction> pendingTransactions = transactionStorageService.getPendingTransactions(phoneNumber);
-
         if (pendingTransactions.isEmpty()) {
             throw new RuntimeException("No hay transacciones pendientes para este número de teléfono.");
         }
@@ -469,12 +537,13 @@ public class TransactionService {
         if (!optionalTransaction.isPresent()) {
             throw new RuntimeException("No se encontró una transacción pendiente con el PIN proporcionado.");
         }
-
         return optionalTransaction.get();
     }
 
+    /**
+     * Procesa la transacción (si ya está pagada) dependiendo del tipo (BALANCE_PURCHASE o PURCHASE).
+     */
     private void processTransaction(Transaction transactionInDB, double amountReceivedHNL) {
-
         if (amountReceivedHNL < transactionInDB.getAmountHnl()) {
             updateTransactionStatus(transactionInDB.getId(), TransactionStatus.FAILED, "Monto recibido insuficiente.");
             throw new RuntimeException("Monto recibido insuficiente.");
@@ -489,6 +558,9 @@ public class TransactionService {
         }
     }
 
+    /**
+     * Añade saldo a la cuenta y marca la transacción como COMPLETED.
+     */
     private void processBalancePurchase(Transaction transactionInDB) {
         User user = transactionInDB.getUser();
         if (user == null) {
@@ -502,43 +574,62 @@ public class TransactionService {
         account.setBalance(account.getBalance() + transactionInDB.getAmountUsd());
         accountRepository.save(account);
 
-
         updateTransactionStatus(transactionInDB.getId(), TransactionStatus.COMPLETED, null);
         salesMetricsService.onTransactionCompleted(transactionInDB);
         System.out.println("Balance actualizado para el usuario: " + user.getEmail());
     }
 
-    private void validateReferenceNumber(String phoneNumber, String refNumber) {
-        String storedRefNumber = transactionStorageService.getSmsReferenceNumber(phoneNumber);
-
-        if (storedRefNumber == null) {
-            throw new RuntimeException("No se encontró un número de referencia de SMS para este número de teléfono.");
-        }
-
-        if (!storedRefNumber.equals(refNumber)) {
-            throw new RuntimeException("El número de referencia no coincide con el recibido en el mensaje de texto.");
-        }
-    }
-
+    /**
+     * Marca la transacción como COMPLETED en la base de datos (COMPRA DE PRODUCTO).
+     * En la versión con KeyPollingService, la transacción pasa a COMPLETED solo cuando
+     * ya se enviaron las keys y el email. (Esto lo hace el KeyPollingService, no aquí).
+     *
+     * Si no requieres Kinguin, puedes hacerlo de inmediato acá.
+     */
     private void processProductPurchase(Transaction transactionInDB) {
         updateTransactionStatus(transactionInDB.getId(), TransactionStatus.COMPLETED, null);
         salesMetricsService.onTransactionCompleted(transactionInDB);
         System.out.println("Transacción de compra de producto completada. Transaction ID: " + transactionInDB.getTransactionNumber());
     }
 
+    private void validateReferenceNumber(String phoneNumber, String refNumber) {
+        String storedRefNumber = transactionStorageService.getSmsReferenceNumber(phoneNumber);
+        if (storedRefNumber == null) {
+            throw new RuntimeException("No se encontró un número de referencia de SMS para este número de teléfono.");
+        }
+        if (!storedRefNumber.equals(refNumber)) {
+            throw new RuntimeException("El número de referencia no coincide con el recibido en el mensaje de texto.");
+        }
+    }
+
+    /**
+     * Limpia el almacenamiento temporal y notifica COMPLETED al front.
+     */
     private void cleanUpAfterSuccess(String phoneNumber, Transaction matchingTransaction) {
         transactionStorageService.removeTransaction(phoneNumber, matchingTransaction.getTransactionNumber());
         transactionStorageService.removeSmsReferenceNumber(phoneNumber);
         transactionStorageService.removeAmountReceived(phoneNumber);
         orderRequestStorageService.removeOrderRequest(phoneNumber);
-        webSocketController.notifyTransactionStatus(phoneNumber, "COMPLETED", "Your transaction was successfully completed.", matchingTransaction.getTransactionNumber());
+
+        webSocketController.notifyTransactionStatus(
+                phoneNumber,
+                "COMPLETED",
+                "Your transaction was successfully completed.",
+                matchingTransaction.getTransactionNumber()
+        );
     }
 
+    /**
+     * Maneja errores de verificación.
+     */
     private void handleVerificationError(String phoneNumber, String errorMessage) {
         System.err.println("Error al verificar la transacción: " + errorMessage);
         webSocketController.notifyTransactionStatus(phoneNumber, "FAILED", errorMessage, null);
     }
 
+    /**
+     * Actualiza el estado de la transacción y notifica por WebSocket.
+     */
     @Transactional
     public void updateTransactionStatus(Long transactionId, TransactionStatus newStatus, String message) {
         Transaction transaction = transactionRepository.findById(transactionId)
@@ -558,17 +649,28 @@ public class TransactionService {
                 transaction.getTransactionNumber()
         );
     }
+
+    /**
+     * Control para ver si el estado actual permite actualización.
+     */
     private boolean isUpdatableStatus(TransactionStatus currentStatus) {
+        // Si está CANCELLED o EXPIRED, no se puede cambiar.
         return currentStatus != TransactionStatus.CANCELLED && currentStatus != TransactionStatus.EXPIRED;
     }
 
-
+    /**
+     * Procesa transacción manual: la agrega a una cola y notifica por WebSocket.
+     */
     public void processManualTransaction(Transaction transaction) {
         manualVerificationQueue.offer(transaction);
         manualVerificationWebSocketController.sendManualVerificationTransaction(transaction);
     }
 
-    public List<Transaction> findTransactionByGameUserId(Long gameUserId){
+    // --------------------------------------------------------------
+    //   BÚSQUEDAS Y OTROS MÉTODOS AUXILIARES
+    // --------------------------------------------------------------
+
+    public List<Transaction> findTransactionByGameUserId(Long gameUserId) {
         return transactionRepository.findByGameUserId(gameUserId);
     }
 
@@ -576,8 +678,7 @@ public class TransactionService {
         return transactionRepository.findByStatusAndPhoneNumber(TransactionStatus.PENDING, phoneNumber);
     }
 
-
-    public List<Transaction> findPendingManualTransactions(){
+    public List<Transaction> findPendingManualTransactions() {
         return transactionRepository.findByStatus(TransactionStatus.AWAITING_MANUAL_PROCESSING);
     }
 
@@ -598,16 +699,18 @@ public class TransactionService {
                 .collect(Collectors.toList());
     }
 
-
-    public Transaction findByTransactionNumber(String transactionNumber){
+    public Transaction findByTransactionNumber(String transactionNumber) {
         return transactionRepository.findByTransactionNumber(transactionNumber);
     }
 
-    public List<Transaction> getAllTransactions(){
+    public List<Transaction> getAllTransactions() {
         return transactionRepository.findAll();
     }
 
-    public List<Transaction> getTransactionByUserId(Long userId) { return transactionRepository.findByUserId(userId);}
+    public List<Transaction> getTransactionByUserId(Long userId) {
+        return transactionRepository.findByUserId(userId);
+    }
+
     private String generateTransactionNumber() {
         return "TX-" + System.currentTimeMillis();
     }
@@ -620,9 +723,13 @@ public class TransactionService {
         return transactionRepository.findByTimestampBetween(start, end);
     }
 
+    /**
+     * Expira las transacciones en estado PENDING que ya pasaron el tiempo límite.
+     * Se ejecuta cada 360000 ms (6 minutos).
+     */
     @Scheduled(fixedRate = 360000)
     @Transactional
-    public void expireTransaction(){
+    public void expireTransaction() {
         LocalDateTime now = LocalDateTime.now();
         List<Transaction> pendingTransactions = transactionRepository.findByStatusAndTimestampBefore(TransactionStatus.PENDING, now);
 
@@ -632,11 +739,13 @@ public class TransactionService {
             transactionRepository.save(transaction);
 
             transactionStorageService.removeTransactionById(transaction.getId());
-
             System.out.println("Transaction expired: " + transaction.getTransactionNumber());
         }
     }
 
+    /**
+     * Aprobación manual de transacciones.
+     */
     @Transactional
     public void approveManualTransaction(String transactionNumber) {
         Transaction transaction = transactionRepository.findByTransactionNumber(transactionNumber);
@@ -647,12 +756,18 @@ public class TransactionService {
             throw new RuntimeException("La transacción no está en estado de verificación manual.");
         }
 
+        // Asumimos que, al aprobar manualmente, la transacción ya está pagada
+        // y solo quedaría completarla. Llamamos processTransaction con el amountHnl
         processTransaction(transaction, transaction.getAmountHnl());
 
+        // Dejarla en COMPLETED
         updateTransactionStatus(transaction.getId(), TransactionStatus.COMPLETED, "Transacción aprobada manualmente.");
         salesMetricsService.onTransactionCompleted(transaction);
-    };
+    }
 
+    /**
+     * Rechazo manual de transacciones.
+     */
     @Transactional
     public void rejectManualTransaction(String transactionNumber) {
         Transaction transaction = transactionRepository.findByTransactionNumber(transactionNumber);

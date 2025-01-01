@@ -124,7 +124,7 @@ public class TelegramListener implements ApplicationListener<ContextClosedEvent>
             JSONArray resultArray = jsonResponse.getJSONArray("result");
 
             if (resultArray.length() == 0) {
-               // System.out.println("No new messages.");
+                // System.out.println("No new messages.");
             } else {
                 for (int i = 0; i < resultArray.length(); i++) {
                     JSONObject update = resultArray.getJSONObject(i);
@@ -140,23 +140,41 @@ public class TelegramListener implements ApplicationListener<ContextClosedEvent>
 
                         lastUpdateId = updateId;
 
-                        // Patrón para mensajes de SMS
-                        Pattern smsPattern = Pattern.compile(
-                                "/Message from (\\d{3}): Has recibido L (\\d{2,}\\.\\d{2}) del (\\d{8,13})\\. Ref\\. (\\d{9,10}), Fecha: (\\d{2}/\\d{2}/\\d{2}) (\\d{2}:\\d{2}) Nuevo balance Tigo Money: L (\\d{2,}\\.\\d{2})"
+                        // ============= PATRONES DE REGEX =============
+
+                        // Patrón #1 (Tigo Money)
+                        Pattern smsPatternTigo = Pattern.compile(
+                                "/Message from (\\d{3}): Has recibido L (\\d{2,}\\.\\d{2}) " +
+                                        "del (\\d{8,13})\\. Ref\\. (\\d{9,10}), Fecha: (\\d{2}/\\d{2}/\\d{2}) " +
+                                        "(\\d{2}:\\d{2}) Nuevo balance Tigo Money: L (\\d{2,}\\.\\d{2})"
                         );
 
-                        Matcher matcher = smsPattern.matcher(text);
-                        if (matcher.find()) {
-                            System.out.println("FOUND SMS MATCHING");
-                            String messageFrom = matcher.group(1);
-                            String amountReceivedStr = matcher.group(2);
-                            double amountReceived = Double.parseDouble(amountReceivedStr);
-                            String senderPhoneNumber = matcher.group(3);
-                            String referenceNumber = matcher.group(4);
-                            String date = matcher.group(5);
-                            String time = matcher.group(6);
-                            String newBalanceStr = matcher.group(7);
-                            double newBalance = Double.parseDouble(newBalanceStr);
+                        // Patrón #2 (Nuevo formato “Transacción exitosa”)
+                        Pattern smsPatternNuevo = Pattern.compile(
+                                "/Message from 555: Transaccion exitosa\\.\\s*" +         // /Message from 555: Transaccion exitosa.
+                                        "Monto: L\\. (\\d+\\.\\d{2})\\s*" +                       // Monto: L. 75.00
+                                        "Cargos: L\\. (\\d+\\.\\d{2})\\s*" +                      // Cargos: L. 0.00
+                                        "Nombre Cliente: (.*?)\\s*" +                             // Nombre Cliente: (captura texto con espacios)
+                                        "Telefono Destino: (\\d+)\\s*" +                          // Telefono Destino: 96631493
+                                        "Ref: (\\d+)\\s*" +                                       // Ref: 104162899
+                                        "Fecha: (.*)"                                             // Fecha: 01/0 (usamos .* para que no truene si viene truncada)
+                        );
+
+                        Matcher matcherTigo = smsPatternTigo.matcher(text);
+                        Matcher matcherNuevo = smsPatternNuevo.matcher(text);
+
+                        // Primero intentamos con el patrón de Tigo Money
+                        if (matcherTigo.find()) {
+                            System.out.println("FOUND TIGO MONEY MATCHING");
+                            String messageFrom       = matcherTigo.group(1);
+                            String amountReceivedStr = matcherTigo.group(2);
+                            double amountReceived    = Double.parseDouble(amountReceivedStr);
+                            String senderPhoneNumber = matcherTigo.group(3);
+                            String referenceNumber   = matcherTigo.group(4);
+                            String date              = matcherTigo.group(5);
+                            String time              = matcherTigo.group(6);
+                            String newBalanceStr     = matcherTigo.group(7);
+                            double newBalance        = Double.parseDouble(newBalanceStr);
 
                             System.out.println("Received Phone Number: " + senderPhoneNumber);
                             System.out.println("Amount Received: " + amountReceived);
@@ -175,30 +193,76 @@ public class TelegramListener implements ApplicationListener<ContextClosedEvent>
                             );
                             smsMessageRepository.save(smsMessage);
 
-                            // Buscar transacciones pendientes que coincidan
+                            // Verificar transacciones pendientes
                             List<Transaction> transactions = transactionStorageService.getPendingTransactions(senderPhoneNumber);
-
                             if (!transactions.isEmpty()) {
                                 System.out.println("Found " + transactions.size() + " pending transactions for phone number: " + senderPhoneNumber);
 
-                                // Almacenar el número de referencia y monto recibido
+                                // Guardar ref y monto para luego pedir PIN temporal
                                 transactionStorageService.storeSmsReferenceNumber(senderPhoneNumber, referenceNumber);
                                 transactionStorageService.storeAmountReceived(senderPhoneNumber, amountReceived);
 
                                 webSocketController.requestRefNumberAndTempPin(senderPhoneNumber);
 
-                                // Asociar el SmsMessage con la transacción
-                                //Transaction matchingTransaction = transactions.get(0); // Puedes mejorar la lógica de selección
-
-                                // Verificar si la transacción ya tiene un SmsMessage asociado
-
                             } else {
                                 System.out.println("No pending transactions found for phone number: " + senderPhoneNumber + " and amount: " + amountReceived);
-
-                                // Almacenar el pago no coincidente
+                                // Almacena el pago no coincidente
                                 storeUnmatchedPayment(smsMessage);
                             }
+
+                        }
+                        // Si no coincide con Tigo Money, probamos el patrón nuevo.
+                        else if (matcherNuevo.find()) {
+                            System.out.println("FOUND NEW PAYMENT FORMAT MATCHING");
+                            // Grupos capturados según el patrón
+                            String amountStr      = matcherNuevo.group(1);
+                            String cargosStr      = matcherNuevo.group(2);
+                            String nombreCliente  = matcherNuevo.group(3);
+                            String telefonoDestino= matcherNuevo.group(4);
+                            String ref            = matcherNuevo.group(5);
+                            String fecha          = matcherNuevo.group(6);
+
+                            double amount = Double.parseDouble(amountStr);
+                            double cargos = Double.parseDouble(cargosStr);
+
+                            // Aquí podrías crear un objeto similar (SmsMessage o el que tú uses)
+                            // o guardar estos datos directamente:
+                            System.out.println("Nombre Cliente: " + nombreCliente);
+                            System.out.println("Teléfono Destino: " + telefonoDestino);
+                            System.out.println("Referencia: " + ref);
+                            System.out.println("Monto: " + amount + " | Cargos: " + cargos + " | Fecha: " + fecha);
+
+                            // Supongamos que, en tu lógica, deseas tratarlo igual que un SMS de pago.
+                            // Creas un SmsMessage, aunque el "senderPhoneNumber" sea "555" por convención.
+                            SmsMessage smsMessage = new SmsMessage(
+                                    "555",                // messageFrom (fijo, en este caso)
+                                    amount,              // amountReceived
+                                    telefonoDestino,     // phoneNumber interpretado como "origen/destino"
+                                    ref,                 // referenceNumber
+                                    fecha,               // date
+                                    "",                  // time (no lo tenemos, puedes dejarlo vacío o ajustar)
+                                    0.0,                 // newBalance (no se provee)
+                                    LocalDateTime.now()  // Fecha/hora actual de recepción
+                            );
+                            smsMessageRepository.save(smsMessage);
+
+                            // Verificas si hay transacciones pendientes con ese teléfono (o la lógica que uses).
+                            List<Transaction> transactions = transactionStorageService.getPendingTransactions(telefonoDestino);
+                            if (!transactions.isEmpty()) {
+                                System.out.println("Found " + transactions.size() + " pending transactions for phone number: " + telefonoDestino);
+
+                                transactionStorageService.storeSmsReferenceNumber(telefonoDestino, ref);
+                                transactionStorageService.storeAmountReceived(telefonoDestino, amount);
+
+                                webSocketController.requestRefNumberAndTempPin(telefonoDestino);
+
+                            } else {
+                                System.out.println("No pending transactions found for phone number: " + telefonoDestino + " and amount: " + amount);
+                                storeUnmatchedPayment(smsMessage);
+                            }
+
                         } else {
+                            // No coincide con ninguno de los dos patrones
                             System.out.println("NOT FOUND SMS MATCHING");
                         }
                     }

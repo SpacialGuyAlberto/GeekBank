@@ -44,6 +44,9 @@ public class Transaction {
 
     private String orderRequestNumber;
 
+    @Column(nullable = true)
+    private String externalOrderId;
+
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = true)
     private User user;
@@ -246,5 +249,14 @@ public class Transaction {
 
     public void setKeys(List<String> keys) {
         this.keys = keys;
+    }
+
+    public String getExternalOrderId() {
+        return externalOrderId;
+    }
+
+    // Setter
+    public void setExternalOrderId(String externalOrderId) {
+        this.externalOrderId = externalOrderId;
     }
 }
