@@ -95,7 +95,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/activation-details").hasAnyRole("ADMIN", "SUPPORT")
                         .requestMatchers(HttpMethod.DELETE, "/api/activation-details/**").hasAnyRole("ADMIN", "SUPPORT")
-                        .requestMatchers(HttpMethod.GET, "/api/activation-details/**").hasAnyRole("ADMIN", "SUPPORT")
+                        .requestMatchers(HttpMethod.GET, "/api/activation-details/**").hasAnyRole("ADMIN", "SUPPORT", "CUSTOMER", "GUEST")
                         // Cualquier otra ruta requiere autenticación
                         .anyRequest().authenticated()
                 )
