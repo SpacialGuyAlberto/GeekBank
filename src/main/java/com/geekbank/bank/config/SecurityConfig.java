@@ -90,6 +90,7 @@ public class SecurityConfig {
                                 "/api/currency", "/api/recommendations/content-based/**",
                                 "/api/manual-orders/**", "/api/main-screen-gift-cards/**",
                                 "api/transactions/verifyPayment",
+                                "/api/activation-details/**",
                                 "api/transactions/verify-unmatched-payment",
                                 "/api/paypal/**", "/api/auth/check-auth", "/api/visits/**", "/api/metrics/**"
                         ).permitAll()
