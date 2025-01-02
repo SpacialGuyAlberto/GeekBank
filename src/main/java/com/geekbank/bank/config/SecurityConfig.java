@@ -94,10 +94,6 @@ public class SecurityConfig {
                                 "api/transactions/verify-unmatched-payment",
                                 "/api/paypal/**", "/api/auth/check-auth", "/api/visits/**", "/api/metrics/**"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/activation-details").hasAnyRole("ADMIN", "SUPPORT")
-                        .requestMatchers(HttpMethod.DELETE, "/api/activation-details/**").hasAnyRole("ADMIN", "SUPPORT")
-                        .requestMatchers(HttpMethod.GET, "/api/activation-details/**").hasAnyRole("ADMIN", "SUPPORT", "CUSTOMER", "GUEST")
-                        // Cualquier otra ruta requiere autenticación
                         .anyRequest().authenticated()
                 )
 
