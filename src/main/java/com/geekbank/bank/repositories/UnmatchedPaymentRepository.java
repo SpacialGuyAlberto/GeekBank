@@ -28,5 +28,9 @@ public interface UnmatchedPaymentRepository extends JpaRepository<UnmatchedPayme
     // Buscar pagos que no tienen un mensaje SMS asociado
     List<UnmatchedPayment> findBySmsMessageIsNull();
 
+    // Otra variante de búsqueda por referencia y teléfono
     UnmatchedPayment findByReferenceNumberAndPhoneNumber(String referenceNumber, String phoneNumber);
+
+    // Eliminar un pago por ID utilizando el método estándar de JpaRepository
+    // No es necesario declarar explícitamente deleteById(Long id) ya que JpaRepository lo proporciona
 }

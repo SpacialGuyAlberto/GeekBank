@@ -92,7 +92,7 @@ public class SecurityConfig {
                                 "api/transactions/verifyPayment",
                                 "/api/activation-details/**",
                                 "api/transactions/verify-unmatched-payment",
-                                "/api/paypal/**", "/api/auth/check-auth", "/api/visits/**", "/api/metrics/**"
+                                "/api/paypal/**", "/api/auth/check-auth", "/api/visits/**", "/api/metrics/**", "/api/admin/payments/**"
                         ).permitAll()
                         // Cualquier otra ruta requiere autenticación
                         .anyRequest().authenticated()

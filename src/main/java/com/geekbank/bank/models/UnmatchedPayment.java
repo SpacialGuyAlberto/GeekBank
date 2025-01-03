@@ -27,6 +27,41 @@ public class UnmatchedPayment {
     @JoinColumn(name = "sms_message_id")
     private SmsMessage smsMessage;
 
+    public byte[] getImage() {
+        return image;
+    }
+
+    public void setImage(byte[] image) {
+        this.image = image;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public String getUpdatedBy() {
+        return updatedBy;
+    }
+
+    public void setUpdatedBy(String updatedBy) {
+        this.updatedBy = updatedBy;
+    }
+
+    @Lob
+    @Column(name = "image", nullable = true)
+    private byte[] image;
+
+    // Campos de auditoría
+    @Column(name = "created_by", updatable = false)
+    private String createdBy;
+
+    @Column(name = "updated_by")
+    private String updatedBy;
+
 
     public UnmatchedPayment() {
     }
