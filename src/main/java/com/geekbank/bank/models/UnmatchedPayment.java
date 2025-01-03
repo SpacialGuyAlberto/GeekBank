@@ -65,6 +65,17 @@ public class UnmatchedPayment {
     @Column(name = "updated_by")
     private String updatedBy;
 
+    private String imagePath;
+
+    // Getters y setters
+    public String getImagePath() {
+        return imagePath;
+    }
+
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
+    }
+
 
     public UnmatchedPayment() {
     }
