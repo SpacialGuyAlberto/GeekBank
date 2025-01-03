@@ -15,12 +15,15 @@ public class UnmatchedPayment {
     private double amountReceived;
     private String referenceNumber;
     private LocalDateTime receivedAt;
+
+    @Column(name="consumed", nullable = false, columnDefinition = "boolean default false")
     private boolean consumed = false;
 
-    @Column(name = "differenceredeemed")
+    @Column(name = "differenceredeemed", nullable = false, columnDefinition = "boolean default false")
     private boolean differenceRedeemed = false;
 
-    @Column(name= "verified")
+
+    @Column(name= "verified", nullable = false, columnDefinition = "boolean default false")
     private boolean verified = false;
 
     @OneToOne
