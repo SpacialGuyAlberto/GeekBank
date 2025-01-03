@@ -62,8 +62,11 @@ public class OrderController {
         orderService.createOrder(orderRequest, transaction);
 
         UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumber(orderRequest.getRefNumber());
-            unmatchedPaymentRepository.save(unmatchedPayment);
-
+        unmatchedPaymentRepository.save(unmatchedPayment);
+        //        if (!unmatchedPayment.isConsumed()){
+//            unmatchedPayment.setConsumed(true);
+//            unmatchedPaymentRepository.save(unmatchedPayment);
+//        }
 
         return ResponseEntity.ok(transaction);
     }
