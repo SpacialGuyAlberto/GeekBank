@@ -342,6 +342,7 @@ public class TelegramListener implements ApplicationListener<ContextClosedEvent>
         }
     }
 
+
     private void storeUnmatchedPayment(SmsMessage smsMessage) {
         UnmatchedPayment unmatchedPayment = new UnmatchedPayment(
                 smsMessage.getSenderPhoneNumber(),
