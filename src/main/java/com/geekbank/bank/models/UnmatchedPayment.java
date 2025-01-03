@@ -15,17 +15,66 @@ public class UnmatchedPayment {
     private double amountReceived;
     private String referenceNumber;
     private LocalDateTime receivedAt;
+
+    @Column(name="consumed", nullable = false, columnDefinition = "boolean default false")
     private boolean consumed = false;
 
-    @Column(name = "differenceredeemed")
+    @Column(name = "differenceredeemed", nullable = false, columnDefinition = "boolean default false")
     private boolean differenceRedeemed = false;
 
-    @Column(name= "verified")
+
+    @Column(name= "verified", nullable = false, columnDefinition = "boolean default false")
     private boolean verified = false;
 
     @OneToOne
     @JoinColumn(name = "sms_message_id")
     private SmsMessage smsMessage;
+
+    public byte[] getImage() {
+        return image;
+    }
+
+    public void setImage(byte[] image) {
+        this.image = image;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public String getUpdatedBy() {
+        return updatedBy;
+    }
+
+    public void setUpdatedBy(String updatedBy) {
+        this.updatedBy = updatedBy;
+    }
+
+    @Lob
+    @Column(name = "image", nullable = true)
+    private byte[] image;
+
+    // Campos de auditoría
+    @Column(name = "created_by", updatable = false)
+    private String createdBy;
+
+    @Column(name = "updated_by")
+    private String updatedBy;
+
+    private String imagePath;
+
+    // Getters y setters
+    public String getImagePath() {
+        return imagePath;
+    }
+
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
+    }
 
 
     public UnmatchedPayment() {

