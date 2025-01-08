@@ -6,6 +6,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,6 +40,10 @@ public class TelegramListener implements ApplicationListener<ContextClosedEvent>
     private int lastUpdateId = 0;
     private volatile boolean running = true;
 
+    // Buffer para mensajes parciales, indexado por chatId
+    // Cuando lleguen fragmentos de "from 555", se irán concatenando
+    private final Map<Long, StringBuilder> partialMessageMap = new ConcurrentHashMap<>();
+
     @Autowired
     private SmsService smsService;
 
@@ -67,7 +73,6 @@ public class TelegramListener implements ApplicationListener<ContextClosedEvent>
 
     @Autowired
     private UnmatchedPaymentRepository unmatchedPaymentRepository;
-
 
     public TelegramListener(SmsService smsService) {
         this.smsService = smsService;
@@ -130,7 +135,7 @@ public class TelegramListener implements ApplicationListener<ContextClosedEvent>
             JSONArray resultArray = jsonResponse.getJSONArray("result");
 
             if (resultArray.length() == 0) {
-                // System.out.println("No new messages.");
+                // No new messages
                 return;
             }
 
@@ -144,265 +149,270 @@ public class TelegramListener implements ApplicationListener<ContextClosedEvent>
                     String text = message.getString("text");
                     long chatId = message.getJSONObject("chat").getLong("id");
 
-                    System.out.println("Message from channel " + chatId + ": " + text);
                     lastUpdateId = updateId;
 
-                    // ============= PATRONES DE REGEX =============
-
-                    // ---------------------------------------------
-                    // Patrón #1 (Tigo Money) -> from \d{3}
-                    // ---------------------------------------------
-                    Pattern smsPatternTigo = Pattern.compile(
-                            "/Message from (\\d{3}): Has recibido L (\\d{2,}\\.\\d{2}) "
-                                    + "del (\\d{8,13})\\. Ref\\. (\\d{9,10}), Fecha: (\\d{2}/\\d{2}/\\d{2}) "
-                                    + "(\\d{2}:\\d{2}) Nuevo balance Tigo Money: L (\\d{2,}\\.\\d{2})"
-                    );
-
-                    // ---------------------------------------------
-                    // Patrón #2 (Transacción exitosa “fijo” de 555)
-                    // ---------------------------------------------
-                    Pattern smsPatternNuevo = Pattern.compile(
-                            // Ojo: forzamos "from 555"
-                            "/Message from 555: Transaccion exitosa\\.\\s*"
-                                    + "Monto: L\\. (\\d+\\.\\d{2})\\s*"
-                                    + "Cargos: L\\. (\\d+\\.\\d{2})\\s*"
-                                    + "Nombre Cliente: (.*?)\\s*"
-                                    + "Telefono Destino: (\\d+)\\s*"
-                                    + "Ref: (\\d+)\\s*"
-                                    + "Fecha: (.*)"
-                    );
-
-                    // ---------------------------------------------
-                    // Patrón #3 (Transacción exitosa *flexible*, multilinea) -> de 555
-                    // ---------------------------------------------
-                    Pattern smsPatternNuevoFlexible = Pattern.compile(
-                            "(?s)" // DOTALL
-                                    + "/Message from 555:.*?"  // EXIGE 'from 555'
-                                    + "(?:Transaccion|Transaction).*?"
-                                    + "Monto:\\s*L\\.\\s*(\\d+(?:\\.\\d{1,2})?).*?"
-                                    + "Nombre Cliente:\\s*(.*?)\\s+"
-                                    + "Telefono Destino:\\s*(\\d+).*?"
-                                    + "Ref:\\s*(\\d+).*"
-                    );
-
-                    // ---------------------------------------------
-                    // Patrón #4 (Mega flexible, también de 555)
-                    // ---------------------------------------------
-                    Pattern smsPatternMegaFlexible = Pattern.compile(
-                            "(?s)"
-                                    + "/Message from 555:.*?" // Forzamos que sea from 555
-                                    + "(?:Transaccion|Transacción)(?: exitosa)?\\.?\\s*"
-                                    + ".*?Monto:\\s*L\\.\\s*(\\d+(?:\\.\\d+)?).*?"
-                                    + "(?:Cargos:\\s*L\\.\\s*(\\d+(?:\\.\\d+)?).*?)?"
-                                    + "Nombre Cliente:\\s*(.*?)\\s+"
-                                    + "Telefono Destino:\\s*(\\d+).*?"
-                                    + "Ref:\\s*(\\d+).*?"
-                                    + "(?:Fecha:\\s*(.*))?",
-                            Pattern.CASE_INSENSITIVE
-                    );
-
-                    // Creamos los Matchers
-                    Matcher matcherTigo          = smsPatternTigo.matcher(text);
-                    Matcher matcherNuevo         = smsPatternNuevo.matcher(text);
-                    Matcher matcherFlexible      = smsPatternNuevoFlexible.matcher(text);
-                    Matcher matcherMegaFlexible  = smsPatternMegaFlexible.matcher(text);
-
-                    // ---------------------------------------------
-                    // #1 Tigo Money (from \d{3})
-                    // ---------------------------------------------
-                    if (matcherTigo.find()) {
-                        System.out.println("FOUND TIGO MONEY MATCHING");
-                        String messageFrom       = matcherTigo.group(1);
-                        String amountReceivedStr = matcherTigo.group(2);
-                        double amountReceived    = Double.parseDouble(amountReceivedStr);
-                        String senderPhoneNumber = matcherTigo.group(3);
-                        String referenceNumber   = matcherTigo.group(4);
-                        String date              = matcherTigo.group(5);
-                        String time              = matcherTigo.group(6);
-                        String newBalanceStr     = matcherTigo.group(7);
-                        double newBalance        = Double.parseDouble(newBalanceStr);
-
-                        System.out.println("Received Phone Number: " + senderPhoneNumber);
-                        System.out.println("Amount Received: " + amountReceived);
-                        System.out.println("Reference Number: " + referenceNumber);
-
-                        // Crear y guardar el SmsMessage
-                        SmsMessage smsMessage = new SmsMessage(
-                                messageFrom,
-                                amountReceived,
-                                senderPhoneNumber,
-                                referenceNumber,
-                                date,
-                                time,
-                                newBalance,
-                                LocalDateTime.now()
-                        );
-                        smsMessageRepository.save(smsMessage);
-
-                        // Verificar transacciones pendientes
-                        List<Transaction> transactions = transactionStorageService.getPendingTransactions(senderPhoneNumber);
-                        if (!transactions.isEmpty()) {
-                            System.out.println("Found " + transactions.size() + " pending transactions for phone number: " + senderPhoneNumber);
-
-                            // Guardar ref y monto
-                            transactionStorageService.storeSmsReferenceNumber(senderPhoneNumber, referenceNumber);
-                            transactionStorageService.storeAmountReceived(senderPhoneNumber, amountReceived);
-
-                            webSocketController.requestRefNumberAndTempPin(senderPhoneNumber);
-                        } else {
-                            System.out.println("No pending transactions found for phone number: " + senderPhoneNumber + " and amount: " + amountReceived);
-                            storeUnmatchedPayment(smsMessage);
+                    // Si no es un mensaje "from 555", intentamos reconocer Tigo u otro
+                    if (!text.contains("Message from 555")) {
+                        boolean recognized = checkTigoPattern(text);
+                        if (!recognized) {
+                            // No es Tigo ni from 555, puedes decidir guardarlo como unmatched o ignorarlo
+                            System.out.println("Message is neither from 555 nor Tigo. Ignoring or storing as unmatched.");
                         }
+                        continue;
                     }
 
-                    // ---------------------------------------------
-                    // #2 Transaccion exitosa “fijo” (from 555)
-                    // ---------------------------------------------
-                    else if (matcherNuevo.find()) {
-                        System.out.println("FOUND NEW PAYMENT FORMAT MATCHING (Fijo)");
-                        String amountStr       = matcherNuevo.group(1);
-                        String cargosStr       = matcherNuevo.group(2);
-                        String nombreCliente   = matcherNuevo.group(3);
-                        String telefonoDestino = matcherNuevo.group(4);
-                        String ref             = matcherNuevo.group(5);
-                        String fecha           = matcherNuevo.group(6);
+                    // Si es "from 555", concatenamos en el buffer de ese chat
+                    StringBuilder partialBuilder = partialMessageMap.computeIfAbsent(chatId, k -> new StringBuilder());
+                    partialBuilder.append(" ").append(text); // agregamos con un espacio en medio
 
-                        double amount = Double.parseDouble(amountStr);
-                        double cargos = Double.parseDouble(cargosStr);
+                    // Intentamos parsear con todo lo que tenemos acumulado
+                    String fullText = partialBuilder.toString().trim();
 
-                        System.out.println("Nombre Cliente: " + nombreCliente);
-                        System.out.println("Teléfono Destino: " + telefonoDestino);
-                        System.out.println("Referencia: " + ref);
-                        System.out.println("Monto: " + amount + " | Cargos: " + cargos + " | Fecha: " + fecha);
-
-                        // Construimos el SmsMessage
-                        SmsMessage smsMessage = new SmsMessage(
-                                "555",
-                                amount,
-                                telefonoDestino,
-                                ref,
-                                fecha,
-                                "",
-                                0.0,
-                                LocalDateTime.now()
-                        );
-                        smsMessageRepository.save(smsMessage);
-
-                        // Verificar transacciones pendientes
-                        List<Transaction> transactions = transactionStorageService.getPendingTransactions(telefonoDestino);
-                        if (!transactions.isEmpty()) {
-                            System.out.println("Found " + transactions.size() + " pending transactions for phone number: " + telefonoDestino);
-
-                            transactionStorageService.storeSmsReferenceNumber(telefonoDestino, ref);
-                            transactionStorageService.storeAmountReceived(telefonoDestino, amount);
-
-                            webSocketController.requestRefNumberAndTempPin(telefonoDestino);
-                        } else {
-                            System.out.println("No pending transactions found for phone number: " + telefonoDestino + " and amount: " + amount);
-                            storeUnmatchedPayment(smsMessage);
-                        }
-                    }
-
-                    // ---------------------------------------------
-                    // #3 Transacción exitosa (flexible, multilinea) -> from 555
-                    // ---------------------------------------------
-                    else if (matcherFlexible.find()) {
-                        System.out.println("FOUND FLEXIBLE PAYMENT FORMAT MATCHING");
-                        String amountStr       = matcherFlexible.group(1);
-                        String nombreCliente   = matcherFlexible.group(2);
-                        String telefonoDestino = matcherFlexible.group(3);
-                        String ref             = matcherFlexible.group(4);
-
-                        double amount = Double.parseDouble(amountStr);
-
-                        System.out.println("Nombre Cliente: " + nombreCliente);
-                        System.out.println("Teléfono Destino: " + telefonoDestino);
-                        System.out.println("Referencia: " + ref);
-                        System.out.println("Monto: " + amount);
-
-                        // Construimos el SmsMessage
-                        SmsMessage smsMessage = new SmsMessage(
-                                "555",
-                                amount,
-                                telefonoDestino,
-                                ref,
-                                "",   // date
-                                "",   // time
-                                0.0,
-                                LocalDateTime.now()
-                        );
-                        smsMessageRepository.save(smsMessage);
-
-                        // Verificar transacciones pendientes
-                        List<Transaction> transactions = transactionStorageService.getPendingTransactions(telefonoDestino);
-                        if (!transactions.isEmpty()) {
-                            transactionStorageService.storeSmsReferenceNumber(telefonoDestino, ref);
-                            transactionStorageService.storeAmountReceived(telefonoDestino, amount);
-
-                            webSocketController.requestRefNumberAndTempPin(telefonoDestino);
-                        } else {
-                            System.out.println("No pending transactions found for phone number: " + telefonoDestino + " and amount: " + amount);
-                            storeUnmatchedPayment(smsMessage);
-                        }
-                    }
-
-                    // ---------------------------------------------
-                    // #4 Mega flexible (también from 555)
-                    // ---------------------------------------------
-                    else if (matcherMegaFlexible.find()) {
-                        System.out.println("FOUND MEGA FLEXIBLE PAYMENT FORMAT MATCHING");
-
-                        String amountStr       = matcherMegaFlexible.group(1); // Monto
-                        String cargosStr       = matcherMegaFlexible.group(2); // Cargos (puede ser null)
-                        String nombreCliente   = matcherMegaFlexible.group(3); // Nombre
-                        String telefonoDestino = matcherMegaFlexible.group(4); // Teléfono
-                        String ref             = matcherMegaFlexible.group(5); // Ref
-                        String fechaStr        = matcherMegaFlexible.group(6); // Fecha (puede ser null)
-
-                        double amount = Double.parseDouble(amountStr);
-                        double cargos = (cargosStr != null) ? Double.parseDouble(cargosStr) : 0.0;
-
-                        System.out.println("Nombre Cliente: " + nombreCliente);
-                        System.out.println("Teléfono Destino: " + telefonoDestino);
-                        System.out.println("Referencia: " + ref);
-                        System.out.println("Monto: " + amount + " | Cargos: " + cargos + " | Fecha: " + fechaStr);
-
-                        // Construimos el SmsMessage
-                        SmsMessage smsMessage = new SmsMessage(
-                                "555",
-                                amount,
-                                telefonoDestino,
-                                ref,
-                                (fechaStr != null ? fechaStr : ""),
-                                "",
-                                0.0,
-                                LocalDateTime.now()
-                        );
-                        smsMessageRepository.save(smsMessage);
-
-                        // Verificar transacciones pendientes
-                        List<Transaction> transactions = transactionStorageService.getPendingTransactions(telefonoDestino);
-                        if (!transactions.isEmpty()) {
-                            transactionStorageService.storeSmsReferenceNumber(telefonoDestino, ref);
-                            transactionStorageService.storeAmountReceived(telefonoDestino, amount);
-
-                            webSocketController.requestRefNumberAndTempPin(telefonoDestino);
-                        } else {
-                            System.out.println("No pending transactions found for phone number: " + telefonoDestino + " and amount: " + amount);
-                            storeUnmatchedPayment(smsMessage);
-                        }
-                    }
-
-                    // ---------------------------------------------
-                    // Ninguno de los patrones coincidió
-                    // ---------------------------------------------
-                    else {
-                        System.out.println("NOT FOUND SMS MATCHING");
+                    // Si se logró parsear, limpiamos el buffer
+                    if (checkAndProcessFrom555(fullText, chatId)) {
+                        partialMessageMap.remove(chatId);
+                    } else {
+                        // Aún no matchea, seguimos esperando más fragmentos
+                        System.out.println("Still partial message for chat " + chatId);
                     }
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Verifica si el texto corresponde a TigoMoney (from \d{3}) en un solo mensaje
+     */
+    private boolean checkTigoPattern(String text) {
+        // Patrón Tigo
+        Pattern smsPatternTigo = Pattern.compile(
+                "/Message from (\\d{3}): Has recibido L (\\d{2,}\\.\\d{2}) "
+                        + "del (\\d{8,13})\\. Ref\\. (\\d{9,10}), Fecha: (\\d{2}/\\d{2}/\\d{2}) "
+                        + "(\\d{2}:\\d{2}) Nuevo balance Tigo Money: L (\\d{2,}\\.\\d{2})"
+        );
+        Matcher matcher = smsPatternTigo.matcher(text);
+        if (matcher.find()) {
+            System.out.println("FOUND TIGO MONEY MATCHING (single message)");
+            // Procesar Tigo
+            String messageFrom       = matcher.group(1);
+            String amountReceivedStr = matcher.group(2);
+            double amountReceived    = Double.parseDouble(amountReceivedStr);
+            String senderPhoneNumber = matcher.group(3);
+            String referenceNumber   = matcher.group(4);
+            String date              = matcher.group(5);
+            String time              = matcher.group(6);
+            String newBalanceStr     = matcher.group(7);
+            double newBalance        = Double.parseDouble(newBalanceStr);
+
+            // Guarda en BD
+            SmsMessage smsMessage = new SmsMessage(
+                    messageFrom,
+                    amountReceived,
+                    senderPhoneNumber,
+                    referenceNumber,
+                    date,
+                    time,
+                    newBalance,
+                    LocalDateTime.now()
+            );
+            smsMessageRepository.save(smsMessage);
+
+            // Checa transacciones pendientes
+            List<Transaction> transactions = transactionStorageService.getPendingTransactions(senderPhoneNumber);
+            if (!transactions.isEmpty()) {
+                transactionStorageService.storeSmsReferenceNumber(senderPhoneNumber, referenceNumber);
+                transactionStorageService.storeAmountReceived(senderPhoneNumber, amountReceived);
+                webSocketController.requestRefNumberAndTempPin(senderPhoneNumber);
+            } else {
+                storeUnmatchedPayment(smsMessage);
+            }
+
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Trata de procesar (acumulado) "from 555" con alguno de los patrones.
+     * Retorna true si alguno matcheó y fue procesado, false si no.
+     */
+    private boolean checkAndProcessFrom555(String fullText, long chatId) {
+        // Patrón fijo (Transaccion exitosa)
+        Pattern smsPatternFijo = Pattern.compile(
+                "/Message from 555: Transaccion exitosa\\.\\s*"
+                        + "Monto: L\\. (\\d+\\.\\d{2})\\s*"
+                        + "Cargos: L\\. (\\d+\\.\\d{2})\\s*"
+                        + "Nombre Cliente: (.*?)\\s*"
+                        + "Telefono Destino: (\\d+)\\s*"
+                        + "Ref: (\\d+)\\s*"
+                        + "Fecha: (.*)"
+        );
+
+        // Patrón flexible multilinea
+        Pattern smsPatternFlexibleMultiline = Pattern.compile(
+                "(?s)" // DOTALL
+                        + "/Message from 555:.*?"
+                        + "(?:Transaccion|Transaction).*?"
+                        + "Monto:\\s*L\\.\\s*(\\d+(?:\\.\\d{1,2})?).*?"
+                        + "Nombre Cliente:\\s*(.*?)\\s+"
+                        + "Telefono Destino:\\s*(\\d+).*?"
+                        + "Ref:\\s*(\\d+).*"
+        );
+
+        // Patrón mega flexible
+        Pattern smsPatternMegaFlexible = Pattern.compile(
+                "(?s)"
+                        + "/Message from 555:.*?"
+                        + "(?:Transaccion|Transacción)(?: exitosa)?\\.?\\s*"
+                        + ".*?Monto:\\s*L\\.\\s*(\\d+(?:\\.\\d+)?).*?"
+                        + "(?:Cargos:\\s*L\\.\\s*(\\d+(?:\\.\\d+)?).*?)?"
+                        + "Nombre Cliente:\\s*(.*?)\\s+"
+                        + "Telefono Destino:\\s*(\\d+).*?"
+                        + "Ref:\\s*(\\d+).*?"
+                        + "(?:Fecha:\\s*(.*))?",
+                Pattern.CASE_INSENSITIVE
+        );
+
+        // Patrón #1: Fijo
+        Matcher matcherFijo = smsPatternFijo.matcher(fullText);
+        if (matcherFijo.find()) {
+            System.out.println("FOUND from 555 (fijo) in ACCUMULATED text");
+            processPaymentFijo(matcherFijo);
+            return true;
+        }
+
+        // Patrón #2: Flexible multilinea
+        Matcher matcherFlex = smsPatternFlexibleMultiline.matcher(fullText);
+        if (matcherFlex.find()) {
+            System.out.println("FOUND from 555 (flexible multiline) in ACCUMULATED text");
+            processPaymentFlexibleMultiline(matcherFlex);
+            return true;
+        }
+
+        // Patrón #3: Mega flexible
+        Matcher matcherMega = smsPatternMegaFlexible.matcher(fullText);
+        if (matcherMega.find()) {
+            System.out.println("FOUND from 555 (mega flexible) in ACCUMULATED text");
+            processPaymentMega(matcherMega);
+            return true;
+        }
+
+        // No coincidió con ninguno
+        return false;
+    }
+
+    // --------------------------
+    //   Métodos para procesar
+    // --------------------------
+
+    private void processPaymentFijo(Matcher matcher) {
+        String amountStr       = matcher.group(1);
+        String cargosStr       = matcher.group(2);
+        String nombreCliente   = matcher.group(3);
+        String telefonoDestino = matcher.group(4);
+        String ref             = matcher.group(5);
+        String fecha           = matcher.group(6);
+
+        double amount = Double.parseDouble(amountStr);
+        double cargos = Double.parseDouble(cargosStr);
+
+        System.out.println("Procesando Transaccion exitosa (fijo) con: "
+                + amount + ", " + nombreCliente);
+
+        // Construimos el SmsMessage
+        SmsMessage smsMessage = new SmsMessage(
+                "555",
+                amount,
+                telefonoDestino,
+                ref,
+                fecha,
+                "",
+                0.0,
+                LocalDateTime.now()
+        );
+        smsMessageRepository.save(smsMessage);
+
+        // Verificar transacciones pendientes
+        List<Transaction> transactions = transactionStorageService.getPendingTransactions(telefonoDestino);
+        if (!transactions.isEmpty()) {
+            transactionStorageService.storeSmsReferenceNumber(telefonoDestino, ref);
+            transactionStorageService.storeAmountReceived(telefonoDestino, amount);
+            webSocketController.requestRefNumberAndTempPin(telefonoDestino);
+        } else {
+            storeUnmatchedPayment(smsMessage);
+        }
+    }
+
+    private void processPaymentFlexibleMultiline(Matcher matcher) {
+        String amountStr       = matcher.group(1);
+        String nombreCliente   = matcher.group(2);
+        String telefonoDestino = matcher.group(3);
+        String ref             = matcher.group(4);
+
+        double amount = Double.parseDouble(amountStr);
+
+        System.out.println("Procesando Transaccion exitosa (flexible multiline) con: "
+                + amount + ", " + nombreCliente);
+
+        SmsMessage smsMessage = new SmsMessage(
+                "555",
+                amount,
+                telefonoDestino,
+                ref,
+                "",  // no captura fecha ni time
+                "",
+                0.0,
+                LocalDateTime.now()
+        );
+        smsMessageRepository.save(smsMessage);
+
+        // Verificar transacciones pendientes
+        List<Transaction> transactions = transactionStorageService.getPendingTransactions(telefonoDestino);
+        if (!transactions.isEmpty()) {
+            transactionStorageService.storeSmsReferenceNumber(telefonoDestino, ref);
+            transactionStorageService.storeAmountReceived(telefonoDestino, amount);
+            webSocketController.requestRefNumberAndTempPin(telefonoDestino);
+        } else {
+            storeUnmatchedPayment(smsMessage);
+        }
+    }
+
+    private void processPaymentMega(Matcher matcher) {
+        String amountStr       = matcher.group(1);
+        String cargosStr       = matcher.group(2); // podría ser null
+        String nombreCliente   = matcher.group(3);
+        String telefonoDestino = matcher.group(4);
+        String ref             = matcher.group(5);
+        String fechaStr        = matcher.group(6); // podría ser null
+
+        double amount = Double.parseDouble(amountStr);
+        double cargos = (cargosStr != null) ? Double.parseDouble(cargosStr) : 0.0;
+
+        System.out.println("Procesando Transaccion exitosa (mega flexible) con: "
+                + amount + ", " + nombreCliente);
+
+        SmsMessage smsMessage = new SmsMessage(
+                "555",
+                amount,
+                telefonoDestino,
+                ref,
+                (fechaStr != null ? fechaStr : ""), // si no viene la fecha, ""
+                "",
+                0.0,
+                LocalDateTime.now()
+        );
+        smsMessageRepository.save(smsMessage);
+
+        // Verificar transacciones pendientes
+        List<Transaction> transactions = transactionStorageService.getPendingTransactions(telefonoDestino);
+        if (!transactions.isEmpty()) {
+            transactionStorageService.storeSmsReferenceNumber(telefonoDestino, ref);
+            transactionStorageService.storeAmountReceived(telefonoDestino, amount);
+            webSocketController.requestRefNumberAndTempPin(telefonoDestino);
+        } else {
+            storeUnmatchedPayment(smsMessage);
         }
     }
 
