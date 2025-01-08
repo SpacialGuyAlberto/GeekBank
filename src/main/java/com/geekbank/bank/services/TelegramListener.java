@@ -5,9 +5,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,7 +19,6 @@ import javax.annotation.PostConstruct;
 
 import com.geekbank.bank.controllers.WebSocketController;
 import com.geekbank.bank.models.SmsMessage;
-import com.geekbank.bank.models.Transaction;
 import com.geekbank.bank.models.UnmatchedPayment;
 import com.geekbank.bank.repositories.*;
 
@@ -37,6 +33,7 @@ public class TelegramListener implements ApplicationListener<ContextClosedEvent>
     private int lastUpdateId = 0;
     private volatile boolean running = true;
 
+    // Inyecciones de servicios/repositories que aún quieras usar
     @Autowired
     private SmsService smsService;
 
@@ -46,30 +43,14 @@ public class TelegramListener implements ApplicationListener<ContextClosedEvent>
     @Autowired
     private WebSocketController webSocketController;
 
-    // Map para concatenar los fragmentos de "Message from 555" por cada chatId
-    private final Map<Long, StringBuilder> partialMessageMap = new ConcurrentHashMap<>();
-
     @Autowired
     private OrderRequestStorageService orderRequestStorageService;
-
-    @Autowired
-    private TransactionRepository transactionRepository;
-
-    @Autowired
-    private TransactionService transactionService;
-
-    @Autowired
-    private TransactionStorageService transactionStorageService;
-
-    @Autowired
-    private AccountRepository accountRepository;
 
     @Autowired
     private SmsMessageRepository smsMessageRepository;
 
     @Autowired
     private UnmatchedPaymentRepository unmatchedPaymentRepository;
-
 
     public TelegramListener(SmsService smsService) {
         this.smsService = smsService;
@@ -85,6 +66,7 @@ public class TelegramListener implements ApplicationListener<ContextClosedEvent>
     public void listenForMessages() {
         while (running) {
             try {
+                // Solicitamos updates a Telegram
                 String urlWithOffset = BASE_URL + "?offset=" + (lastUpdateId + 1);
                 URL url = new URL(urlWithOffset);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -95,7 +77,6 @@ public class TelegramListener implements ApplicationListener<ContextClosedEvent>
                     BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                     StringBuilder response = new StringBuilder();
                     String inputLine;
-
                     while ((inputLine = in.readLine()) != null) {
                         response.append(inputLine);
                     }
@@ -140,32 +121,19 @@ public class TelegramListener implements ApplicationListener<ContextClosedEvent>
                 JSONObject update = resultArray.getJSONObject(i);
                 int updateId = update.getInt("update_id");
 
-                // Suponiendo que lees "channel_post"
+                // Revisamos si viene en "channel_post"
                 if (update.has("channel_post")) {
                     JSONObject message = update.getJSONObject("channel_post");
                     String text = message.getString("text");
-                    long chatId = message.getJSONObject("chat").getLong("id");
 
                     lastUpdateId = updateId;
 
-                    // Solo acumulamos si es "Message from 555"
-                    if (!text.contains("Message from 555")) {
-                        continue;
-                    }
-
-                    // Acumular
-                    StringBuilder sb = partialMessageMap
-                            .computeIfAbsent(chatId, k -> new StringBuilder());
-                    sb.append(" ").append(text);
-
-                    String fullText = sb.toString().trim();
-
-                    // Intentar parsear
-                    if (tryParsePayment(fullText)) {
-                        // Si ya parseamos y tenemos todo, limpiamos el buffer
-                        partialMessageMap.remove(chatId);
-                    } else {
-                        System.out.println("Partial message for chat " + chatId + " => not matched yet");
+                    // Solo procesamos si contiene "Message from 555"
+                    if (text.contains("Message from 555")) {
+                        boolean matched = tryParsePayment(text);
+                        if (!matched) {
+                            System.out.println("Mensaje no cumple el patrón de pago.");
+                        }
                     }
                 }
             }
@@ -174,7 +142,7 @@ public class TelegramListener implements ApplicationListener<ContextClosedEvent>
         }
     }
 
-    // Único patrón: mega flexible con fecha opcional
+    // Patrón con fecha opcional
     private static final Pattern smsPatternMegaFlexibleDateOptional = Pattern.compile(
             "(?s)"
                     + "/Message from 555:.*?"
@@ -183,13 +151,15 @@ public class TelegramListener implements ApplicationListener<ContextClosedEvent>
                     + "Cargos:\\s*L\\.\\s*(\\d+(?:\\.\\d+)?).*?"
                     + "Nombre Cliente:\\s*(.*?)\\s+"
                     + "Telefono Destino:\\s*(\\d+).*?"
-                    + "Ref:\\s*(\\d+).*?" // Captura Ref
-                    + "(?:Fecha:\\s*(.*))?", // Captura fecha, si existe
+                    + "Ref:\\s*(\\d+).*?"         // Captura referencia
+                    + "(?:Fecha:\\s*(.*))?",     // Fecha opcional
             Pattern.CASE_INSENSITIVE
     );
 
     /**
-     * Si hace match, procesamos. Si no, devolvemos false (para seguir esperando más texto).
+     * Intenta parsear el mensaje:
+     * - Si cumple el patrón, se almacena en smsMessageRepository y UnmatchedPaymentRepository.
+     * - Devuelve true si hizo match, false si no.
      */
     private boolean tryParsePayment(String text) {
         Matcher matcher = smsPatternMegaFlexibleDateOptional.matcher(text);
@@ -197,49 +167,36 @@ public class TelegramListener implements ApplicationListener<ContextClosedEvent>
             return false;
         }
 
-        // Extraemos grupos
-        String amountStr     = matcher.group(1); // Monto
-        String cargosStr     = matcher.group(2); // Cargos
-        String nombreCliente = matcher.group(3); // Nombre
-        String telefonoDest  = matcher.group(4); // Teléfono
-        String ref           = matcher.group(5); // Ref
-        String fechaStr      = matcher.group(6); // Fecha (opcional)
+        // Extraer datos
+        String amountStr     = matcher.group(1);
+        String cargosStr     = matcher.group(2);
+        String nombreCliente = matcher.group(3);
+        String telefonoDest  = matcher.group(4);
+        String ref           = matcher.group(5);
+        String fechaStr      = matcher.group(6); // opcional
 
         double amount = Double.parseDouble(amountStr);
         double cargos = Double.parseDouble(cargosStr);
 
-        // Si no llegó fecha o está vacía, usar la de hoy:
+        // Si no hay fecha, usar la actual
         if (fechaStr == null || fechaStr.isBlank()) {
             fechaStr = LocalDateTime.now().toLocalDate().toString();
         }
 
-        // Crear el SmsMessage
+        // Crear y guardar en smsMessageRepository
         SmsMessage smsMessage = new SmsMessage(
-                "555",
-                amount,
-                telefonoDest,
-                ref,
-                fechaStr,   // Aseguramos que tenga algo
-                "",
-                0.0,
-                LocalDateTime.now()
+                "555",                  // Remitente
+                amount,                 // Monto
+                telefonoDest,           // Tel destino
+                ref,                    // Referencia
+                fechaStr,               // Fecha
+                "",                     // Mensaje adicional
+                0.0,                    // Valor extra
+                LocalDateTime.now()     // Recibido a
         );
         smsMessageRepository.save(smsMessage);
 
-        // Verificar transacciones pendientes
-        List<Transaction> transactions = transactionStorageService.getPendingTransactions(telefonoDest);
-        if (!transactions.isEmpty()) {
-            transactionStorageService.storeSmsReferenceNumber(telefonoDest, ref);
-            transactionStorageService.storeAmountReceived(telefonoDest, amount);
-            webSocketController.requestRefNumberAndTempPin(telefonoDest);
-        } else {
-            storeUnmatchedPayment(smsMessage);
-        }
-
-        return true;
-    }
-
-    private void storeUnmatchedPayment(SmsMessage smsMessage) {
+        // También guardar en UnmatchedPayment (por ahora consideramos todo como "unmatched")
         UnmatchedPayment unmatchedPayment = new UnmatchedPayment(
                 smsMessage.getSenderPhoneNumber(),
                 smsMessage.getAmountReceived(),
@@ -248,9 +205,12 @@ public class TelegramListener implements ApplicationListener<ContextClosedEvent>
                 smsMessage
         );
         unmatchedPaymentRepository.save(unmatchedPayment);
-        System.out.println("Stored unmatched payment for phone number: "
-                + smsMessage.getSenderPhoneNumber()
-                + " | Amount: " + smsMessage.getAmountReceived()
-                + " | Reference: " + smsMessage.getReferenceNumber());
+
+        System.out.println("Se guardó el SMS y el registro de UnmatchedPayment: "
+                + "Tel: " + telefonoDest
+                + ", Ref: " + ref
+                + ", Monto: " + amount);
+
+        return true;
     }
 }
