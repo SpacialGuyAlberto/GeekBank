@@ -2,7 +2,7 @@ package com.geekbank.bank.models;
 import jakarta.persistence.*;
 
 @Entity
-public class Customer {
+public class Customer extends User{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
@@ -30,7 +30,4 @@ public class Customer {
 
     public void setFirstName(String firstName){ this.firstName = firstName;}
     public void setPassword(String password){this.password = password; }
-
-
-
 }
