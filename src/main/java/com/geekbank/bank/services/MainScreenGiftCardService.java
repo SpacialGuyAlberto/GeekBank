@@ -7,6 +7,8 @@ import com.geekbank.bank.repositories.MainScreenGiftCardItemRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
@@ -27,33 +29,53 @@ public class MainScreenGiftCardService {
         this.kinguinService = kinguinService;
     }
 
-    public List<MainScreenGiftCardItemDTO> getMainScreenGiftCardItems() {
-        List<MainScreenGiftCardItem> mainScreenGiftCardItems = mainScreenGiftCardItemRepository.findAll();
-        return mainScreenGiftCardItems.stream()
-                .map(item -> {
-                    KinguinGiftCard giftcard = kinguinService.fetchGiftCardById(String.valueOf(item.getProductId()))
-                            .orElse(null);
-                    return new MainScreenGiftCardItemDTO(item, giftcard);
-                })
-                .collect(Collectors.toList());
+    public Page<MainScreenGiftCardItemDTO> getMainScreenGiftCardItems(Pageable pageable) {
+        Page<MainScreenGiftCardItem> pageOfItems = mainScreenGiftCardItemRepository.findAll(pageable);
+
+        // Usamos .map del objeto Page para transformar cada MainScreenGiftCardItem a DTO
+        return pageOfItems.map(item -> {
+            KinguinGiftCard giftcard = kinguinService.fetchGiftCardById(String.valueOf(item.getProductId()))
+                    .orElse(null);
+            return new MainScreenGiftCardItemDTO(item, giftcard);
+        });
     }
 
     public List<MainScreenGiftCardItem> addItems(List<Long> productIds) {
-        List<MainScreenGiftCardItem> newItems = productIds.stream()
+        // 1. Ver cuáles ya existen en la BD
+        List<Long> existingProductIds = mainScreenGiftCardItemRepository
+                .findByProductIdIn(productIds)     // Retorna los registros existentes
+                .stream()
+                .map(MainScreenGiftCardItem::getProductId)
+                .collect(Collectors.toList());
+
+        // 2. Filtrar sólo los IDs nuevos, ignorando duplicados
+        List<Long> newProductIds = productIds.stream()
+                .distinct() // quita duplicados dentro de la misma lista
+                .filter(id -> !existingProductIds.contains(id))
+                .collect(Collectors.toList());
+
+        // 3. Crear entidades para los nuevos IDs y guardarlas
+        List<MainScreenGiftCardItem> newItems = newProductIds.stream()
                 .map(productId -> {
                     MainScreenGiftCardItem item = new MainScreenGiftCardItem();
                     item.setProductId(productId);
                     return mainScreenGiftCardItemRepository.save(item);
                 })
                 .collect(Collectors.toList());
-        logger.info("Agregados {} nuevos elementos de tarjetas de regalo para la pantalla principal.", newItems.size());
+
+        logger.info("Agregados {} nuevos elementos de tarjetas de regalo (sin repetir).", newItems.size());
         return newItems;
     }
+
 
     @Transactional
     public void removeItems(List<Long> productIds) {
         logger.debug("Intentando eliminar elementos de tarjetas de regalo con IDs de producto: {}", productIds);
-        mainScreenGiftCardItemRepository.deleteAll();
+
+        // Llamamos directamente al método del repositorio que borra solo los registros con esos IDs.
+        mainScreenGiftCardItemRepository.deleteByProductIdIn(productIds);
+
+        // Verificamos si efectivamente se eliminaron
         List<MainScreenGiftCardItem> remainingItems = mainScreenGiftCardItemRepository.findByProductIdIn(productIds);
         if (remainingItems.isEmpty()) {
             logger.debug("Se eliminaron correctamente los elementos de tarjetas de regalo para los IDs de producto: {}", productIds);
@@ -61,4 +83,5 @@ public class MainScreenGiftCardService {
             logger.error("No se pudieron eliminar todos los elementos de tarjetas de regalo para los IDs de producto: {}", productIds);
         }
     }
+
 }

@@ -35,7 +35,7 @@ public class User {
     }
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @JsonManagedReference // Para manejar la serialización
     private Account account;
 
     @Column(nullable = true)
