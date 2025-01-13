@@ -4,6 +4,9 @@ import com.geekbank.bank.models.MainScreenGiftCardItem;
 import com.geekbank.bank.models.MainScreenGiftCardItemDTO;
 import com.geekbank.bank.services.MainScreenGiftCardService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,8 +24,12 @@ public class MainScreenGiftCardController {
     }
 
     @GetMapping
-    public ResponseEntity<List<MainScreenGiftCardItemDTO>> getMainScreenGiftCardItems() {
-        List<MainScreenGiftCardItemDTO> items = mainScreenGiftCardService.getMainScreenGiftCardItems();
+    public ResponseEntity<Page<MainScreenGiftCardItemDTO>> getMainScreenGiftCardItems(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<MainScreenGiftCardItemDTO> items = mainScreenGiftCardService.getMainScreenGiftCardItems(pageable);
         return ResponseEntity.ok(items);
     }
 

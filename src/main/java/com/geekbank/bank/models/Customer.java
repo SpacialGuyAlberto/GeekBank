@@ -31,6 +31,4 @@ public class Customer {
     public void setFirstName(String firstName){ this.firstName = firstName;}
     public void setPassword(String password){this.password = password; }
 
-
-
 }
