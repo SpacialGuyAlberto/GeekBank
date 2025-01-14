@@ -29,7 +29,7 @@ public class MainScreenGiftCardController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size
     ) {
-        // Forzamos, por ejemplo, orden asc por ID
+        System.out.println("GET /main-screen-gift-cards?page=" + page + "&size=" + size);
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id"));
         Page<MainScreenGiftCardItemDTO> items = mainScreenGiftCardService.getMainScreenGiftCardItems(pageable);
         return ResponseEntity.ok(items);
