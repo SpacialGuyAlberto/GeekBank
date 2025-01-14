@@ -30,11 +30,13 @@ public class MainScreenGiftCardController {
             @RequestParam(value = "size", defaultValue = "10") int size
     ) {
         System.out.println("GET /main-screen-gift-cards?page=" + page + "&size=" + size);
+
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id"));
         Page<MainScreenGiftCardItemDTO> items = mainScreenGiftCardService.getMainScreenGiftCardItems(pageable);
+
+        System.out.println("Retornando " + items.getContent().size() + " elementos. totalPages=" + items.getTotalPages());
         return ResponseEntity.ok(items);
     }
-
 
     @PostMapping
     public ResponseEntity<List<MainScreenGiftCardItem>> addMainScreenGiftCardItems(@RequestBody MainScreenGiftCardRequest request) {
