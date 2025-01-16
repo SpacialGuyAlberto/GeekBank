@@ -177,7 +177,7 @@ public class KinguinService {
         headers.set("X-Api-Key", apiKey);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        String searchUrl = apiUrl + "?name=" + name;
+        String searchUrl = apiUrl + "?name=" + name + "&limit=500";
         ResponseEntity<JsonNode> response = restTemplate.exchange(searchUrl, HttpMethod.GET, entity, JsonNode.class);
         JsonNode products = response.getBody();
 
