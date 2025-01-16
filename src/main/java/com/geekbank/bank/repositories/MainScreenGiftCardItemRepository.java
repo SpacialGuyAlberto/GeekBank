@@ -33,6 +33,7 @@ public interface MainScreenGiftCardItemRepository extends JpaRepository<MainScre
     @Query("DELETE FROM MainScreenGiftCardItem i WHERE i.productId IN :productIds")
     void deleteByProductIdIn(List<Long> productIds);
 
+
     // Métodos por defecto de JpaRepository (deleteAll, findAll, etc.)
     @Override
     void deleteAll();
