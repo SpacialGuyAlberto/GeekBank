@@ -83,6 +83,22 @@ public class Transaction {
     @Column(columnDefinition = "TEXT")
     private List<String> keys = new ArrayList<>();
 
+
+
+    // NUEVO: Afiliado que refirió la compra
+    @ManyToOne
+    @JoinColumn(name = "affiliate_id", nullable = true)
+    private User affiliate;
+
+    // NUEVO: Descuento aplicado (USD)
+    @Column(nullable = true)
+    private Double discountApplied;
+
+    // NUEVO: Comisión ganada por el afiliado (USD)
+    @Column(nullable = true)
+    private Double commissionEarned;
+
+
     public Long getId() {
         return id;
     }
@@ -258,5 +274,29 @@ public class Transaction {
     // Setter
     public void setExternalOrderId(String externalOrderId) {
         this.externalOrderId = externalOrderId;
+    }
+
+    public User getAffiliate() {
+        return affiliate;
+    }
+
+    public void setAffiliate(User affiliate) {
+        this.affiliate = affiliate;
+    }
+
+    public Double getDiscountApplied() {
+        return discountApplied;
+    }
+
+    public void setDiscountApplied(Double discountApplied) {
+        this.discountApplied = discountApplied;
+    }
+
+    public Double getCommissionEarned() {
+        return commissionEarned;
+    }
+
+    public void setCommissionEarned(Double commissionEarned) {
+        this.commissionEarned = commissionEarned;
     }
 }

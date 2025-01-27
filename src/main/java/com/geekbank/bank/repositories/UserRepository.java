@@ -13,6 +13,9 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     Optional<User> findById(long id);
+
+    User findByAffiliateLink(String affiliateLink);
+    User findByPromoCode(String promoCode);
     Optional<User> findByActivationToken(String activationToken);
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.account WHERE u.id = :userId")
     Optional<User> findByIdWithAccount(@Param("userId") Long userId);

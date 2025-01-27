@@ -34,6 +34,21 @@ public class OrderRequest {
 
     private Boolean sendKeyToSMS;
 
+
+    private String referenceCode;
+
+    private String affiliateLink;  // El link del afiliado (opcional)
+
+    public String getPromoCode() {
+        return promoCode;
+    }
+
+    public void setPromoCode(String promoCode) {
+        this.promoCode = promoCode;
+    }
+
+    private String promoCode;
+
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
@@ -126,6 +141,21 @@ public class OrderRequest {
         this.createdAt = LocalDateTime.now();
     }
 
+    public String getReferenceCode() {
+        return referenceCode;
+    }
+
+    public void setReferenceCode(String referenceCode) {
+        this.referenceCode = referenceCode;
+    }
+
+    public String getAffiliateLink() {
+        return affiliateLink;
+    }
+
+    public void setAffiliateLink(String affiliateLink) {
+        this.affiliateLink = affiliateLink;
+    }
 
     public static class Product {
         private int kinguinId;
@@ -155,7 +185,6 @@ public class OrderRequest {
         public void setPrice(double price) {
             this.price = price;
         }
-
 
     }
 }

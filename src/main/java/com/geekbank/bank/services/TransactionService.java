@@ -71,7 +71,6 @@ public class TransactionService {
     @Autowired
     private PdfGeneratorService pdfGeneratorService;
 
-    // Tiempo por defecto para expiración (minutos)
     private static final long EXPIRATION_MINUTES = 3;
 
     private PriorityBlockingQueue<Transaction> manualVerificationQueue = new PriorityBlockingQueue<>(
@@ -83,16 +82,102 @@ public class TransactionService {
         this.emailService = emailService;
     }
 
-    // --------------------------------------------------------------
-    //   MÉTODOS DE CREACIÓN / PROCESAMIENTO DE TRANSACCIONES
-    // --------------------------------------------------------------
 
-    // Genera un PIN aleatorio de 4 dígitos
     private static Long generatePin() {
         Random random = new Random();
         int pin = random.nextInt(9000) + 1000; // entre 1000 y 9999
         return (long) pin;
     }
+
+    @Transactional
+    public Transaction createTransactionWithAffiliate(
+            OrderRequest orderRequest
+    ) {
+        // 1. Calcular el monto base de la compra (suma de productos)
+        double baseAmountUsd = 0.0;
+        for (OrderRequest.Product product : orderRequest.getProducts()) {
+            baseAmountUsd += (product.getPrice() * product.getQty());
+        }
+
+        // 2. Buscar si se proporcionó un affiliateLink o promoCode
+        String affiliateLink = orderRequest.getAffiliateLink(); // si lo agregaste
+        String promoCode = orderRequest.getPromoCode();         // si lo agregaste
+        User affiliateUser = null;
+        Double discount = 0.0;
+        Double commission = 0.0;
+
+        if (affiliateLink != null && !affiliateLink.isEmpty()) {
+            affiliateUser = userRepository.findByAffiliateLink(affiliateLink);
+        } else if (promoCode != null && !promoCode.isEmpty()) {
+            affiliateUser = userRepository.findByPromoCode(promoCode);
+            // Si existe, aplicamos descuento (5%)
+            if (affiliateUser != null) {
+                discount = baseAmountUsd * 0.05;  // 5% de descuento
+            }
+        }
+
+        // 3. Monto final (descontado)
+        double finalAmountUsd = baseAmountUsd - discount;
+        if (finalAmountUsd < 0) finalAmountUsd = 0;
+
+        // 4. Si hay afiliado, calcula la comisión
+        if (affiliateUser != null && affiliateUser.getCommissionRate() != null) {
+            double rate = affiliateUser.getCommissionRate();
+            commission = finalAmountUsd * rate; // p.ej. 0.10 => 10% de la venta
+        }
+
+        // 5. Crear la transacción (similar a tu createTransactionForPaypalAndCreditCard)
+        double exchangeRate = currencyService.getExchangeRateUSDtoHNL();
+        double amountHnl = currencyService.convertUsdToHnl(finalAmountUsd, exchangeRate);
+
+        Transaction transaction = new Transaction();
+        transaction.setAmountUsd(finalAmountUsd);
+        transaction.setAmountHnl(amountHnl);
+        transaction.setExchangeRate(exchangeRate);
+        transaction.setTimestamp(LocalDateTime.now());
+        transaction.setTransactionNumber(generateTransactionNumber());
+        transaction.setPhoneNumber(orderRequest.getPhoneNumber());
+        transaction.setOrderRequestNumber(orderRequest.getOrderRequestId());
+        transaction.setStatus(TransactionStatus.PENDING);
+        transaction.setType(TransactionType.PURCHASE);
+        transaction.setExpiresAt(LocalDateTime.now().plusMinutes(15));
+        transaction.setManual(false); // Ejemplo
+
+        // 6. Asigna el afiliado, el descuento y la comisión
+        transaction.setAffiliate(affiliateUser);
+        transaction.setDiscountApplied(discount);
+        transaction.setCommissionEarned(commission);
+
+        // 7. Asigna el "buyer" (comprador), si es un userId o guestId
+        if (orderRequest.getUserId() != null) {
+            User buyer = userRepository.findById(orderRequest.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            transaction.setUser(buyer);
+        } else if (orderRequest.getGuestId() != null) {
+            transaction.setGuestId(orderRequest.getGuestId());
+        }
+
+        // 8. Manejo de products en TransactionProduct
+        List<TransactionProduct> transactionProducts = new ArrayList<>();
+        for (OrderRequest.Product product : orderRequest.getProducts()) {
+            TransactionProduct tProd = new TransactionProduct();
+            tProd.setTransaction(transaction);
+            tProd.setProductId((long) product.getKinguinId());
+            tProd.setQuantity(product.getQty());
+            // ...
+            transactionProducts.add(tProd);
+        }
+        transaction.setProducts(transactionProducts);
+
+        // 9. Guardamos
+        Transaction saved = transactionRepository.save(transaction);
+
+        // 10. (Opcional) Notificar o seguir tu flujo normal (por ejemplo, placeOrder)
+        // orderService.placeOrder(orderRequest, saved);
+
+        return saved;
+    }
+
 
     /**
      * Crea una transacción “genérica” con datos básicos (pendiente de pago).
@@ -457,10 +542,6 @@ public class TransactionService {
         webSocketController.sendTransactionStatus(savedTransaction.getStatus());
         return savedTransaction;
     }
-
-    // --------------------------------------------------------------
-    //   VERIFICACIONES / PROCESAMIENTO POSTERIOR
-    // --------------------------------------------------------------
 
     @Transactional
     public void verifyTransaction(String phoneNumber, Long pin, String refNumber) {
