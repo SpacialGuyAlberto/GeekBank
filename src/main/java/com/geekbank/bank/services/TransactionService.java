@@ -93,15 +93,14 @@ public class TransactionService {
     public Transaction createTransactionWithAffiliate(
             OrderRequest orderRequest
     ) {
-        // 1. Calcular el monto base de la compra (suma de productos)
         double baseAmountUsd = 0.0;
         for (OrderRequest.Product product : orderRequest.getProducts()) {
             baseAmountUsd += (product.getPrice() * product.getQty());
         }
 
-        // 2. Buscar si se proporcionó un affiliateLink o promoCode
-        String affiliateLink = orderRequest.getAffiliateLink(); // si lo agregaste
-        String promoCode = orderRequest.getPromoCode();         // si lo agregaste
+
+        String affiliateLink = orderRequest.getAffiliateLink();
+        String promoCode = orderRequest.getPromoCode();
         User affiliateUser = null;
         Double discount = 0.0;
         Double commission = 0.0;
@@ -110,23 +109,23 @@ public class TransactionService {
             affiliateUser = userRepository.findByAffiliateLink(affiliateLink);
         } else if (promoCode != null && !promoCode.isEmpty()) {
             affiliateUser = userRepository.findByPromoCode(promoCode);
-            // Si existe, aplicamos descuento (5%)
+
             if (affiliateUser != null) {
-                discount = baseAmountUsd * 0.05;  // 5% de descuento
+                discount = baseAmountUsd * 0.05;
             }
         }
 
-        // 3. Monto final (descontado)
+
         double finalAmountUsd = baseAmountUsd - discount;
         if (finalAmountUsd < 0) finalAmountUsd = 0;
 
-        // 4. Si hay afiliado, calcula la comisión
+
         if (affiliateUser != null && affiliateUser.getCommissionRate() != null) {
             double rate = affiliateUser.getCommissionRate();
-            commission = finalAmountUsd * rate; // p.ej. 0.10 => 10% de la venta
+            commission = finalAmountUsd * rate;
         }
 
-        // 5. Crear la transacción (similar a tu createTransactionForPaypalAndCreditCard)
+
         double exchangeRate = currencyService.getExchangeRateUSDtoHNL();
         double amountHnl = currencyService.convertUsdToHnl(finalAmountUsd, exchangeRate);
 
@@ -143,12 +142,12 @@ public class TransactionService {
         transaction.setExpiresAt(LocalDateTime.now().plusMinutes(15));
         transaction.setManual(false); // Ejemplo
 
-        // 6. Asigna el afiliado, el descuento y la comisión
+
         transaction.setAffiliate(affiliateUser);
         transaction.setDiscountApplied(discount);
         transaction.setCommissionEarned(commission);
 
-        // 7. Asigna el "buyer" (comprador), si es un userId o guestId
+
         if (orderRequest.getUserId() != null) {
             User buyer = userRepository.findById(orderRequest.getUserId())
                     .orElseThrow(() -> new RuntimeException("User not found"));
@@ -157,7 +156,6 @@ public class TransactionService {
             transaction.setGuestId(orderRequest.getGuestId());
         }
 
-        // 8. Manejo de products en TransactionProduct
         List<TransactionProduct> transactionProducts = new ArrayList<>();
         for (OrderRequest.Product product : orderRequest.getProducts()) {
             TransactionProduct tProd = new TransactionProduct();
@@ -177,8 +175,6 @@ public class TransactionService {
 
         return saved;
     }
-
-
     /**
      * Crea una transacción “genérica” con datos básicos (pendiente de pago).
      */
@@ -216,7 +212,6 @@ public class TransactionService {
             transaction.setGameUserId(gameUserId);
         }
 
-        // Manejo de “manual”
         if (isManual != null) {
             transaction.setManual(isManual);
             transaction.setExpiresAt(LocalDateTime.now().plusMinutes(isManual ? 600 : EXPIRATION_MINUTES));
