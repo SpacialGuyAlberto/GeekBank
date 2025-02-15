@@ -186,4 +186,12 @@ public class TransactionController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/create-transaction-promo-code")
+    public void createTransactionWithAffiliate(
+            @RequestBody OrderRequest orderRequest
+    ){
+        //Invocar en el transaction service
+        transactionService.createTransactionWithAffiliate(orderRequest);
+    }
 }

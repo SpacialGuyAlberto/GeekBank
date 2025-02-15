@@ -81,8 +81,6 @@ public class TransactionService {
     public TransactionService(SendGridEmailService emailService) {
         this.emailService = emailService;
     }
-
-
     private static Long generatePin() {
         Random random = new Random();
         int pin = random.nextInt(9000) + 1000; // entre 1000 y 9999
@@ -97,7 +95,6 @@ public class TransactionService {
         for (OrderRequest.Product product : orderRequest.getProducts()) {
             baseAmountUsd += (product.getPrice() * product.getQty());
         }
-
 
         String affiliateLink = orderRequest.getAffiliateLink();
         String promoCode = orderRequest.getPromoCode();
@@ -114,17 +111,13 @@ public class TransactionService {
                 discount = baseAmountUsd * 0.05;
             }
         }
-
-
         double finalAmountUsd = baseAmountUsd - discount;
         if (finalAmountUsd < 0) finalAmountUsd = 0;
-
 
         if (affiliateUser != null && affiliateUser.getCommissionRate() != null) {
             double rate = affiliateUser.getCommissionRate();
             commission = finalAmountUsd * rate;
         }
-
 
         double exchangeRate = currencyService.getExchangeRateUSDtoHNL();
         double amountHnl = currencyService.convertUsdToHnl(finalAmountUsd, exchangeRate);
@@ -141,12 +134,9 @@ public class TransactionService {
         transaction.setType(TransactionType.PURCHASE);
         transaction.setExpiresAt(LocalDateTime.now().plusMinutes(15));
         transaction.setManual(false); // Ejemplo
-
-
         transaction.setAffiliate(affiliateUser);
         transaction.setDiscountApplied(discount);
         transaction.setCommissionEarned(commission);
-
 
         if (orderRequest.getUserId() != null) {
             User buyer = userRepository.findById(orderRequest.getUserId())
@@ -162,17 +152,12 @@ public class TransactionService {
             tProd.setTransaction(transaction);
             tProd.setProductId((long) product.getKinguinId());
             tProd.setQuantity(product.getQty());
-            // ...
             transactionProducts.add(tProd);
         }
         transaction.setProducts(transactionProducts);
-
-        // 9. Guardamos
         Transaction saved = transactionRepository.save(transaction);
-
         // 10. (Opcional) Notificar o seguir tu flujo normal (por ejemplo, placeOrder)
         // orderService.placeOrder(orderRequest, saved);
-
         return saved;
     }
     /**
@@ -406,12 +391,10 @@ public class TransactionService {
         transaction.setOrderRequestNumber(orderRequest.getOrderRequestId());
         transaction.setTempPin(null);
 
-        // Validar productos
         if (orderRequest.getProducts() != null && orderRequest.getProducts().size() > 10) {
             throw new IllegalArgumentException("No se pueden agregar más de 10 productos por transacción.");
         }
 
-        // Asocia productos
         List<TransactionProduct> transactionProducts = orderRequest.getProducts().stream().map(productRequest -> {
             Long productId = (long) productRequest.getKinguinId();
             TransactionProduct transactionProduct = new TransactionProduct();
@@ -441,8 +424,7 @@ public class TransactionService {
             processManualTransaction(savedTransaction);
             this.emailService.sendNotificationEmail("enkiluzlbel@gmail.com");
         }
-
-        // Notificar (ahora en PROCESSING o AWAITING_MANUAL_PROCESSING)
+        
         webSocketController.sendTransactionStatus(savedTransaction.getStatus());
         return savedTransaction;
     }

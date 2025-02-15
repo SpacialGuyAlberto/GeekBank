@@ -5,22 +5,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class OrderRequest {
-
-    public String getOrderRequestId() {
-        return orderRequestId;
-    }
-
-    public void setOrderRequestId() {
-        this.orderRequestId = "ORQ-" + System.currentTimeMillis();
-    }
-
     private String orderRequestId;
     private Long userId;
-
-    public void setGuestId(String guestId) {
-        this.guestId = guestId;
-    }
-
     private String guestId;
     private Long gameUserId;
 
@@ -34,18 +20,9 @@ public class OrderRequest {
 
     private Boolean sendKeyToSMS;
 
-
     private String referenceCode;
 
-    private String affiliateLink;  // El link del afiliado (opcional)
-
-    public String getPromoCode() {
-        return promoCode;
-    }
-
-    public void setPromoCode(String promoCode) {
-        this.promoCode = promoCode;
-    }
+    private String affiliateLink;
 
     private String promoCode;
 
@@ -116,6 +93,9 @@ public class OrderRequest {
     public String getRefNumber() {
         return refNumber;
     }
+    public void setGuestId(String guestId) {
+        this.guestId = guestId;
+    }
 
     public void setRefNumber(String refNumber) {
         this.refNumber = refNumber;
@@ -155,6 +135,21 @@ public class OrderRequest {
 
     public void setAffiliateLink(String affiliateLink) {
         this.affiliateLink = affiliateLink;
+    }
+    public String getPromoCode() {
+        return promoCode;
+    }
+
+    public void setPromoCode(String promoCode) {
+        this.promoCode = promoCode;
+    }
+
+    public String getOrderRequestId() {
+        return orderRequestId;
+    }
+
+    public void setOrderRequestId() {
+        this.orderRequestId = "ORQ-" + System.currentTimeMillis();
     }
 
     public static class Product {
