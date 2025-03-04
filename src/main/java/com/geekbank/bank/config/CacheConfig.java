@@ -17,9 +17,9 @@ public class CacheConfig {
     public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager("exchangeRateUSDtoHNL", "giftCards");
         cacheManager.setCaffeine(Caffeine.newBuilder()
-                .expireAfterWrite(10, TimeUnit.MINUTES) // Tiempo de expiración después de escribir
-                .maximumSize(1000) // Tamaño máximo de la caché
-                .recordStats() // Habilita estadísticas de la caché
+                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .maximumSize(1000)
+                .recordStats()
         );
         return cacheManager;
     }

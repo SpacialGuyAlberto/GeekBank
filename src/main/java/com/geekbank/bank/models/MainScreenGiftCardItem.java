@@ -11,8 +11,6 @@ public class MainScreenGiftCardItem {
     @Column(name = "product_id", nullable = false, unique = true)
     private Long productId;
 
-    // Getters y Setters
-
     public Long getId() {
         return id;
     }

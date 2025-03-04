@@ -90,9 +90,6 @@ public class WishListController {
             return this.quantity;
         }
         public double getPrice(){ return this.price; }
-
-
-        // Getters and Setters
     }
 
     public static class UpdateWishedItemQuantityRequest {

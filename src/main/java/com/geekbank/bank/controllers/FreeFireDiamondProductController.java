@@ -21,10 +21,8 @@ public class FreeFireDiamondProductController {
         this.productService = productService;
     }
 
-    // Endpoint para obtener todos los productos de Free Fire
     @GetMapping("/products")
     public List<FreeFireDiamondProduct> getAllFreeFireDiamondProducts() {
         return productService.getAllFreeFireDiamondProducts();
     }
-
 }

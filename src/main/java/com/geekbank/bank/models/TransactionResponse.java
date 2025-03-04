@@ -7,8 +7,6 @@ public class TransactionResponse {
 
     private TransactionStatus transactionStatus;
 
-    // Getters y setters
-
     public String getOrderRequestNumber() {
         return orderRequestNumber;
     }

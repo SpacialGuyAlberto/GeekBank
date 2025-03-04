@@ -28,7 +28,7 @@ public class FeedbackService {
         feedback.setGiftCardId(feedbackRequest.getGiftCardId());
         feedback.setScore(feedbackRequest.getScore());
         feedback.setMessage(feedbackRequest.getMessage());
-        // `createdAt` se asigna automáticamente con @CreationTimestamp
+
         return feedbackRepository.save(feedback);
     }
 
@@ -57,8 +57,6 @@ public class FeedbackService {
     public List<Feedback> getFeedbacksByUserId(Long userId) {
         return feedbackRepository.findByUserId(userId);
     }
-
-
 
     public void deleteFeedback(Long id) {
         feedbackRepository.deleteById(id);

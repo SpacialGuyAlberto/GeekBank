@@ -10,7 +10,6 @@ public class FreeFireDiamondProduct extends Product {
     @Enumerated(EnumType.STRING)
     @Column(name = "denomination")
     private FreeFireDiamondDenomination denomination;
-
     public FreeFireDiamondProduct() {}
 
     public FreeFireDiamondProduct(String name, FreeFireDiamondDenomination denomination, String description) {

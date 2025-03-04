@@ -43,20 +43,17 @@ public class TransactionRequest {
         this.amount = amount;
     }
 
-    private Long userId; // Opcional, para usuarios autenticados
-    private String guestId; // Opcional, para usuarios guest
+    private Long userId;
+    private String guestId;
     private String phoneNumber;
     private List<Product> products;
     private Double amount;
 
-    // Getters y setters
 
     public static class Product {
         private Long kinguinId;
         private Integer qty;
         private Double price;
-        private String name; // Opcional, para balance
-
-        // Getters y setters
+        private String name;
     }
 }

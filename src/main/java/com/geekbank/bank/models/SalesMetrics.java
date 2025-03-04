@@ -6,7 +6,7 @@ import jakarta.persistence.Id;
 @Entity
 public class SalesMetrics {
     @Id
-    private Long id = 1L; // un solo registro (o puedes tener múltiples si segmentas por fecha o categoría)
+    private Long id = 1L;
 
     public long getTotalSalesCount() {
         return totalSalesCount;

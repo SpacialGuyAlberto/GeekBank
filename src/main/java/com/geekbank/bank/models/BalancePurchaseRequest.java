@@ -7,18 +7,17 @@ public class BalancePurchaseRequest {
 
     private String id;
     private Long userId;
-    private String guestId; // Opcional, para usuarios guest
+    private String guestId;
     private String phoneNumber;
     private Double amount;
     private LocalDateTime createdAt;
 
-    // Constructor
+
     public BalancePurchaseRequest() {
         setId();
         this.createdAt = LocalDateTime.now();
     }
 
-    // Getters y setters
 
     public String getId() {
         return id;

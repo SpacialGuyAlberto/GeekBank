@@ -20,10 +20,6 @@ public class TelegramController {
     public void handleUpdate(@RequestBody UpdateRequest request) {
         String message = request.getMessage();
         System.out.println("Received message: " + message);
-
-        // Process the message and extract phone number and amount
-        // Assuming you have the logic to process the message here
-        // Send SMS
         String phoneNumber = null;
         smsService.sendPaymentNotification(null);
     }

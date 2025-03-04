@@ -32,7 +32,7 @@ public class ManualVerificationWebSocketController {
                 transaction.getProducts()
         );
 
-        // Enviar el DTO
+
         messagingTemplate.convertAndSend(destination, dto);
     }
 

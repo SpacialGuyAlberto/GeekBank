@@ -13,7 +13,6 @@ public class GiftCardController {
     public GeneralGiftCard getFreeFireGiftCard() {
         return new GeneralGiftCard("1234-5678-9012", "Free Fire Diamonds", 1.9, "2025-12-31");
     }
-
     @GetMapping("/call-of-duty")
     public GeneralGiftCard getCallOfDutyGiftCard() {
         return new GeneralGiftCard("1234-5678-9012", "Call of Duty Battle Pass", 43.99, "2025-12-31");

@@ -70,22 +70,22 @@ public class KinguinService {
 
                     try {
                         if (giftCardRepository.existsById(kinguinId)) {
-                            // Obtener la entidad existente
+
                             GiftCardEntity existingEntity = giftCardRepository.findById(kinguinId).orElse(null);
                             if (existingEntity != null) {
-                                // Actualizar la entidad con los datos de kCard
+
                                 GiftCardMapper.updateGiftCardEntity(existingEntity, kCard);
                                 giftCardRepository.save(existingEntity);
                                 logger.info("GiftCard ID {} actualizada exitosamente.", existingEntity.getKinguinId());
                             }
                         } else {
-                            // Crear una nueva entidad y guardarla
+
                             GiftCardEntity newEntity = GiftCardMapper.mapToGiftCardEntity(kCard);
                             giftCardRepository.save(newEntity);
                             logger.info("GiftCard ID {} insertada exitosamente.", newEntity.getKinguinId());
                         }
 
-                        // Incrementar el contador y actualizar el progreso
+
                         synchronizedGiftCards++;
                         progress.set((int) ((synchronizedGiftCards / (double) totalGiftCards) * 100));
 
@@ -93,16 +93,15 @@ public class KinguinService {
                         logger.error("Error al procesar GiftCard ID {}: {}", kinguinId, e.getMessage());
                     }
 
-                    // Agregar la GiftCard a la lista de todas las GiftCards obtenidas
                     allGiftCards.add(kCard);
                 }
 
                 currentPage++;
                 logger.debug("Página {}: {} GiftCards obtenidas.", currentPage, giftCards.size());
 
-                // Opcional: Agregar un retraso para evitar exceder los límites de tasa de la API
+
                 try {
-                    Thread.sleep(200); // Espera de 200 ms entre solicitudes
+                    Thread.sleep(200);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     logger.error("Interrupción durante el sleep entre solicitudes de páginas: {}", e.getMessage());
@@ -260,33 +259,27 @@ public List<KinguinGiftCard> fetchFilteredGiftCards(Map<String, String> filters)
             giftCards.add(mapJsonToGiftCard(product));
         }
 
-        // Formato de fecha esperado (ejemplo: 2023-11-01T12:30:00Z)
-        DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME; // Ajustado al formato real
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
 
-
-        // Ordenar por fecha descendente (de más reciente a más antiguo)
         giftCards.sort((g1, g2) -> {
             try {
                 String rd1 = g1.getReleaseDate();
                 String rd2 = g2.getReleaseDate();
 
-                // Manejar releaseDate vacías o nulas
                 if (rd1 == null || rd1.isEmpty()) {
-                    return 1; // Considerar g1 como más antiguo
+                    return 1;
                 }
                 if (rd2 == null || rd2.isEmpty()) {
-                    return -1; // Considerar g2 como más antiguo
+                    return -1;
                 }
 
-                // Parsear las fechas correctamente
                 LocalDateTime d1 = LocalDateTime.parse(rd1, DateTimeFormatter.ISO_DATE_TIME);
                 LocalDateTime d2 = LocalDateTime.parse(rd2, DateTimeFormatter.ISO_DATE_TIME);
 
-                return d2.compareTo(d1); // Orden descendente
+                return d2.compareTo(d1);
             } catch (DateTimeParseException e) {
-                // Manejar excepciones de parseo
                 System.err.println("Error al parsear releaseDate: " + e.getMessage());
-                return 0; // Considerar iguales en caso de error
+                return 0;
             }
         });
 

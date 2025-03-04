@@ -58,7 +58,6 @@ public class UnmatchedPayment {
     @Column(name = "image", nullable = true)
     private byte[] image;
 
-    // Campos de auditoría
     @Column(name = "created_by", updatable = false)
     private String createdBy;
 
@@ -67,7 +66,6 @@ public class UnmatchedPayment {
 
     private String imagePath;
 
-    // Getters y setters
     public String getImagePath() {
         return imagePath;
     }
@@ -75,7 +73,6 @@ public class UnmatchedPayment {
     public void setImagePath(String imagePath) {
         this.imagePath = imagePath;
     }
-
 
     public UnmatchedPayment() {
     }

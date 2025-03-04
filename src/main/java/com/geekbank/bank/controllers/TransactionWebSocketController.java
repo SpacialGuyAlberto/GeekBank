@@ -7,7 +7,6 @@ import com.geekbank.bank.models.Transaction;
 
 @Controller
 public class TransactionWebSocketController {
-
     @MessageMapping("/transaction-status")
     @SendTo("/topic/transactions")
     public Transaction sendTransactionStatus(Transaction transaction) {

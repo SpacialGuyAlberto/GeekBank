@@ -22,7 +22,6 @@ public class MainScreenGiftCardService {
     private final KinguinService kinguinService;
 
     private static final Logger logger = LoggerFactory.getLogger(MainScreenGiftCardService.class);
-
     @Autowired
     public MainScreenGiftCardService(MainScreenGiftCardItemRepository mainScreenGiftCardItemRepository, KinguinService kinguinService) {
         this.mainScreenGiftCardItemRepository = mainScreenGiftCardItemRepository;
@@ -32,7 +31,7 @@ public class MainScreenGiftCardService {
     public Page<MainScreenGiftCardItemDTO> getMainScreenGiftCardItems(Pageable pageable) {
         Page<MainScreenGiftCardItem> pageOfItems = mainScreenGiftCardItemRepository.findAll(pageable);
 
-        // Usamos .map del objeto Page para transformar cada MainScreenGiftCardItem a DTO
+
         return pageOfItems.map(item -> {
             KinguinGiftCard giftcard = kinguinService.fetchGiftCardById(String.valueOf(item.getProductId()))
                     .orElse(null);
@@ -41,20 +40,19 @@ public class MainScreenGiftCardService {
     }
 
     public List<MainScreenGiftCardItem> addItems(List<Long> productIds) {
-        // 1. Ver cuáles ya existen en la BD
+
         List<Long> existingProductIds = mainScreenGiftCardItemRepository
                 .findByProductIdIn(productIds)     // Retorna los registros existentes
                 .stream()
                 .map(MainScreenGiftCardItem::getProductId)
                 .collect(Collectors.toList());
 
-        // 2. Filtrar sólo los IDs nuevos, ignorando duplicados
+
         List<Long> newProductIds = productIds.stream()
-                .distinct() // quita duplicados dentro de la misma lista
+                .distinct()
                 .filter(id -> !existingProductIds.contains(id))
                 .collect(Collectors.toList());
 
-        // 3. Crear entidades para los nuevos IDs y guardarlas
         List<MainScreenGiftCardItem> newItems = newProductIds.stream()
                 .map(productId -> {
                     MainScreenGiftCardItem item = new MainScreenGiftCardItem();
@@ -72,10 +70,8 @@ public class MainScreenGiftCardService {
     public void removeItems(List<Long> productIds) {
         logger.debug("Intentando eliminar elementos de tarjetas de regalo con IDs de producto: {}", productIds);
 
-        // Llamamos directamente al método del repositorio que borra solo los registros con esos IDs.
         mainScreenGiftCardItemRepository.deleteByProductIdIn(productIds);
 
-        // Verificamos si efectivamente se eliminaron
         List<MainScreenGiftCardItem> remainingItems = mainScreenGiftCardItemRepository.findByProductIdIn(productIds);
         if (remainingItems.isEmpty()) {
             logger.debug("Se eliminaron correctamente los elementos de tarjetas de regalo para los IDs de producto: {}", productIds);

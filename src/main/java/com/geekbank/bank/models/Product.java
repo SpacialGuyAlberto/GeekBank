@@ -10,7 +10,7 @@ public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "product_id")
-    private Long productId; // Cambiado a Long para compatibilidad con claves foráneas
+    private Long productId;
 
     private String name;
     private double price;

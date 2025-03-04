@@ -256,16 +256,13 @@ public class TransactionService {
             String phoneNumber,
             OrderRequest orderRequest
     ) {
-        // 1. Usuario
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + userId));
 
-        // 2. Monto total en USD
         double totalAmountUsd = products.stream()
                 .mapToDouble(product -> product.getPrice() * product.getQty())
                 .sum();
 
-        // 3. Tasa de cambio
         double exchangeRate = currencyService.getExchangeRateUSDtoHNL();
         double totalAmountHnl = currencyService.convertUsdToHnl(totalAmountUsd, exchangeRate);
 

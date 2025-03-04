@@ -17,7 +17,6 @@ public class HighlightItemWithGiftcardDTO {
 
     }
 
-    // Getters and Setters
     public HighlightItem getHighlightItem() {
         return this.highlightItem;
     }

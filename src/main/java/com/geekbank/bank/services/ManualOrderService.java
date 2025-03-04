@@ -36,7 +36,6 @@ public class ManualOrderService {
     @Value("${captcha.api.key}")
     private String captchaApiKey;
 
-    // Sitekey fijo proporcionado
     private final String FIXED_SITEKEY = "df2f3ec1-3c26-4daa-97f3-22b71daccb97";
 
     private final TwoCaptcha solver;
@@ -62,14 +61,12 @@ public class ManualOrderService {
 
     public String runManualOrder(String transactionNumber) {
 
-
-
         System.out.println("Transaction Number: " + transactionNumber);
         Transaction transaction = transactionRepository.findTransactionByNumber(transactionNumber);
         if (transaction == null) {
             throw new IllegalArgumentException("Transaction not found for transaction number: " + transactionNumber);
         }
-//
+
         Orders order = ordersRepository.findByTransaction_Id(transaction.getId());
 
         if (transaction == null){
@@ -78,25 +75,21 @@ public class ManualOrderService {
 
         Product product = productRepository.findByProductId(transaction.getProducts().get(0).getProductId());
 
-
-        // Configurar ChromeOptions
         ChromeOptions options = new ChromeOptions();
-        // Comenta o elimina esta línea para ver el navegador durante la depuración
         // options.addArguments("--headless");
         options.addArguments("--disable-gpu");
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
 
-        // Establecer un User-Agent común para evitar detección
+
         options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
                 "AppleWebKit/537.36 (KHTML, like Gecko) " +
                 "Chrome/113.0.0.0 Safari/537.36");
 
-        // Inicializar WebDriver (Selenium Manager manejará el driver automáticamente)
         WebDriver driver = new ChromeDriver(options);
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(60)); // Aumentado a 60 segundos
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(60));
 
-        // Ajustar el tamaño de la ventana
+
         driver.manage().window().setSize(new Dimension(1920, 1080));
 
         String hCaptchaResponse = null;
@@ -108,16 +101,13 @@ public class ManualOrderService {
             driver.get("https://gold.razer.com/mx/es");
             System.out.println("Navegación completada.");
 
-            // Captura de pantalla
+
             takeScreenshot(driver, "home_page.png");
 
-            // Cerrar banner de cookies si está visible
             cerrarBannerDeCookies(driver, wait);
 
-            // Hacer clic en el botón "ACEPTO" si está presente
             clickButtonAcceptor(driver, wait);
 
-            // Esperar y hacer clic en el botón de inicio de sesión
             WebElement loginButton = wait.until(ExpectedConditions.elementToBeClickable(
                     By.xpath("//a[@aria-label='Log in your razer id account' and contains(text(), 'INICIAR SESIÓN')]")
             ));
@@ -229,13 +219,10 @@ public class ManualOrderService {
             // Hacer clic en el checkbox
             clickCheckbox(driver, wait);
 
-            // Captura de pantalla
             takeScreenshot(driver, "after_checkbox_click.png");
 
-            // Hacer clic en el botón de envío del formulario
             clickSubmitFormButton(driver, wait);
 
-            // Esperar a que la página de confirmación cargue
             try {
                 wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".confirmation-message, #confirmation")));
                 System.out.println("Página de confirmación cargada.");

@@ -8,7 +8,6 @@ public class ConfigLoader {
             .directory("./")
             .ignoreIfMissing()
             .load();
-
     public static String getVariable(String key) {
         return dotenv.get(key);
     }

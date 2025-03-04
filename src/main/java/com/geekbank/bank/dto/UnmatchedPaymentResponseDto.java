@@ -13,7 +13,6 @@ public class UnmatchedPaymentResponseDto {
     private String message;
     private List<String> options;
 
-    // Constructores
     public UnmatchedPaymentResponseDto(UnmatchedPayment unmatchedPayment, double receivedAmount, double expectedAmount, double difference, String message, List<String> options) {
         this.unmatchedPayment = unmatchedPayment;
         this.receivedAmount = receivedAmount;
@@ -27,7 +26,6 @@ public class UnmatchedPaymentResponseDto {
 
     }
 
-    // Getters y Setters
     public UnmatchedPayment getUnmatchedPayment() {
         return unmatchedPayment;
     }

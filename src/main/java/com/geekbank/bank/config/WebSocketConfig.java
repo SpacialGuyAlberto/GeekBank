@@ -15,7 +15,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    @Value("${DOMAIN_ORIGIN_URL}")  // Inyecta la variable de entorno DOMAIN_URL
+    @Value("${DOMAIN_ORIGIN_URL}")
     private String domainUrl;
 
     @Override

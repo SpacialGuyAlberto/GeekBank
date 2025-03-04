@@ -7,5 +7,5 @@ public enum TransactionStatus {
     CANCELLED,
     EXPIRED,
     PROCESSING,
-    AWAITING_MANUAL_PROCESSING // Nuevo estado
+    AWAITING_MANUAL_PROCESSING
 }

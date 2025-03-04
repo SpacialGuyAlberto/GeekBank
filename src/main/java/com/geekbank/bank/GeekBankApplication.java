@@ -22,12 +22,11 @@ public class GeekBankApplication  {
     private TelegramListener telegramListener;
 
     public static void main(String[] args) {
-        // Cargar las variables de entorno desde el archivo .env
+
         Dotenv dotenv = Dotenv.configure()
-                .directory("./")  // Asegúrate de que la ruta sea la correcta
+                .directory("./")
                 .load();
 
-        // Establecer las variables de entorno como propiedades del sistema
         System.setProperty("SPRING_APPLICATION_NAME", dotenv.get("SPRING_APPLICATION_NAME"));
         System.setProperty("SPRING_DATASOURCE_URL", dotenv.get("SPRING_DATASOURCE_URL"));
         System.setProperty("SPRING_DATASOURCE_USERNAME", dotenv.get("SPRING_DATASOURCE_USERNAME"));
@@ -46,7 +45,7 @@ public class GeekBankApplication  {
         System.setProperty("PAYPAL_CLIENT_ID", dotenv.get("PAYPAL_CLIENT_ID"));
         System.setProperty("PAYPAL_CLIENT_SECRET", dotenv.get("PAYPAL_CLIENT_SECRET"));
         System.setProperty("PAYPAL_BASE_URL", dotenv.get("PAYPAL_BASE_URL"));
-        // Inicia la aplicación Spring Boot
+
         SpringApplication.run(GeekBankApplication.class, args);
     }
 }

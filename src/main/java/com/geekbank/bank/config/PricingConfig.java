@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration;
 public class PricingConfig {
     @Value("${ecommerce.profit-margin.default}")
     private double defaultProfitMargin;
-
     public double getDefaultProfitMargin() {
         return defaultProfitMargin;
     }
