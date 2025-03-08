@@ -25,6 +25,10 @@ public interface MainScreenGiftCardItemRepository extends JpaRepository<MainScre
     @Query("SELECT i FROM MainScreenGiftCardItem i WHERE i.productId IN :productIds")
     List<MainScreenGiftCardItem> findByProductIdIn(List<Long> productIds);
 
+    @Query("SELECT m FROM MainScreenGiftCardItem m ORDER BY m.createdAt ASC")
+    Page<MainScreenGiftCardItem> findAllOrdered(Pageable pageable);
+
+
     /**
      * Para eliminar registros por sus productIds:
      */
