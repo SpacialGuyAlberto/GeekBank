@@ -185,10 +185,11 @@ public class KinguinService {
             }
         }
 
+        // if id exists in Table SEARCH PRIORITIES then giftcatds[1 or priority] == gifcatd.getId(id)
+
         giftCards.sort(Comparator.comparingDouble(KinguinGiftCard::getPrice));
         return giftCards;
     }
-
 
 //    public List<KinguinGiftCard> fetchFilteredGiftCards(Map<String, String> filters) {
 //        HttpHeaders headers = new HttpHeaders();
