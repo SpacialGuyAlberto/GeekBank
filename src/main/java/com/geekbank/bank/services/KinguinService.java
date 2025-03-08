@@ -3,7 +3,6 @@ package com.geekbank.bank.services;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.geekbank.bank.mappers.GiftCardMapper;
-import com.geekbank.bank.models.GiftCard;
 import com.geekbank.bank.models.KinguinGiftCard;
 import com.geekbank.bank.models.GiftCardEntity;
 import com.geekbank.bank.repositories.GiftCardRepository;
@@ -19,7 +18,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -170,7 +168,6 @@ public class KinguinService {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-
     public List<KinguinGiftCard> searchGiftCardsByName(String name) {
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Api-Key", apiKey);
@@ -188,8 +185,11 @@ public class KinguinService {
             }
         }
 
+        giftCards.sort(Comparator.comparingDouble(KinguinGiftCard::getPrice));
         return giftCards;
     }
+
+
 //    public List<KinguinGiftCard> fetchFilteredGiftCards(Map<String, String> filters) {
 //        HttpHeaders headers = new HttpHeaders();
 //        headers.set("X-Api-Key", apiKey);
@@ -282,8 +282,6 @@ public List<KinguinGiftCard> fetchFilteredGiftCards(Map<String, String> filters)
                 return 0;
             }
         });
-
-
     }
 
     return giftCards;
