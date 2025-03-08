@@ -5,22 +5,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class OrderRequest {
-
-    public String getOrderRequestId() {
-        return orderRequestId;
-    }
-
-    public void setOrderRequestId() {
-        this.orderRequestId = "ORQ-" + System.currentTimeMillis();
-    }
-
     private String orderRequestId;
     private Long userId;
-
-    public void setGuestId(String guestId) {
-        this.guestId = guestId;
-    }
-
     private String guestId;
     private Long gameUserId;
 
@@ -33,6 +19,12 @@ public class OrderRequest {
     private String email;
 
     private Boolean sendKeyToSMS;
+
+    private String referenceCode;
+
+    private String affiliateLink;
+
+    private String promoCode;
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
@@ -101,6 +93,9 @@ public class OrderRequest {
     public String getRefNumber() {
         return refNumber;
     }
+    public void setGuestId(String guestId) {
+        this.guestId = guestId;
+    }
 
     public void setRefNumber(String refNumber) {
         this.refNumber = refNumber;
@@ -126,6 +121,36 @@ public class OrderRequest {
         this.createdAt = LocalDateTime.now();
     }
 
+    public String getReferenceCode() {
+        return referenceCode;
+    }
+
+    public void setReferenceCode(String referenceCode) {
+        this.referenceCode = referenceCode;
+    }
+
+    public String getAffiliateLink() {
+        return affiliateLink;
+    }
+
+    public void setAffiliateLink(String affiliateLink) {
+        this.affiliateLink = affiliateLink;
+    }
+    public String getPromoCode() {
+        return promoCode;
+    }
+
+    public void setPromoCode(String promoCode) {
+        this.promoCode = promoCode;
+    }
+
+    public String getOrderRequestId() {
+        return orderRequestId;
+    }
+
+    public void setOrderRequestId() {
+        this.orderRequestId = "ORQ-" + System.currentTimeMillis();
+    }
 
     public static class Product {
         private int kinguinId;
@@ -155,7 +180,6 @@ public class OrderRequest {
         public void setPrice(double price) {
             this.price = price;
         }
-
 
     }
 }

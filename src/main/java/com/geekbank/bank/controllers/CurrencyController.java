@@ -23,7 +23,6 @@ public class CurrencyController {
         return new ExchangeRateResponse(rate);
     }
 
-    // Clase estática para la respuesta
     public static class ExchangeRateResponse {
         private double exchangeRate;
 

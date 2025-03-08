@@ -19,11 +19,9 @@ public class ActivationDetails {
     @Column(name = "text_details", columnDefinition = "TEXT")
     private String textDetails;
 
-    // Constructor vacío (obligatorio para JPA)
     public ActivationDetails() {
     }
 
-    // Constructor completo
     public ActivationDetails(Long id, Long kinguinId, String videoUrl, String textDetails) {
         this.id = id;
         this.kinguinId = kinguinId;

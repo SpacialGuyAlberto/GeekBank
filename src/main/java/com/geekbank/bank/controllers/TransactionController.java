@@ -132,9 +132,6 @@ public class TransactionController {
     }
 
 
-//    @PostMapping("/transaction-tigo-payment")
-//    public ResponseEntity<Transaction> createTransactionForTigoVerifiedPayment()
-
     @GetMapping("/verify-unmatched-payment")
     public ResponseEntity<UnmatchedPaymentResponseDto> verifyUnmatchedPaymentAmount(
             @RequestParam String referenceNumber,
@@ -185,5 +182,12 @@ public class TransactionController {
         );
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/create-transaction-promo-code")
+    public void createTransactionWithAffiliate(
+            @RequestBody OrderRequest orderRequest
+    ){
+        transactionService.createTransactionWithAffiliate(orderRequest);
     }
 }

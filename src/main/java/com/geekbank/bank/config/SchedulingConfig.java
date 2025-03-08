@@ -13,7 +13,6 @@ public class SchedulingConfig {
     @Autowired
     private GiftCardSyncService giftCardSyncService;
 
-    // Ejecutar la sincronización una vez al día a las 2 AM
     @Scheduled(cron = "0 0 2 * * ?")
     public void scheduleGiftCardSync() {
         giftCardSyncService.syncGiftCards();

@@ -22,16 +22,14 @@ public class ActivationDetailsService {
             String videoUrl,
             String textDetails
     ) {
-        // 1. Buscamos si existen detalles previos
+
         Optional<ActivationDetails> optionalDetails = activationDetailsRepository.findByKinguinId(kinguinId);
 
-        // 2. Si existen, los actualizamos. Si no, creamos uno nuevo.
         ActivationDetails details = optionalDetails.orElse(new ActivationDetails());
         details.setKinguinId(kinguinId);
         details.setVideoUrl(videoUrl);
         details.setTextDetails(textDetails);
 
-        // 3. Guardamos en la BD
         return activationDetailsRepository.save(details);
     }
 

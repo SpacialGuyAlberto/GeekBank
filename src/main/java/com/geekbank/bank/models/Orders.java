@@ -60,7 +60,6 @@ public class Orders {
         this.createdAt = LocalDateTime.now();
         this.products = new ArrayList<>();
     }
-    // Getters y Setters
 
     public Long getId() {
         return id;

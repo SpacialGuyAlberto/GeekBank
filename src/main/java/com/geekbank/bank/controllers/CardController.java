@@ -37,6 +37,4 @@ public class CardController {
         Card createdCard = cardService.createCard(card);
         return ResponseEntity.created(URI.create("/api/cards/" + createdCard.getId())).body(createdCard);
     }
-
-
 }

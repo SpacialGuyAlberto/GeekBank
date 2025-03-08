@@ -22,7 +22,6 @@ import java.util.Optional;
 @Service
 public class KeyPollingService {
 
-    // Inyecta tus repositorios, servicios de email, etc.
     @Autowired
     private TransactionRepository transactionRepository;
 
@@ -41,23 +40,22 @@ public class KeyPollingService {
     @Autowired
     private WebSocketController webSocketController;
 
-    // Tu API key y endpoints
     private static final String API_KEY = "77d96c852356b1c654a80f424d67048f";
     private static final String KEYS_ENDPOINT = "https://gateway.kinguin.net/esa/api/v2/order/";
 
     public void pollKeysIndefinitely(String orderId, Transaction transaction, OrderRequest orderRequest) {
-        // Se lanza en un hilo aparte
+
         new Thread(() -> {
-            // poll hasta que aparezcan las keys
+
             List<Map<String, Object>> keysData = new ArrayList<>();
 
             while (keysData.isEmpty()) {
-                // Intenta descargar keys
+
                 keysData = tryDownloadKeys(orderId);
 
                 if (keysData.isEmpty()) {
                     try {
-                        // Espera algunos segundos antes de volver a intentar
+
                         Thread.sleep(5000);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
@@ -67,21 +65,18 @@ public class KeyPollingService {
                 }
             }
 
-            // En este punto, sí hay keys
             List<String> keys = new ArrayList<>();
             for (Map<String, Object> keyObj : keysData) {
                 String serial = (String) keyObj.get("serial");
                 keys.add(serial);
             }
 
-            // Actualiza el transaction en DB con las keys
             transaction.setKeys(keys);
             transaction.setStatus(TransactionStatus.COMPLETED);
             transactionRepository.save(transaction);
             webSocketController.sendTransactionStatus(transaction.getStatus());
             System.out.println("Keys finalmente encontradas. Se envían al usuario.");
 
-            // Envía el correo con las keys
             enviarEmailYsms(orderRequest, transaction, keys);
 
         }).start();

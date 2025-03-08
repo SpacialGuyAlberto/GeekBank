@@ -12,7 +12,6 @@ public class OrderDetails {
     private boolean manual;
     private Long gameUserId;
 
-    // Getters y setters
 
     public Long getUserId() {
         return userId;
@@ -70,14 +69,12 @@ public class OrderDetails {
         this.gameUserId = gameUserId;
     }
 
-    // Clase interna para representar los productos en el pedido
     public static class Product {
         private int kinguinId;
         private int qty;
         private double price;
         private String name;
 
-        // Getters y setters
 
         public int getKinguinId() {
             return kinguinId;

@@ -21,10 +21,10 @@ public class Transaction {
     private double amountUsd;
 
     @Column(name = "amount_hnl", nullable = false)
-    private double amountHnl; // Monto en HNL
+    private double amountHnl;
 
     @Column(name = "exchange_rate", nullable = false)
-    private double exchangeRate; // Tasa de cambio utilizada
+    private double exchangeRate;
 
     @Column(nullable = false)
     private String phoneNumber;
@@ -78,10 +78,21 @@ public class Transaction {
     @JsonManagedReference
     private SmsMessage smsMessage;
 
-    // Aquí usamos el convertidor
     @Convert(converter = ListToStringConverter.class)
     @Column(columnDefinition = "TEXT")
     private List<String> keys = new ArrayList<>();
+
+
+    @ManyToOne
+    @JoinColumn(name = "affiliate_id", nullable = true)
+    private User affiliate;
+
+    @Column(nullable = true)
+    private Double discountApplied;
+
+    @Column(nullable = true)
+    private Double commissionEarned;
+
 
     public Long getId() {
         return id;
@@ -255,8 +266,31 @@ public class Transaction {
         return externalOrderId;
     }
 
-    // Setter
     public void setExternalOrderId(String externalOrderId) {
         this.externalOrderId = externalOrderId;
+    }
+
+    public User getAffiliate() {
+        return affiliate;
+    }
+
+    public void setAffiliate(User affiliate) {
+        this.affiliate = affiliate;
+    }
+
+    public Double getDiscountApplied() {
+        return discountApplied;
+    }
+
+    public void setDiscountApplied(Double discountApplied) {
+        this.discountApplied = discountApplied;
+    }
+
+    public Double getCommissionEarned() {
+        return commissionEarned;
+    }
+
+    public void setCommissionEarned(Double commissionEarned) {
+        this.commissionEarned = commissionEarned;
     }
 }

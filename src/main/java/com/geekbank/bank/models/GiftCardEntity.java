@@ -241,13 +241,10 @@ public class GiftCardEntity {
         this.genres = genres;
     }
 
-
-        // Constructor vacío
         public GiftCardEntity() {}
 
     public List<String> getTags() {
         return this.tags;
     }
 
-    // Getters y Setters (omitidos por brevedad)
     }

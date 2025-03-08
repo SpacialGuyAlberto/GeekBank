@@ -16,10 +16,8 @@ public class Visit {
 
     private LocalDateTime timestamp;
 
-    // Constructor sin argumentos
     public Visit() {}
 
-    // Getters y Setters
     public Long getId() {
         return id;
     }

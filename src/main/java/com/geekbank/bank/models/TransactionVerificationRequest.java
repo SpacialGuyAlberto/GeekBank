@@ -5,8 +5,6 @@ public class TransactionVerificationRequest {
     private String refNumber;
     private String phoneNumber;
 
-    // Getters y Setters
-
     public Long getTempPin() {
         return tempPin;
     }

@@ -27,8 +27,6 @@ public class BalanceController {
         }
 
         balanceRequest.setId();
-
-        // Crear una transacción para la compra de balance
         Transaction transaction;
         try {
             transaction = transactionService.createTransaction(
@@ -37,7 +35,7 @@ public class BalanceController {
                     null,
                     balanceRequest.getId(),
                     balanceRequest.getAmount(),
-                    TransactionType.BALANCE_PURCHASE, // Necesitarás agregar este tipo
+                    TransactionType.BALANCE_PURCHASE,
                     "Compra de balance",
                     balanceRequest.getPhoneNumber(),
                     null,
@@ -46,9 +44,6 @@ public class BalanceController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error creating transaction: " + e.getMessage());
         }
-
-        // Aquí puedes integrar el servicio de pago (por ejemplo, Tigo)
-        // Enviar solicitud de pago, etc.
 
         String responseMessage = "Balance purchase initiated. Transaction number: " + transaction.getTransactionNumber();
         return ResponseEntity.ok(responseMessage);

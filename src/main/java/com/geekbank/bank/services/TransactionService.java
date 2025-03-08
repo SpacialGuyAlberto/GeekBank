@@ -71,7 +71,6 @@ public class TransactionService {
     @Autowired
     private PdfGeneratorService pdfGeneratorService;
 
-    // Tiempo por defecto para expiración (minutos)
     private static final long EXPIRATION_MINUTES = 3;
 
     private PriorityBlockingQueue<Transaction> manualVerificationQueue = new PriorityBlockingQueue<>(
@@ -82,18 +81,85 @@ public class TransactionService {
     public TransactionService(SendGridEmailService emailService) {
         this.emailService = emailService;
     }
-
-    // --------------------------------------------------------------
-    //   MÉTODOS DE CREACIÓN / PROCESAMIENTO DE TRANSACCIONES
-    // --------------------------------------------------------------
-
-    // Genera un PIN aleatorio de 4 dígitos
     private static Long generatePin() {
         Random random = new Random();
         int pin = random.nextInt(9000) + 1000; // entre 1000 y 9999
         return (long) pin;
     }
 
+    @Transactional
+    public Transaction createTransactionWithAffiliate(
+            OrderRequest orderRequest
+    ) {
+        double baseAmountUsd = 0.0;
+        for (OrderRequest.Product product : orderRequest.getProducts()) {
+            baseAmountUsd += (product.getPrice() * product.getQty());
+        }
+
+        String affiliateLink = orderRequest.getAffiliateLink();
+        String promoCode = orderRequest.getPromoCode();
+        User affiliateUser = null;
+        Double discount = 0.0;
+        Double commission = 0.0;
+
+        if (affiliateLink != null && !affiliateLink.isEmpty()) {
+            affiliateUser = userRepository.findByAffiliateLink(affiliateLink);
+        } else if (promoCode != null && !promoCode.isEmpty()) {
+            affiliateUser = userRepository.findByPromoCode(promoCode);
+
+            if (affiliateUser != null) {
+                discount = baseAmountUsd * 0.05;
+            }
+        }
+        double finalAmountUsd = baseAmountUsd - discount;
+        if (finalAmountUsd < 0) finalAmountUsd = 0;
+
+        if (affiliateUser != null && affiliateUser.getCommissionRate() != null) {
+            double rate = affiliateUser.getCommissionRate();
+            commission = finalAmountUsd * rate;
+        }
+
+        double exchangeRate = currencyService.getExchangeRateUSDtoHNL();
+        double amountHnl = currencyService.convertUsdToHnl(finalAmountUsd, exchangeRate);
+
+        Transaction transaction = new Transaction();
+        transaction.setAmountUsd(finalAmountUsd);
+        transaction.setAmountHnl(amountHnl);
+        transaction.setExchangeRate(exchangeRate);
+        transaction.setTimestamp(LocalDateTime.now());
+        transaction.setTransactionNumber(generateTransactionNumber());
+        transaction.setPhoneNumber(orderRequest.getPhoneNumber());
+        transaction.setOrderRequestNumber(orderRequest.getOrderRequestId());
+        transaction.setStatus(TransactionStatus.PENDING);
+        transaction.setType(TransactionType.PURCHASE);
+        transaction.setExpiresAt(LocalDateTime.now().plusMinutes(15));
+        transaction.setManual(false); // Ejemplo
+        transaction.setAffiliate(affiliateUser);
+        transaction.setDiscountApplied(discount);
+        transaction.setCommissionEarned(commission);
+
+        if (orderRequest.getUserId() != null) {
+            User buyer = userRepository.findById(orderRequest.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            transaction.setUser(buyer);
+        } else if (orderRequest.getGuestId() != null) {
+            transaction.setGuestId(orderRequest.getGuestId());
+        }
+
+        List<TransactionProduct> transactionProducts = new ArrayList<>();
+        for (OrderRequest.Product product : orderRequest.getProducts()) {
+            TransactionProduct tProd = new TransactionProduct();
+            tProd.setTransaction(transaction);
+            tProd.setProductId((long) product.getKinguinId());
+            tProd.setQuantity(product.getQty());
+            transactionProducts.add(tProd);
+        }
+        transaction.setProducts(transactionProducts);
+        Transaction saved = transactionRepository.save(transaction);
+        // 10. (Opcional) Notificar o seguir tu flujo normal (por ejemplo, placeOrder)
+        // orderService.placeOrder(orderRequest, saved);
+        return saved;
+    }
     /**
      * Crea una transacción “genérica” con datos básicos (pendiente de pago).
      */
@@ -131,7 +197,6 @@ public class TransactionService {
             transaction.setGameUserId(gameUserId);
         }
 
-        // Manejo de “manual”
         if (isManual != null) {
             transaction.setManual(isManual);
             transaction.setExpiresAt(LocalDateTime.now().plusMinutes(isManual ? 600 : EXPIRATION_MINUTES));
@@ -191,16 +256,13 @@ public class TransactionService {
             String phoneNumber,
             OrderRequest orderRequest
     ) {
-        // 1. Usuario
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + userId));
 
-        // 2. Monto total en USD
         double totalAmountUsd = products.stream()
                 .mapToDouble(product -> product.getPrice() * product.getQty())
                 .sum();
 
-        // 3. Tasa de cambio
         double exchangeRate = currencyService.getExchangeRateUSDtoHNL();
         double totalAmountHnl = currencyService.convertUsdToHnl(totalAmountUsd, exchangeRate);
 
@@ -280,7 +342,7 @@ public class TransactionService {
      */
     @Transactional
     public Transaction createTransactionForVerifiedTigoPayment(OrderRequest orderRequest) {
-        // 1. Busca el unmatchedPayment
+
         UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumber(orderRequest.getRefNumber());
         if (!unmatchedPayment.isVerified()) {
             throw new RuntimeException("El pago encontrado no ha sido verificado.");
@@ -326,12 +388,10 @@ public class TransactionService {
         transaction.setOrderRequestNumber(orderRequest.getOrderRequestId());
         transaction.setTempPin(null);
 
-        // Validar productos
         if (orderRequest.getProducts() != null && orderRequest.getProducts().size() > 10) {
             throw new IllegalArgumentException("No se pueden agregar más de 10 productos por transacción.");
         }
 
-        // Asocia productos
         List<TransactionProduct> transactionProducts = orderRequest.getProducts().stream().map(productRequest -> {
             Long productId = (long) productRequest.getKinguinId();
             TransactionProduct transactionProduct = new TransactionProduct();
@@ -361,8 +421,7 @@ public class TransactionService {
             processManualTransaction(savedTransaction);
             this.emailService.sendNotificationEmail("enkiluzlbel@gmail.com");
         }
-
-        // Notificar (ahora en PROCESSING o AWAITING_MANUAL_PROCESSING)
+        
         webSocketController.sendTransactionStatus(savedTransaction.getStatus());
         return savedTransaction;
     }
@@ -457,10 +516,6 @@ public class TransactionService {
         webSocketController.sendTransactionStatus(savedTransaction.getStatus());
         return savedTransaction;
     }
-
-    // --------------------------------------------------------------
-    //   VERIFICACIONES / PROCESAMIENTO POSTERIOR
-    // --------------------------------------------------------------
 
     @Transactional
     public void verifyTransaction(String phoneNumber, Long pin, String refNumber) {

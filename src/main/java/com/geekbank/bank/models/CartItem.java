@@ -17,7 +17,6 @@ public class CartItem {
     private int quantity;
     private double price;
 
-    // Getters and setters
     public Long getId() {
         return id;
     }

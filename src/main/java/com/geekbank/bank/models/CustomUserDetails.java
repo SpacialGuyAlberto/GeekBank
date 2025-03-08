@@ -31,25 +31,23 @@ public class CustomUserDetails implements UserDetails {
         return username;
     }
 
-    // Implementa los otros métodos de UserDetails según sea necesario
-
     @Override
     public boolean isAccountNonExpired() {
-        return true; // Aquí puedes implementar la lógica de expiración de la cuenta si es necesario
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; // Aquí puedes implementar la lógica de bloqueo de la cuenta si es necesario
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // Aquí puedes implementar la lógica de expiración de credenciales si es necesario
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        return true; // Aquí puedes implementar la lógica para habilitar/deshabilitar la cuenta si es necesario
+        return true;
     }
 }

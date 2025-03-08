@@ -34,8 +34,9 @@ public class User {
         this.account = account;
     }
 
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    @JsonManagedReference // Para manejar la serialización
+    @JsonManagedReference
     private Account account;
 
     @Column(nullable = true)
@@ -54,6 +55,20 @@ public class User {
     @Column(nullable = true)
     private String activationToken;
 
+
+    @Column(nullable = true, unique = true)
+    private String affiliateLink;
+
+    @Column(nullable = true, unique = true)
+    private String promoCode;
+
+    @Column(nullable = true)
+    private Double commissionRate;
+
+    @PrimaryKeyJoinColumn
+    @OneToOne
+    Promotion promo;
+
     private static final SecureRandom secureRandom = new SecureRandom();
     private static final Base64.Encoder base64Encoder = Base64.getUrlEncoder().withoutPadding();
 
@@ -69,7 +84,7 @@ public class User {
         secureRandom.nextBytes(randomBytes);
         return base64Encoder.encodeToString(randomBytes);
     }
-    // Getters and setters
+
     public Long getId() {
         return id;
     }
@@ -132,4 +147,28 @@ public class User {
     public void setActivationToken(String activationToken) {
         this.activationToken = activationToken;
     }
+    public String getAffiliateLink() {
+        return affiliateLink;
+    }
+
+    public void setAffiliateLink(String affiliateLink) {
+        this.affiliateLink = affiliateLink;
+    }
+
+    public String getPromoCode() {
+        return promoCode;
+    }
+
+    public void setPromoCode(String promoCode) {
+        this.promoCode = promoCode;
+    }
+
+    public Double getCommissionRate() {
+        return commissionRate;
+    }
+
+    public void setCommissionRate(Double commissionRate) {
+        this.commissionRate = commissionRate;
+    }
+
 }

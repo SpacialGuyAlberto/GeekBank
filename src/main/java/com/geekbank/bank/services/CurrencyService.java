@@ -47,7 +47,7 @@ public class CurrencyService {
                     Double amount = (Double) responseDetails.get("amount");
 
                     if (value != null && amount != null && amount != 0) {
-                        return value / amount; // Devuelve la tasa de cambio
+                        return value / amount;
                     }
                 }
             }
@@ -55,7 +55,7 @@ public class CurrencyService {
             System.err.println("Error al obtener la tasa de cambio de USD a HNL: " + e.getMessage());
         }
 
-        return 24.5; // Tasa fija en caso de error
+        return 24.5;
     }
 
     // Métodos de conversión

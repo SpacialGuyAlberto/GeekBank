@@ -23,17 +23,12 @@ public class AccountService {
         this.accountRepository = accountRepository;
     }
 
-    // Crear una nueva cuenta
     public Account createAccount(Account account) {
-        // Validaciones iniciales (si es necesario)
         account.setAccountNumber(generateUniqueAccountNumber());
-        // Inicializar campos predeterminados
         account.setStatus(AccountStatus.ACTIVE);
         account.setVerificationStatus(VerificationStatus.UNVERIFIED);
         account.setBalance(0.0);
         account.setLoyaltyPoints(0);
-
-        // Generar un número de cuenta único
         account.setAccountNumber(generateUniqueAccountNumber());
 
         return accountRepository.save(account);
@@ -43,12 +38,10 @@ public class AccountService {
         return accountRepository.findByStatus(status);
     }
 
-    // Obtener una cuenta por ID
     public Optional<Account> getAccountById(Long id) {
         return accountRepository.findById(id);
     }
 
-    // Obtener una cuenta por número de cuenta
     public Optional<Optional<Account>> getAccountByAccountNumber(String accountNumber) {
         return Optional.ofNullable(accountRepository.findByAccountNumber(accountNumber));
     }
@@ -57,7 +50,6 @@ public class AccountService {
         return accountRepository.findByUserId(userId);
     }
 
-    // Actualizar una cuenta existente
     public Account updateAccount(Account account) {
         // Asegurarse de que la cuenta existe
         if (!accountRepository.existsById(account.getId())) {
@@ -66,7 +58,6 @@ public class AccountService {
         return accountRepository.save(account);
     }
 
-    // Eliminar una cuenta
     public void deleteAccount(Long id) {
         if (!accountRepository.existsById(id)) {
             throw new RuntimeException("La cuenta no existe");
@@ -74,7 +65,6 @@ public class AccountService {
         accountRepository.deleteById(id);
     }
 
-    // Acumular puntos de lealtad
     @Transactional
     public void addLoyaltyPoints(Long accountId, int points) {
         Account account = accountRepository.findById(accountId)
@@ -86,7 +76,6 @@ public class AccountService {
         accountRepository.save(account);
     }
 
-    // Debitar saldo de la cuenta
     @Transactional
     public void debitAccount(Long accountId, double amount) {
         Account account = accountRepository.findById(accountId)

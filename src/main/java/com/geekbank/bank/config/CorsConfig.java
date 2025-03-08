@@ -25,7 +25,7 @@ public class CorsConfig {
         config.setAllowedOrigins(Arrays.asList(
                 "http://localhost:4200",
                 "https://astralisbank.com"
-        ));// Aquí se permite la URL del frontend
+        ));
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         config.setExposedHeaders(List.of("Authorization"));

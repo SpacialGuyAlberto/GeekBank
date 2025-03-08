@@ -8,9 +8,9 @@ public class Receipt {
     private String customerEmail;
     private double amountUsd;
     private String date;
-    private List<OrderRequest.Product> products; // Nueva lista de productos
+    private List<OrderRequest.Product> products;
 
-    // Constructor
+
     public Receipt(String transactionId, String customerName, String customerEmail, double amountUsd, String date, List<OrderRequest.Product> products) {
         this.transactionId = transactionId;
         this.customerName = customerName;
@@ -20,7 +20,6 @@ public class Receipt {
         this.products = products;
     }
 
-    // Getters y Setters
     public String getTransactionId() {
         return transactionId;
     }

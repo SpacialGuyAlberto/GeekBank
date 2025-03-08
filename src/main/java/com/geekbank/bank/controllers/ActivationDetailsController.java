@@ -23,8 +23,6 @@ public class ActivationDetailsController {
     public ResponseEntity<ActivationDetails> createOrUpdate(
             @RequestBody ActivationDetails body
     ) {
-        // Aquí body traerá { kinguinId, videoUrl, textDetails }
-        // Puedes validar si kinguinId viene informado, etc.
         if (body.getKinguinId() == null) {
             return ResponseEntity.badRequest().build();
         }
@@ -37,9 +35,6 @@ public class ActivationDetailsController {
         return ResponseEntity.ok(updated);
     }
 
-    /**
-     * Obtener los detalles de activación según el kinguinId.
-     */
     @GetMapping("/{kinguinId}")
     public ResponseEntity<ActivationDetails> getDetails(@PathVariable Long kinguinId) {
         return activationDetailsService.getDetailsByKinguinId(kinguinId)
@@ -47,9 +42,6 @@ public class ActivationDetailsController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * Eliminar detalles de activación según el kinguinId.
-     */
     @DeleteMapping("/{kinguinId}")
     public ResponseEntity<Void> deleteDetails(@PathVariable Long kinguinId) {
         activationDetailsService.deleteDetailsByKinguinId(kinguinId);

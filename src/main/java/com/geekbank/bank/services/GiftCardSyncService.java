@@ -25,13 +25,11 @@ public class GiftCardSyncService {
 
     private static final Logger logger = LoggerFactory.getLogger(GiftCardSyncService.class);
 
-    // Variables estáticas para almacenar el progreso
     private static AtomicInteger progress = new AtomicInteger(0);
     private static boolean isSyncing = false;
     private static int totalGiftCards = 0;
     private static int synchronizedGiftCards = 0;
 
-    // Variable para manejar la cancelación
     private static AtomicBoolean cancelSync = new AtomicBoolean(false);
 
     public static int getProgress() {
@@ -50,7 +48,6 @@ public class GiftCardSyncService {
         return synchronizedGiftCards;
     }
 
-    // Método para cancelar la sincronización
     public void cancelSync() {
         cancelSync.set(true);
         logger.info("Sincronización cancelada por el usuario.");
@@ -82,27 +79,25 @@ public class GiftCardSyncService {
                     throw new RuntimeException("Sincronización cancelada por el usuario.");
                 }
 
-                // Verificar si la GiftCard ya existe
                 if (!giftCardRepository.existsById((long) kCard.getKinguinId())) {
                     GiftCardEntity entity = new GiftCardEntity();
                     entity.setKinguinId((long) kCard.getKinguinId());
                     entity.setProductId(truncate(kCard.getProductId(), 255));
                     entity.setName(truncate(kCard.getProduct(), 255));
-                    entity.setDescription(truncate(kCard.getDescription(), 1000)); // Ajusta según corresponda
+                    entity.setDescription(truncate(kCard.getDescription(), 1000));
                     entity.setPrice(kCard.getPrice());
                     entity.setReleaseDate(kCard.getExpirationDate());
-                    entity.setPlatform(truncate(kCard.getPlatform(), 100)); // Ajusta según corresponda
+                    entity.setPlatform(truncate(kCard.getPlatform(), 100));
                     entity.setQty(kCard.getQty());
                     entity.setTextQty(kCard.getTextQty());
-                    entity.setRegionalLimitations(truncate(kCard.getRegionalLimitations(), 500)); // Ajusta según corresponda
+                    entity.setRegionalLimitations(truncate(kCard.getRegionalLimitations(), 500));
                     entity.setRegionId(kCard.getRegionId());
-                    entity.setActivationDetails(truncate(kCard.getActivationDetails(), 1000)); // Ajusta según corresponda
-                    entity.setOriginalName(truncate(kCard.getOriginalName(), 500)); // Ajusta según corresponda
+                    entity.setActivationDetails(truncate(kCard.getActivationDetails(), 1000));
+                    entity.setOriginalName(truncate(kCard.getOriginalName(), 500));
                     entity.setOffersCount(kCard.getOffersCount());
                     entity.setTotalQty(kCard.getTotalQty());
-                    entity.setAgeRating(truncate(kCard.getAgeRating(), 100)); // Ajusta según corresponda
+                    entity.setAgeRating(truncate(kCard.getAgeRating(), 100));
 
-                    // Logs detallados antes de la inserción
                     logger.debug("Insertando GiftCard ID {} con los siguientes datos:", entity.getKinguinId());
                     logger.debug("Product ID: {}", entity.getProductId());
                     logger.debug("Name: {}", entity.getName());
@@ -128,7 +123,7 @@ public class GiftCardSyncService {
             logger.info("Sincronización de GiftCards completada. Total de GiftCards sincronizadas: {}", synchronizedGiftCards);
         } catch (Exception e) {
             logger.error("Error durante la sincronización de GiftCards: {}", e.getMessage(), e);
-            throw e; // Re-lanzar la excepción para que la transacción se revierta
+            throw e;
         } finally {
             isSyncing = false;
             progress.set(100);

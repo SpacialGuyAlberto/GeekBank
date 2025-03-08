@@ -3,15 +3,14 @@ package com.geekbank.bank.dto;
 import java.util.Date;
 
 public class FeedbackRequest {
-    private Long userId; // Cambiado de Long a String
-    private Long giftCardId; // Renombrado de productId a giftCardId
+    private Long userId;
+    private Long giftCardId;
     private int score;
     private String message;
-    private Date createdAt; // Añadido el campo createdAt
-    // Constructor vacío (necesario para algunos frameworks)
+    private Date createdAt;
+
     public FeedbackRequest() {}
 
-    // Nuevo constructor con todos los campos
     public FeedbackRequest(Long userId, Long giftCardId, int score, String message, Date createdAt) {
         this.userId = userId;
         this.giftCardId = giftCardId;
@@ -20,7 +19,7 @@ public class FeedbackRequest {
         this.createdAt = createdAt;
     }
 
-    // Constructor alternativo sin el campo createdAt, si no necesitas inicializarlo siempre
+
     public FeedbackRequest(Long userId, Long giftCardId, int score, String message) {
         this.userId = userId;
         this.giftCardId = giftCardId;
@@ -28,8 +27,6 @@ public class FeedbackRequest {
         this.message = message;
     }
 
-
-    // Getters y setters
     public Long getUserId() {
         return userId;
     }

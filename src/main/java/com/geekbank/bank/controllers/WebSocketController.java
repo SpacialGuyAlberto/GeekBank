@@ -19,7 +19,6 @@ public class WebSocketController {
     private SimpUserRegistry simpUserRegistry;
     private final SimpMessagingTemplate messagingTemplate;
     private TransactionStatus transactionStatus;
-
     public WebSocketController(SimpMessagingTemplate messagingTemplate) {
         this.messagingTemplate = messagingTemplate;
     }
@@ -36,7 +35,7 @@ public class WebSocketController {
     public void sendTransactionStatus(TransactionStatus status){
         Map<String, String> payload = new HashMap<>();
         payload.put("status", String.valueOf(status));
-        // Asegúrate de colocar un destino válido (por ejemplo, sin concatenar el payload)
+
         messagingTemplate.convertAndSend("/topic/transaction-status", payload);
     }
 
@@ -50,7 +49,6 @@ public class WebSocketController {
             messagingTemplate.convertAndSend(destination, payload);
             System.out.println("Mensaje enviado al destino: " + destination);
 
-            // Verificar si hay suscriptores
             boolean hasSubscribers = simpUserRegistry.getUsers().stream()
                     .flatMap(user -> user.getSessions().stream())
                     .flatMap(session -> session.getSubscriptions().stream())
@@ -61,7 +59,6 @@ public class WebSocketController {
             } else {
                 System.out.println("No hay suscriptores activos para el destino: " + destination);
             }
-
         } catch (Exception e) {
             System.err.println("Error al enviar el mensaje al frontend para el número de teléfono: " + phoneNumber);
             e.printStackTrace();

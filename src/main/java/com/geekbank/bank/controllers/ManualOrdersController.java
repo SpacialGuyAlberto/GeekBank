@@ -20,13 +20,7 @@ public class ManualOrdersController {
     private OrderService orderService;
     private Orders order;
     private Transaction transaction;
-    /**
-     * Endpoint para ejecutar el script de Selenium.
-     * Método: POST
-     * URL: /api/manual-orders/run
-     *
-     * @return Mensaje de estado de la ejecución.
-     */
+
     @PostMapping("/run/{transactionNumber}")
     public ResponseEntity<String> runManualOrder(@PathVariable String transactionNumber) {
 
@@ -38,13 +32,6 @@ public class ManualOrdersController {
         }
     }
 
-    /**
-     * Ruta de prueba para verificar que el controlador está funcionando.
-     * Método: GET
-     * URL: /api/manual-orders/test
-     *
-     * @return Mensaje de prueba.
-     */
     @GetMapping("/test")
     public ResponseEntity<String> test() {
         return ResponseEntity.ok("Backend de Selenium está funcionando.");

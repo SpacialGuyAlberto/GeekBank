@@ -347,7 +347,6 @@ public class KinguinGiftCard implements GiftCard {
     }
 
 
-    // Getters and Setters...
 
     public static class Screenshot {
         @JsonProperty("url")
@@ -359,7 +358,6 @@ public class KinguinGiftCard implements GiftCard {
         public Screenshot() {
         }
 
-        // Getters and Setters...
 
         public String getUrl() {
             return url;
@@ -388,7 +386,6 @@ public class KinguinGiftCard implements GiftCard {
         public Video() {
         }
 
-        // Getters and Setters...
 
         public String getName() {
             return name;
@@ -417,7 +414,6 @@ public class KinguinGiftCard implements GiftCard {
         public SystemRequirement() {
         }
 
-        // Getters and Setters...
 
         public String getSystem() {
             return system;
@@ -470,7 +466,6 @@ public class KinguinGiftCard implements GiftCard {
         public Offer() {
         }
 
-        // Getters and Setters...
 
         public String getName() {
             return name;
@@ -572,7 +567,7 @@ public class KinguinGiftCard implements GiftCard {
             public Cover() {
             }
 
-            // Getters and Setters...
+
 
             public String getThumbnail() {
                 return thumbnail;
@@ -583,7 +578,6 @@ public class KinguinGiftCard implements GiftCard {
             }
         }
 
-        // Getters and Setters...
 
         public List<Screenshot> getScreenshots() {
             return screenshots;
@@ -667,8 +661,4 @@ public class KinguinGiftCard implements GiftCard {
                 ", updatedAt='" + updatedAt + '\'' +
                 '}';
     }
-
-
-    // Getters y setters para todos los campos
-    //...
 }

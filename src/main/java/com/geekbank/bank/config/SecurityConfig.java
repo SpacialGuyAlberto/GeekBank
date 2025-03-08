@@ -46,13 +46,10 @@ public class SecurityConfig {
 
     @Value("${DOMAIN_ORIGIN_URL}")
     private String frontendUrl;
-
     private final JwtTokenUtil jwtTokenUtil;
     private final UserDetailsServiceImpl userDetailsService;
-
     @Autowired
     private UserRepository userRepository;
-
     public SecurityConfig(JwtTokenUtil jwtTokenUtil, UserDetailsServiceImpl userDetailsService) {
         this.jwtTokenUtil = jwtTokenUtil;
         this.userDetailsService = userDetailsService;
@@ -60,7 +57,6 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
         http
                 .authorizeHttpRequests(authorize -> authorize
                         // Rutas públicas (permitAll)
@@ -92,27 +88,19 @@ public class SecurityConfig {
                                 "api/transactions/verifyPayment",
                                 "/api/activation-details/**",
                                 "api/transactions/verify-unmatched-payment",
-                                "/api/paypal/**", "/api/auth/check-auth", "/api/visits/**", "/api/metrics/**", "/api/admin/payments/**"
+                                "/api/paypal/**", "/api/auth/check-auth", "/api/visits/**", "/api/metrics/**",
+                                "/api/admin/payments/**", "/api/promotion/**"
                         ).permitAll()
-                        // Cualquier otra ruta requiere autenticación
                         .anyRequest().authenticated()
                 )
 
-                // ***** Si no quieres redirecciones a login, COMENTA o QUITA oauth2Login() *****
                 // .oauth2Login(oauth2Login -> oauth2Login
                 //     .defaultSuccessUrl("/api/home", true)
                 //     .userInfoEndpoint(userInfoEndpoint ->
                 //         userInfoEndpoint.oidcUserService(oidcUserService()))
                 // )
-
-                // Deshabilitar CSRF (opcional en aplicaciones REST).
                 .csrf(csrf -> csrf.disable())
-
-
-                // Configura CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                // Devuelve 401 en lugar de 302 cuando no haya auth
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.sendError(
@@ -121,28 +109,20 @@ public class SecurityConfig {
                             );
                         })
                 )
-
-                // Sessions stateless (JWT)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-
-        // Inserta el filtro que valida JWT antes del UsernamePasswordAuthenticationFilter
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // Filtro que maneja el JWT
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(jwtTokenUtil, userDetailsService);
     }
-
-    // Configuración para login con Google (si quisieras usar oauth2Login)
     @Bean
     public ClientRegistrationRepository clientRegistrationRepository() {
         return new InMemoryClientRegistrationRepository(googleClientRegistration());
     }
-
     private ClientRegistration googleClientRegistration() {
         return ClientRegistration.withRegistrationId("google")
                 .clientId("445500636748-2nuqarr3morlrul9bdadefcogo7rffcn.apps.googleusercontent.com")
@@ -159,7 +139,6 @@ public class SecurityConfig {
                 .build();
     }
 
-    // Configuración CORS
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
@@ -172,7 +151,6 @@ public class SecurityConfig {
         config.addAllowedMethod("*");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // Aplica esta configuración a todas las rutas
         source.registerCorsConfiguration("/**", config);
         return source;
     }
@@ -181,8 +159,6 @@ public class SecurityConfig {
     public OidcUserService oidcUserService() {
         return new OidcUserService();
     }
-
-    // Manager de autenticación
     @Bean
     public AuthenticationManager authenticationManager(
             UserDetailsService userDetailsService,
@@ -194,19 +170,14 @@ public class SecurityConfig {
         return new ProviderManager(authenticationProvider);
     }
 
-    // Carga el servicio de usuarios
     @Bean
     public UserDetailsService userDetailsService() {
         return new UserDetailsServiceImpl(userRepository);
     }
-
-    // Encoder para las contraseñas
     @Bean
     public PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
-
-    // Decoder para tokens JWT de Google (si quisieras validar ID token, etc.)
     @Bean
     public JwtDecoder jwtDecoder() {
         return NimbusJwtDecoder

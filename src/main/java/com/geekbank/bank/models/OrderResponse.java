@@ -4,7 +4,6 @@ public class OrderResponse {
     private String orderId;
     private double totalPrice;
 
-    // Getters y Setters
     public String getOrderId() {
         return orderId;
     }

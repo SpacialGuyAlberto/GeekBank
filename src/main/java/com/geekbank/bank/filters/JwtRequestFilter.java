@@ -37,7 +37,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             "/api/auth/validate-password",
             "/api/auth/logout",
             "/api/auth/reset-password"
-            // Agrega otros endpoints públicos según sea necesario
+
     );
 
     @Override

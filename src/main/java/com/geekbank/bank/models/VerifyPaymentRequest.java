@@ -7,7 +7,6 @@ public class VerifyPaymentRequest {
     private String phoneNumber;
     private OrderRequest orderRequest;
 
-    // Getters y Setters
 
     public String getRefNumber() {
         return refNumber;

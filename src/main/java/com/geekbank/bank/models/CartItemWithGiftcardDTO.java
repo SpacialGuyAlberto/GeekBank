@@ -16,7 +16,6 @@ public class CartItemWithGiftcardDTO {
 
     }
 
-    // Getters and Setters
     public CartItem getCartItem() {
         return cartItem;
     }
