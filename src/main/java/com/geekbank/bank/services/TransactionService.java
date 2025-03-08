@@ -342,7 +342,7 @@ public class TransactionService {
      */
     @Transactional
     public Transaction createTransactionForVerifiedTigoPayment(OrderRequest orderRequest) {
-        // 1. Busca el unmatchedPayment
+
         UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumber(orderRequest.getRefNumber());
         if (!unmatchedPayment.isVerified()) {
             throw new RuntimeException("El pago encontrado no ha sido verificado.");

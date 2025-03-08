@@ -28,6 +28,8 @@ ext {
 }
 
 dependencies {
+    compileOnly 'org.projectlombok:lombok:1.18.30' // Use latest version
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
     implementation 'io.jsonwebtoken:jjwt-api:0.11.3'
     implementation 'io.jsonwebtoken:jjwt-impl:0.11.3'
     implementation 'io.jsonwebtoken:jjwt-jackson:0.11.3'

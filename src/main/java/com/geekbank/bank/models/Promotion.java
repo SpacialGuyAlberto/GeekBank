@@ -1,30 +1,18 @@
 package com.geekbank.bank.models;
-
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.Setter;
+import lombok.Getter;
 
 @Entity
 @Table(name = "promotion")
+@Getter
+@Setter
 public class Promotion {
 
     @Id
     private Long id;
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-
-    public double getDiscountPorcentage() {
-        return discountPorcentage;
-    }
-
-    public void setDiscountPorcentage(double discountPorcentage) {
-        this.discountPorcentage = discountPorcentage;
-    }
 
     @Column(name = "code", nullable = false)
     private String code;
@@ -32,11 +20,9 @@ public class Promotion {
     @Column(nullable = true)
     private double discountPorcentage;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    @OneToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference
+    private User user;
 
-    public Long getId() {
-        return id;
-    }
 }

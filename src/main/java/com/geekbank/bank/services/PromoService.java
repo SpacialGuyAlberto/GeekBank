@@ -1,9 +1,9 @@
 package com.geekbank.bank.services;
 
+import com.geekbank.bank.models.OrderRequest;
 import com.geekbank.bank.models.Promotion;
 import com.geekbank.bank.models.User;
 import com.geekbank.bank.repositories.PromotionRepository;
-import org.aspectj.apache.bcel.classfile.Code;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +12,6 @@ import java.util.Random;
 
 @Service
 public class PromoService {
-
 
     @Autowired
     private PromotionRepository promotionRepository;
@@ -25,6 +24,7 @@ public class PromoService {
 
         return promo;
     }
+
 
     private String generatePromoCode(){
         String alphabet = "ABCDFGHIJKLMNOPQRSTUVWXYZ";
@@ -51,5 +51,9 @@ public class PromoService {
         }
 
         return false;
+    }
+
+    public Promotion getPromoByCode(String code){
+        return promotionRepository.findByCode(code).orElse(null);
     }
 }
