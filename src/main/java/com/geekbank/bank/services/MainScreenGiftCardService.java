@@ -31,7 +31,7 @@ public class MainScreenGiftCardService {
     }
 
     public Page<MainScreenGiftCardItemDTO> getMainScreenGiftCardItems(Pageable pageable) {
-        Page<MainScreenGiftCardItem> pageOfItems = mainScreenGiftCardItemRepository.findAll(pageable);
+        Page<MainScreenGiftCardItem> pageOfItems = mainScreenGiftCardItemRepository.findAllOrdered(pageable);
 
 
         return pageOfItems.map(item -> {
