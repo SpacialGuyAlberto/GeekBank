@@ -83,7 +83,6 @@ public class KinguinService {
                             logger.info("GiftCard ID {} insertada exitosamente.", newEntity.getKinguinId());
                         }
 
-
                         synchronizedGiftCards++;
                         progress.set((int) ((synchronizedGiftCards / (double) totalGiftCards) * 100));
 
@@ -154,9 +153,18 @@ public class KinguinService {
             }
         }
 
+        giftCards.removeIf(
+                giftcard -> giftcard.getRegionId() != 3
+        );
+
+//        giftCards.removeIf(
+//                giftcard -> giftcard.getRegionId() != 3
+//                        && giftcard.getRegionId() != 4
+//                        && giftcard.getRegionId() != 11
+//
+//        );
         return giftCards;
     }
-
 
 
     public Map<Long, KinguinGiftCard> fetchGiftCardsByIds(List<Long> productIds) {
@@ -185,108 +193,88 @@ public class KinguinService {
             }
         }
 
-        // if id exists in Table SEARCH PRIORITIES then giftcatds[1 or priority] == gifcatd.getId(id)
-
         giftCards.sort(Comparator.comparingDouble(KinguinGiftCard::getPrice));
+        giftCards.removeIf(
+                giftcard -> giftcard.getRegionId() != 3
+        );
+//        giftCards.removeIf(
+//                giftcard -> giftcard.getRegionId() != 3
+//                        && giftcard.getRegionId() != 4
+//                        && giftcard.getRegionId() != 11
+//
+//        );
+
         return giftCards;
     }
 
-//    public List<KinguinGiftCard> fetchFilteredGiftCards(Map<String, String> filters) {
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.set("X-Api-Key", apiKey);
-//        HttpEntity<String> entity = new HttpEntity<>(headers);
-//
-//        StringBuilder urlBuilder = new StringBuilder(apiUrl);
-//        urlBuilder.append("?");
-//
-//        for (Map.Entry<String, String> entry : filters.entrySet()) {
-//            if (entry.getValue() != null && !entry.getValue().isEmpty()) {
-//                urlBuilder.append(entry.getKey())
-//                        .append("=")
-//                        .append(entry.getValue())
-//                        .append("&");
-//            }
-//        }
-//
-//        // Remueve el último "&" si existe
-//        String finalUrl = urlBuilder.toString();
-//        finalUrl = finalUrl.endsWith("&") ? finalUrl.substring(0, finalUrl.length() - 1) : finalUrl;
-//        System.out.println("Final URL: " + finalUrl);
-//
-//        // Realiza la solicitud HTTP
-//        ResponseEntity<JsonNode> response = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, JsonNode.class);
-//        JsonNode products = response.getBody();
-//
-//        List<KinguinGiftCard> giftCards = new ArrayList<>();
-//        if (products != null) {
-//            JsonNode productsSection = products.path("results");
-//            for (JsonNode product : productsSection) {
-//                giftCards.add(mapJsonToGiftCard(product));
-//            }
-//        }
-//
-//        return giftCards;
-//    }
-public List<KinguinGiftCard> fetchFilteredGiftCards(Map<String, String> filters) {
-    HttpHeaders headers = new HttpHeaders();
-    headers.set("X-Api-Key", apiKey);
-    HttpEntity<String> entity = new HttpEntity<>(headers);
+    public List<KinguinGiftCard> fetchFilteredGiftCards(Map<String, String> filters) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Api-Key", apiKey);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
 
-    StringBuilder urlBuilder = new StringBuilder(apiUrl);
-    urlBuilder.append("?");
+        StringBuilder urlBuilder = new StringBuilder(apiUrl);
+        urlBuilder.append("?");
 
-    for (Map.Entry<String, String> entry : filters.entrySet()) {
-        if (entry.getValue() != null && !entry.getValue().isEmpty()) {
-            urlBuilder.append(entry.getKey())
-                    .append("=")
-                    .append(entry.getValue())
-                    .append("&");
-        }
-    }
-
-    // Remueve el último "&" si existe
-    String finalUrl = urlBuilder.toString();
-    finalUrl = finalUrl.endsWith("&") ? finalUrl.substring(0, finalUrl.length() - 1) : finalUrl;
-    System.out.println("Final URL: " + finalUrl);
-
-    // Realiza la solicitud HTTP
-    ResponseEntity<JsonNode> response = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, JsonNode.class);
-    JsonNode products = response.getBody();
-
-    List<KinguinGiftCard> giftCards = new ArrayList<>();
-    if (products != null) {
-        JsonNode productsSection = products.path("results");
-        for (JsonNode product : productsSection) {
-            giftCards.add(mapJsonToGiftCard(product));
-        }
-
-        DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
-
-        giftCards.sort((g1, g2) -> {
-            try {
-                String rd1 = g1.getReleaseDate();
-                String rd2 = g2.getReleaseDate();
-
-                if (rd1 == null || rd1.isEmpty()) {
-                    return 1;
-                }
-                if (rd2 == null || rd2.isEmpty()) {
-                    return -1;
-                }
-
-                LocalDateTime d1 = LocalDateTime.parse(rd1, DateTimeFormatter.ISO_DATE_TIME);
-                LocalDateTime d2 = LocalDateTime.parse(rd2, DateTimeFormatter.ISO_DATE_TIME);
-
-                return d2.compareTo(d1);
-            } catch (DateTimeParseException e) {
-                System.err.println("Error al parsear releaseDate: " + e.getMessage());
-                return 0;
+        for (Map.Entry<String, String> entry : filters.entrySet()) {
+            if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+                urlBuilder.append(entry.getKey())
+                        .append("=")
+                        .append(entry.getValue())
+                        .append("&");
             }
-        });
-    }
+        }
 
-    return giftCards;
-}
+        String finalUrl = urlBuilder.toString();
+        finalUrl = finalUrl.endsWith("&") ? finalUrl.substring(0, finalUrl.length() - 1) : finalUrl;
+        System.out.println("Final URL: " + finalUrl);
+
+        ResponseEntity<JsonNode> response = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, JsonNode.class);
+        JsonNode products = response.getBody();
+
+        List<KinguinGiftCard> giftCards = new ArrayList<>();
+        if (products != null) {
+            JsonNode productsSection = products.path("results");
+            for (JsonNode product : productsSection) {
+                    giftCards.add(mapJsonToGiftCard(product));
+            }
+
+            DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+
+            giftCards.sort((g1, g2) -> {
+                try {
+                    String rd1 = g1.getReleaseDate();
+                    String rd2 = g2.getReleaseDate();
+
+                    if (rd1 == null || rd1.isEmpty()) {
+                        return 1;
+                    }
+                    if (rd2 == null || rd2.isEmpty()) {
+                        return -1;
+                    }
+
+                    LocalDateTime d1 = LocalDateTime.parse(rd1, DateTimeFormatter.ISO_DATE_TIME);
+                    LocalDateTime d2 = LocalDateTime.parse(rd2, DateTimeFormatter.ISO_DATE_TIME);
+
+                    return d2.compareTo(d1);
+                } catch (DateTimeParseException e) {
+                    System.err.println("Error al parsear releaseDate: " + e.getMessage());
+                    return 0;
+                }
+            });
+        }
+
+        giftCards.removeIf(
+                giftcard -> giftcard.getRegionId() != 3
+        );
+
+//            giftCards.removeIf(
+//                    giftcard -> giftcard.getRegionId() != 3
+//                    && giftcard.getRegionId() != 4
+//                    && giftcard.getRegionId() != 11
+//
+//            );
+            return giftCards;
+        }
 
 
     @Cacheable("giftCards")
