@@ -1,5 +1,6 @@
 package com.geekbank.bank.controllers;
 
+import com.deepl.api.DeepLException;
 import com.geekbank.bank.models.KinguinGiftCard;
 import com.geekbank.bank.models.User;
 import com.geekbank.bank.services.KinguinService;
@@ -27,7 +28,16 @@ public class KinguinController {
     @GetMapping("/gift-cards/{id}")
     @CrossOrigin(origins = "http://localhost:4200")
     public KinguinGiftCard getGiftCardById(@PathVariable String id) {
-        return kinguinService.fetchGiftCardById(id);
+        return  kinguinService.fetchGiftCardById(id);
+    }
+
+    @GetMapping("/gift-cards-details/{id}")
+    @CrossOrigin(origins = "http://localhost:4200")
+    public KinguinGiftCard getGiftCardDetailsById(@PathVariable String id) throws DeepLException, InterruptedException {
+        KinguinGiftCard giftCard =  kinguinService.fetchGiftCardById(id);
+        giftCard.setDescription(kinguinService.translateText(giftCard.getDescription()));
+        giftCard.setActivationDetails(kinguinService.translateText(giftCard.getActivationDetails()));
+        return giftCard;
     }
 
     @GetMapping("/gift-cards/search")

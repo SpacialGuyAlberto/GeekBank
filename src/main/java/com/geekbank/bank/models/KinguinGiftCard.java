@@ -2,6 +2,8 @@ package com.geekbank.bank.models;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -91,6 +93,7 @@ public class KinguinGiftCard implements GiftCard {
     @JsonProperty("languages")
     private List<String> languages;
 
+    @Getter
     @JsonProperty("systemRequirements")
     private List<SystemRequirement> systemRequirements;
 
