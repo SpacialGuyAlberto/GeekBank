@@ -6,17 +6,19 @@ import com.geekbank.bank.mappers.GiftCardMapper;
 import com.geekbank.bank.models.KinguinGiftCard;
 import com.geekbank.bank.models.GiftCardEntity;
 import com.geekbank.bank.repositories.GiftCardRepository;
+import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-
+import com.deepl.api.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -30,6 +32,8 @@ public class KinguinService {
 
     private static final String apiUrl = "https://gateway.kinguin.net/esa/api/v1/products";
     protected static final String apiKey = "77d96c852356b1c654a80f424d67048f";
+    Translator translator;
+    protected static String deeplApiKey = "b9809fe3-aa7c-4802-b12b-cacef4df6e2a:fx";
     private static AtomicInteger progress = new AtomicInteger(0);
     private static boolean isSyncing = false;
     private static int totalGiftCards = 0;
@@ -277,6 +281,7 @@ public class KinguinService {
         }
 
 
+    @SneakyThrows
     @Cacheable("giftCards")
     public KinguinGiftCard fetchGiftCardById(String id) {
         HttpHeaders headers = new HttpHeaders();
@@ -287,17 +292,31 @@ public class KinguinService {
         JsonNode product = response.getBody();
 
         if (product != null) {
-            return mapJsonToGiftCard(product);
+
+            KinguinGiftCard giftcard = mapJsonToGiftCard(product);
+
+            return giftcard;
         }
 
         return null;
     }
 
-    
+
+    public String translateText(String text) throws DeepLException, InterruptedException {
+        translator = new Translator(deeplApiKey);
+        TextResult result = translator.translateText(text, "EN", "ES");
+        return result.getText();
+    }
+
     private KinguinGiftCard mapJsonToGiftCard(JsonNode product) {
+
         KinguinGiftCard giftCard = new KinguinGiftCard();
         giftCard.setName(product.path("name").asText());
+
+
         giftCard.setDescription(product.path("description").asText());
+
+
         giftCard.setCoverImage(product.path("coverImage").asText());
         giftCard.setCoverImageOriginal(product.path("coverImageOriginal").asText());
         System.out.println(product.path("CoverImageOriginal"));
