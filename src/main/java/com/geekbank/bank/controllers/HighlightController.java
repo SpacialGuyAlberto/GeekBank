@@ -1,8 +1,11 @@
 package com.geekbank.bank.controllers;
 
+import com.geekbank.bank.dto.HighlightDTO;
 import com.geekbank.bank.models.HighlightItem;
 import com.geekbank.bank.models.HighlightItemWithGiftcardDTO;
 import com.geekbank.bank.services.HighlightService;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,14 +24,16 @@ public class HighlightController {
     }
 
     @GetMapping
-    public ResponseEntity<List<HighlightItemWithGiftcardDTO>> getHighlights() {
-        List<HighlightItemWithGiftcardDTO> highlights = highlightService.getHighlightsByProductIds();
+    public ResponseEntity<List<HighlightItem>> getHighlights() {
+        List<HighlightItem> highlights = highlightService.fetchHighlights();
         return ResponseEntity.ok(highlights);
     }
 
+
+
     @PostMapping()
-    public ResponseEntity<List<HighlightItem>> addHighlights(@RequestBody HighlightRequest request) {
-        List<HighlightItem> addedHighlights = highlightService.addHighlightItems(request.getProductIds());
+    public ResponseEntity<List<HighlightItem>> addHighlights(@RequestBody List<HighlightItem> highlightItems) {
+        List<HighlightItem> addedHighlights = highlightService.addHighlightItems(highlightItems);
         return ResponseEntity.ok(addedHighlights);
     }
 
@@ -38,16 +43,9 @@ public class HighlightController {
         return ResponseEntity.noContent().build();
     }
 
-    // Clase para encapsular la lista de productIds
+    @Getter
+    @Setter
     public static class HighlightRequest {
-        private List<Long> productIds;
-
-        public List<Long> getProductIds() {
-            return productIds;
-        }
-
-        public void setProductIds(List<Long> productIds) {
-            this.productIds = productIds;
-        }
+        private List<HighlightDTO> highlightDTOS;
     }
 }
