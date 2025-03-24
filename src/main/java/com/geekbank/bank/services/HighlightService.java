@@ -1,5 +1,6 @@
 package com.geekbank.bank.services;
 
+import com.geekbank.bank.dto.HighlightDTO;
 import com.geekbank.bank.models.HighlightItem;
 import com.geekbank.bank.models.HighlightItemWithGiftcardDTO;
 import com.geekbank.bank.models.KinguinGiftCard;
@@ -25,28 +26,28 @@ public class HighlightService {
     public HighlightService(HighlightItemRepository highlightItemRepository, KinguinService kinguinService) {
         this.highlightItemRepository = highlightItemRepository;
         this.kinguinService = kinguinService;
+
     }
 
-    public List<HighlightItemWithGiftcardDTO> getHighlightsByProductIds() {
+    public List<HighlightItem> fetchHighlights() {
         List<HighlightItem> highlightItems = highlightItemRepository.findAll();
-        return highlightItems.stream()
-                .map(highlightItem -> {
-                    KinguinGiftCard giftcard = kinguinService.fetchGiftCardById(String.valueOf(highlightItem.getProductId()))
-                            .orElse(null);
-                    return new HighlightItemWithGiftcardDTO(highlightItem, giftcard);
-                })
-                .collect(Collectors.toList());
+        return highlightItems;
     }
 
-    public List<HighlightItem> addHighlightItems(List<Long> productIds) {
-        List<HighlightItem> newHighlights = productIds.stream()
-                .map(productId -> {
+
+
+    public List<HighlightItem> addHighlightItems(List<HighlightItem> highlightRequest) {
+
+        return highlightRequest.stream()
+                .map(highlightDTO1 -> {
                     HighlightItem highlightItem = new HighlightItem();
-                    highlightItem.setProductId(productId);
+                    highlightItem.setImageUrl(highlightDTO1.getImageUrl());
+                    highlightItem.setTitle(highlightDTO1.getTitle());
+                    highlightItem.setPrice(highlightDTO1.getPrice());
+                    highlightItem.setProductId(highlightDTO1.getProductId());
                     return highlightItemRepository.save(highlightItem);
                 })
                 .collect(Collectors.toList());
-        return newHighlights;
     }
 
     @Transactional

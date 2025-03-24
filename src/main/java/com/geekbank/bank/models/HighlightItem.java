@@ -1,8 +1,12 @@
 package com.geekbank.bank.models;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
+@Getter
+@Setter
 public class HighlightItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -11,21 +15,13 @@ public class HighlightItem {
     @Column(name = "product_id")
     private Long productId;
 
-    // Getters and setters
-    public Long getId() {
-        return id;
-    }
+    @Getter
+    @Column(name = "image_url")
+    private String imageUrl;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    @Column(name = "title")
+    private String title;
 
-    public Long getProductId() {
-        return productId;
-    }
-
-    public void setProductId(Long productId) {
-        this.productId = productId;
-    }
-
+    @Column(name = "price")
+    private Double price;
 }
