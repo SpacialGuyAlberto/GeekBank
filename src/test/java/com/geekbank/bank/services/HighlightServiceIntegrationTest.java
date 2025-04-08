@@ -1,5 +1,6 @@
 package com.geekbank.bank.services;
 
+import com.geekbank.bank.dto.HighlightDTO;
 import com.geekbank.bank.models.HighlightItem;
 import com.geekbank.bank.models.HighlightItemWithGiftcardDTO;
 import com.geekbank.bank.repositories.HighlightItemRepository;
@@ -31,6 +32,7 @@ public class HighlightServiceIntegrationTest {
 
     @Autowired
     private KinguinService kinguinService;
+    private HighlightDTO highlightDTO;
 
     @BeforeEach
     public void setUp() {
@@ -41,8 +43,9 @@ public class HighlightServiceIntegrationTest {
     @DisplayName("Agregar nuevos highlights y verificar que se guarden correctamente")
     public void testAddHighlightItems() {
         List<Long> productIds = Arrays.asList(1L, 2L, 3L);
+        List<HighlightDTO> highlightRequest = Arrays.asList();
 
-        List<HighlightItem> addedHighlights = highlightService.addHighlightItems(productIds);
+        List<HighlightItem> addedHighlights = highlightService.addHighlightItems(highlightRequest);
 
         assertEquals(3, addedHighlights.size(), "Deberían haberse guardado tres elementos destacados");
         addedHighlights.forEach(highlightItem -> assertTrue(productIds.contains(highlightItem.getProductId()), "El ID de producto debería coincidir"));
@@ -72,7 +75,8 @@ public class HighlightServiceIntegrationTest {
     public void testRemoveHighlightItems() {
         // Agregar elementos destacados
         List<Long> productIds = Arrays.asList(1L, 2L, 3L);
-        highlightService.addHighlightItems(productIds);
+        List<HighlightDTO> highlightRequest = Arrays.asList();
+        highlightService.addHighlightItems(highlightRequest);
 
         // Verificar que existen antes de eliminarlos
         assertEquals(3, highlightItemRepository.count(), "Deberían haber tres elementos destacados antes de la eliminación");

@@ -35,7 +35,6 @@ public class HighlightService {
     }
 
 
-
     public List<HighlightItem> addHighlightItems(List<HighlightItem> highlightRequest) {
 
         return highlightRequest.stream()

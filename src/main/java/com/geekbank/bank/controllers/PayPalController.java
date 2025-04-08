@@ -18,16 +18,31 @@ public class PayPalController {
     }
 
     @PostMapping("/create-order")
-    public ResponseEntity<Map<String, Object>> createOrder(@RequestBody Map<String, String> request) throws IOException {
-        String amount = request.get("amount");
-        Map<String, Object> order = payPalService.createOrder(amount);
-        return ResponseEntity.ok(order);
+    public ResponseEntity<Map<String, Object>> createOrder(@RequestBody Map<String, String> request) {
+        try {
+            String amount = request.get("amount");
+            Map<String, Object> order = payPalService.createOrder(amount);
+            return ResponseEntity.ok(order);
+        } catch (IOException | RuntimeException e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        } catch (Exception e) { // Para ApiException y otros
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
     }
-
 
     @PostMapping("/capture-order/{orderId}")
-    public Map<String, Object> captureOrder(@PathVariable String orderId) throws IOException {
-        return payPalService.captureOrder(orderId);
+    public ResponseEntity<Map<String, Object>> captureOrder(@PathVariable String orderId) {
+        try {
+            Map<String, Object> result = payPalService.captureOrder(orderId);
+            return ResponseEntity.ok(result);
+        } catch (IOException | RuntimeException e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        } catch (Exception e) { // Para ApiException y otros
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }
-

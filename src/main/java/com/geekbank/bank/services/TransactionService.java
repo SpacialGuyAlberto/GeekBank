@@ -491,16 +491,16 @@ public class TransactionService {
         transaction.setProducts(transactionProducts);
 
         // Estado inicial
-        if (transaction.getManual()) {
-            transaction.setStatus(TransactionStatus.AWAITING_MANUAL_PROCESSING);
-        } else {
-            transaction.setStatus(TransactionStatus.PROCESSING);
-            UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumber(orderRequest.getRefNumber());
-            if (!unmatchedPayment.isConsumed()){
-                unmatchedPayment.setConsumed(true);
-                unmatchedPaymentRepository.save(unmatchedPayment);
-            }
-        }
+//        if (transaction.getManual()) {
+//            transaction.setStatus(TransactionStatus.AWAITING_MANUAL_PROCESSING);
+//        } else {
+//            transaction.setStatus(TransactionStatus.PROCESSING);
+//            UnmatchedPayment unmatchedPayment = unmatchedPaymentRepository.findByReferenceNumber(orderRequest.getRefNumber());
+//            if (!unmatchedPayment.isConsumed()){
+//                unmatchedPayment.setConsumed(true);
+//                unmatchedPaymentRepository.save(unmatchedPayment);
+//            }
+//        }
 
         Transaction savedTransaction = transactionRepository.save(transaction);
 
