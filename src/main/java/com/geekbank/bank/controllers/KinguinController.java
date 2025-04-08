@@ -49,5 +49,4 @@ public class KinguinController {
     public List<KinguinGiftCard> getFilteredGiftCards(@RequestParam Map<String, String> filters) {
         return kinguinService.fetchFilteredGiftCards(filters);
     }
-
 }

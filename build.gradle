@@ -53,6 +53,10 @@ dependencies {
     implementation 'com.github.2captcha:2captcha-java:1.2.0'
     implementation 'com.squareup.okhttp3:okhttp:4.9.3'
 
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'com.paypal.sdk:paypal-server-sdk:0.6.0'
+
     runtimeOnly 'com.mysql:mysql-connector-j'
     runtimeOnly 'com.oracle.database.jdbc:ojdbc11'
     runtimeOnly 'org.postgresql:postgresql'
@@ -92,6 +96,7 @@ dependencies {
     implementation 'org.json:json:20210307'
 
     testImplementation 'com.h2database:h2:2.1.214'
+
 
     // Mockito para Simulación de Servicios (ya incluido mediante 'mockito-core:5.3.1')
 }

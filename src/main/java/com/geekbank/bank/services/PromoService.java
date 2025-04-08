@@ -25,7 +25,6 @@ public class PromoService {
         return promo;
     }
 
-
     private String generatePromoCode(){
         String alphabet = "ABCDFGHIJKLMNOPQRSTUVWXYZ";
         Random random = new Random();

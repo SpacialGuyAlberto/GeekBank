@@ -21,11 +21,6 @@ import java.util.Optional;
 public class OrderController {
 
     @Autowired
-    private TigoService tigoService;
-    @Autowired
-    private UserService userService;
-
-    @Autowired
     private OrderService orderService;
     Orders orders;
     @Autowired
@@ -38,12 +33,8 @@ public class OrderController {
     private TransactionRepository transactionRepository;
 
     @Autowired
-    private OrderRequestStorageService orderRequestStorageService;
-
-    @Autowired
-    private SmsService smsService;
-    @Autowired
     private UnmatchedPaymentRepository unmatchedPaymentRepository;
+
     @Autowired
     private OrdersRepository ordersRepository;
 
