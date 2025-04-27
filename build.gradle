@@ -57,6 +57,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'com.paypal.sdk:paypal-server-sdk:0.6.0'
 
+    implementation("com.stripe:stripe-java:29.0.0")
+
+
     runtimeOnly 'com.mysql:mysql-connector-j'
     runtimeOnly 'com.oracle.database.jdbc:ojdbc11'
     runtimeOnly 'org.postgresql:postgresql'

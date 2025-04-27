@@ -2,294 +2,86 @@ package com.geekbank.bank.services;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.paypal.sdk.Environment;
 import com.paypal.sdk.PaypalServerSdkClient;
+import com.paypal.sdk.authentication.ClientCredentialsAuthModel;
 import com.paypal.sdk.controllers.OrdersController;
 import com.paypal.sdk.exceptions.ApiException;
 import com.paypal.sdk.http.response.ApiResponse;
 import com.paypal.sdk.models.*;
-import com.paypal.sdk.models.PayeePaymentMethodPreference;
-import com.paypal.sdk.models.PaymentMethodPreference;
+import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 
+/**
+ * Servicio PayPal para **Expanded Checkout**.
+ * Siempre trabajamos con **intent = CAPTURE** y contra el entorno LIVE.
+ */
 @Service
 public class PayPalService {
 
+    /* ---------- Credenciales (inyectadas desde application‑*.yml) ---------- */
+    private final String clientId;
+    private final String clientSecret;
+
+    /* ---------- SDK Client (una sola instancia) ---------- */
     private final PaypalServerSdkClient client;
-    private final ObjectMapper objectMapper;
 
-    @Value("${PAYPAL_BASE_URL}")
-    private String baseUrl;
+    private final ObjectMapper mapper = new ObjectMapper();
 
-    @Value("${PAYPAL_CLIENT_ID}")
-    private String clientId;
+    public PayPalService(@Value("${PAYPAL_CLIENT_ID}")     String clientId,
+                         @Value("${PAYPAL_CLIENT_SECRET}") String clientSecret) {
+        this.clientId     = clientId;
+        this.clientSecret = clientSecret;
 
-    @Value("${PAYPAL_CLIENT_SECRET}")
-    private String clientSecret;
-
-    public PayPalService(PaypalServerSdkClient client) {
-        this.client = client;
-        this.objectMapper = new ObjectMapper();
-    }
-
-    /**
-     * Crea una orden de PayPal usando el SDK oficial.
-     */
-
-    public String getAccessToken() throws IOException {
-        URL url = new URL(baseUrl + "/v1/oauth2/token");
-        String credentials = clientId + ":" + clientSecret;
-        String encodedCredentials = Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
-
-        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-        httpConn.setRequestMethod("POST");
-
-        httpConn.setRequestProperty("Authorization", "Basic " + encodedCredentials);
-        httpConn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-
-        httpConn.setDoOutput(true);
-        try (OutputStreamWriter writer = new OutputStreamWriter(httpConn.getOutputStream(), StandardCharsets.UTF_8)) {
-            writer.write("grant_type=client_credentials");
-            writer.flush();
-        }
-
-        InputStream responseStream = httpConn.getResponseCode() / 100 == 2
-                ? httpConn.getInputStream()
-                : httpConn.getErrorStream();
-        String response = new Scanner(responseStream, StandardCharsets.UTF_8.name()).useDelimiter("\\A").next();
-
-        Map<String, Object> responseMap = objectMapper.readValue(response, Map.class);
-        String accessToken = (String) responseMap.get("access_token");
-
-        if (accessToken == null) {
-            throw new IOException("Failed to obtain access token: " + response);
-        }
-
-        return accessToken;
-    }
-
-//        public Map<String, Object> createOrder(String amount) throws IOException {
-//        String accessToken = getAccessToken();
-//
-//        URL url = new URL(baseUrl + "/v2/checkout/orders");
-//        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-//        httpConn.setRequestMethod("POST");
-//
-//        httpConn.setRequestProperty("Content-Type", "application/json");
-//        httpConn.setRequestProperty("Authorization", "Bearer " + accessToken);
-//        httpConn.setRequestProperty("PayPal-Request-Id", UUID.randomUUID().toString());
-//
-//        // Construir el cuerpo de la solicitud JSON
-//        Map<String, Object> orderData = new HashMap<>();
-//        orderData.put("intent", "CAPTURE");
-//
-//        Map<String, Object> amountData = new HashMap<>();
-//        amountData.put("currency_code", "USD");
-//        amountData.put("value", amount);
-//
-//        Map<String, Object> purchaseUnit = new HashMap<>();
-//        purchaseUnit.put("reference_id", UUID.randomUUID().toString());
-//        purchaseUnit.put("amount", amountData);
-//
-//        orderData.put("purchase_units", Collections.singletonList(purchaseUnit));
-//
-//        // Añadir las URLs de retorno y cancelación
-//        Map<String, Object> applicationContext = new HashMap<>();
-//        applicationContext.put("return_url", "https://astralisbank.com/home");
-//        applicationContext.put("cancel_url", "https://tusitio.com/cancel");
-//        orderData.put("application_context", applicationContext);
-//
-//        // Convertir el mapa a JSON
-//        String orderJson = objectMapper.writeValueAsString(orderData);
-//
-//        httpConn.setDoOutput(true);
-//        try (OutputStreamWriter writer = new OutputStreamWriter(httpConn.getOutputStream())) {
-//            writer.write(orderJson);
-//            writer.flush();
-//        }
-//
-//        InputStream responseStream = httpConn.getResponseCode() / 100 == 2
-//                ? httpConn.getInputStream()
-//                : httpConn.getErrorStream();
-//        String response = new Scanner(responseStream).useDelimiter("\\A").next();
-//
-//        Map<String, Object> responseMap = objectMapper.readValue(response, Map.class);
-//        return responseMap;
-//    }
-    
-    public Map<String, Object> createOrder(String amount) throws IOException, ApiException {
-        // 1. Se construye el objeto de la orden (OrderRequest).
-        //    En este ejemplo solo pasamos un PurchaseUnitRequest con un AmountWithBreakdown.
-        System.out.println( "CLIENT ID ////////////////" + clientId);
-
-//        OrderRequest orderRequest = new OrderRequest.Builder(
-//                CheckoutPaymentIntent.fromString("CAPTURE"),
-//                Arrays.asList(
-//                        new PurchaseUnitRequest.Builder(
-//                                new AmountWithBreakdown.Builder("USD", amount)
-//                                        .build()
-//                        )
-//                                .referenceId(UUID.randomUUID().toString())
-//                                .build()
-//                )
-//        ).build();
-        PaymentMethodPreference paymentMethodPref = new PaymentMethodPreference.Builder()
-                .payeePreferred(PayeePaymentMethodPreference.UNRESTRICTED)
+        /* Forzamos el entorno LIVE (producción) */
+        this.client = new PaypalServerSdkClient.Builder()
+                .environment(Environment.PRODUCTION)   //  ← ← LIVE
+                .clientCredentialsAuth(new ClientCredentialsAuthModel.Builder(clientId, clientSecret).build())
+                .loggingConfig(b -> b.level(Level.INFO))
                 .build();
+    }
 
-        OrderRequest orderRequest = new OrderRequest.Builder(
+    /* ====================== 1 · CREATE ORDER ====================== */
+    public Map<String, Object> createOrder(String amountStr) throws IOException, ApiException {
+        BigDecimal amount = new BigDecimal(amountStr);
+
+        PurchaseUnitRequest pu = new PurchaseUnitRequest.Builder(
+                new AmountWithBreakdown.Builder("EUR", amount.toPlainString()).build()
+        ).build();
+
+        OrderRequest orderReq = new OrderRequest.Builder(
                 CheckoutPaymentIntent.CAPTURE,
-                Collections.singletonList(
-                        new PurchaseUnitRequest.Builder(
-                                new AmountWithBreakdown.Builder("USD", amount).build()
-                        ).referenceId(UUID.randomUUID().toString()).build()
-                )
-                )
-                .applicationContext(
-                        new OrderApplicationContext.Builder()
-                                .returnUrl("https://astralisbank.com/home")
-                                .cancelUrl("https://astralisbank.com/home")
-                                .paymentMethod(paymentMethodPref)
-                                .build()
-                )
-                .build();
+                List.of(pu)
+        ).build();
 
+        OrdersCreateInput input = new OrdersCreateInput.Builder(null, orderReq).build();
+        OrdersController orders = client.getOrdersController();
+        ApiResponse<Order> resp  = orders.ordersCreate(input);
 
-        // 2. Crear el input para la orden.
-        OrdersCreateInput createOrderInput = new OrdersCreateInput.Builder(null, orderRequest).build();
-
-        // 3. Obtener el OrdersController para llamar al método createOrder del SDK.
-        OrdersController ordersController = client.getOrdersController();
-
-        // 4. Llamar al método createOrder.
-        ApiResponse<Order> apiResponse = ordersController.ordersCreate(createOrderInput);
-        Order order = apiResponse.getResult();
-
-        // 5. Convertimos la respuesta Order en un Map para retornarlo como JSON.
-        return objectMapper.convertValue(order, new TypeReference<Map<String, Object>>() {});
+        return mapper.convertValue(resp.getResult(), new TypeReference<>() {});
     }
 
-    /**
-     * Obtiene la información completa de la orden (incluyendo status) desde PayPal.
-     */
-    public Order getOrderDetails(String orderId) throws ApiException, IOException {
-        OrdersController ordersController = client.getOrdersController();
+    /* ====================== 2 · CAPTURE ORDER ===================== */
+    public Map<String, Object> captureOrder(String orderId) throws IOException, ApiException {
+        OrdersController oc = client.getOrdersController();
+        OrdersCaptureInput in = new OrdersCaptureInput.Builder(orderId, null).build();
 
-        // Construimos la request para obtener la orden:
-        OrdersGetInput getInput = new OrdersGetInput.Builder(orderId).build();
-
-        // Llamamos al endpoint GET /v2/checkout/orders/{orderId}
-        ApiResponse<Order> response = ordersController.ordersGet(getInput);
-        return response.getResult();
+        ApiResponse<Order> resp = oc.ordersCapture(in);   // ⇠ NO getResult()
+        return mapper.convertValue(resp.getResult(), new TypeReference<>() {});
     }
 
-    /**
-     * Captura una orden existente de PayPal usando el SDK oficial,
-     * verificando antes que el estado de la orden sea APPROVED.
-     */
-//    public Map<String, Object> captureOrder(String orderId) throws IOException, ApiException {
-//        // 1. Verificar estado de la orden antes de capturar
-//        Order existingOrder = getOrderDetails(orderId);
-//        OrderStatus status = existingOrder.getStatus();
-//        System.out.println("Current order status: " + status);
-//
-//        if (!"APPROVED".equalsIgnoreCase(status.toString())) {
-//            throw new IllegalStateException(
-//                    "No se puede capturar la orden. " +
-//                            "Se requiere que esté en estado APPROVED, y está en: " + status
-//            );
-//        }
-//
-//        // 2. Construir el input para captura de la orden
-//        OrdersCaptureInput captureOrderInput = new OrdersCaptureInput.Builder(orderId, null).build();
-//
-//        // 3. Capturar la orden con el SDK
-//        OrdersController ordersController = client.getOrdersController();
-//        ApiResponse<Order> apiResponse = ordersController.ordersCapture(captureOrderInput);
-//        Order capturedOrder = apiResponse.getResult();
-//
-//        // 4. Convertir la respuesta a Map y retornarla
-//        return objectMapper.convertValue(capturedOrder, new TypeReference<Map<String, Object>>() {});
-//    }
-//
-//    /**
-//     * Ejemplo de payout (opcional, si lo necesitas).
-//     * Con el nuevo SDK se manejaría diferente;
-//     * si todavía no hay un controlador de payouts en el SDK,
-//     * podrías seguir usando la llamada manual aquí.
-//     */
-//    public Map<String, Object> createPayout() {
-//        // Por ahora, si tu SDK no tiene método para payouts,
-//        // se haría como antes o con un endpoint si PayPal provee uno.
-//        return Collections.emptyMap();
-//    }
-    public Map<String, Object> captureOrder(String orderId) throws IOException {
-        String accessToken = getAccessToken();
 
-        URL url = new URL(baseUrl + "/v2/checkout/orders/" + orderId + "/capture");
-        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-        httpConn.setRequestMethod("POST");
-
-        httpConn.setRequestProperty("Content-Type", "application/json");
-        httpConn.setRequestProperty("Authorization", "Bearer " + accessToken);
-        httpConn.setRequestProperty("PayPal-Request-Id", UUID.randomUUID().toString());
-
-        // No es necesario enviar un cuerpo en esta solicitud
-        httpConn.setDoOutput(true);
-
-        InputStream responseStream = httpConn.getResponseCode() / 100 == 2
-                ? httpConn.getInputStream()
-                : httpConn.getErrorStream();
-        String response = new Scanner(responseStream).useDelimiter("\\A").next();
-
-        Map<String, Object> responseMap = objectMapper.readValue(response, Map.class);
-        return responseMap;
-    }
-
-    public Map<String, Object> createPayout() throws IOException {
-        String accessToken = getAccessToken();
-
-        URL url = new URL(baseUrl + "/v1/payments/payouts");
-        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-        httpConn.setRequestMethod("POST");
-
-        httpConn.setRequestProperty("Content-Type", "application/json");
-        httpConn.setRequestProperty("Authorization", "Bearer " + accessToken);
-
-        // Construir el cuerpo de la solicitud JSON para el Payout
-        String payoutJson = "{ " +
-                "\"sender_batch_header\": { " +
-                "\"sender_batch_id\": \"" + UUID.randomUUID().toString() + "\", " +
-                "\"email_subject\": \"Has recibido un pago\" " +
-                "}, " +
-                "\"items\": [ { " +
-                "\"recipient_type\": \"EMAIL\", " +
-                "\"amount\": { \"value\": \"10.00\", \"currency\": \"USD\" }, " +
-                "\"receiver\": \"correo@destinatario.com\", " +
-                "\"note\": \"Gracias por tu servicio\" " +
-                "} ] " +
-                "}";
-
-        httpConn.setDoOutput(true);
-        try (OutputStreamWriter writer = new OutputStreamWriter(httpConn.getOutputStream())) {
-            writer.write(payoutJson);
-            writer.flush();
-        }
-
-        InputStream responseStream = httpConn.getResponseCode() / 100 == 2
-                ? httpConn.getInputStream()
-                : httpConn.getErrorStream();
-        String response = new Scanner(responseStream).useDelimiter("\\A").next();
-
-        Map<String, Object> responseMap = objectMapper.readValue(response, Map.class);
-        return responseMap;
-    }
+    /* ------------------------------------------------------------------ */
+    /* Métodos de Hosted‑Fields conservados en blanco para compatibilidad */
+    /* ------------------------------------------------------------------ */
+    public Map<String, Object> confirmPaymentSource(String id, Map<String, Object> b) { return Map.of(); }
+    public Map<String, Object> authorizeOrder(String id)                    { return Map.of(); }
+    public Map<String, Object> captureAuthorization(String id)              { return Map.of(); }
+    public Map<String, Object> confirmOrder(String id)                      { return Map.of(); }
 }
