@@ -14,9 +14,12 @@ import java.util.Map;
 @Service
 public class StripeService {
 
+    @Value("${STRIPE_API_KEY}")
+    private String stripeApiKey;
+
     @PostConstruct
     public void init() {
-        Stripe.apiKey = "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";
+        Stripe.apiKey = stripeApiKey;
     }
 
     public Charge charge(ChargeRequest req) throws StripeException {
