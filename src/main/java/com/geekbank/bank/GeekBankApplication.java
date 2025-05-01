@@ -45,6 +45,7 @@ public class GeekBankApplication  {
         System.setProperty("PAYPAL_CLIENT_ID", dotenv.get("PAYPAL_CLIENT_ID"));
         System.setProperty("PAYPAL_CLIENT_SECRET", dotenv.get("PAYPAL_CLIENT_SECRET"));
         System.setProperty("PAYPAL_BASE_URL", dotenv.get("PAYPAL_BASE_URL"));
+        System.setProperty("STRIPE_API_KEY", dotenv.get("STRIPE_API_KEY"));
 
         SpringApplication.run(GeekBankApplication.class, args);
     }
