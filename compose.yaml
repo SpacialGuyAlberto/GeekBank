@@ -3,7 +3,7 @@ services:
     image: 'postgres:latest'
     environment:
       - POSTGRES_DB=Primary
-      - POSTGRES_PASSWORD=LeiserHazard1996!
+      - POSTGRES_PASSWORD=Punkhazard4!
       - POSTGRES_USER=postgres
     ports:
       - '5432:5432'
