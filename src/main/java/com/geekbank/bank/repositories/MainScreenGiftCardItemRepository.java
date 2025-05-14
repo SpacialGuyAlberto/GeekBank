@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MainScreenGiftCardItemRepository extends JpaRepository<MainScreenGiftCardItem, Long> {
@@ -18,19 +19,16 @@ public interface MainScreenGiftCardItemRepository extends JpaRepository<MainScre
      * Para la paginación:
      */
     Page<MainScreenGiftCardItem> findAll(Pageable pageable);
-
     /**
      * Para buscar registros específicos:
      */
     @Query("SELECT i FROM MainScreenGiftCardItem i WHERE i.productId IN :productIds")
     List<MainScreenGiftCardItem> findByProductIdIn(List<Long> productIds);
 
-
+    Optional<MainScreenGiftCardItem> findById(Long id);
 
     @Query("SELECT m FROM MainScreenGiftCardItem m ORDER BY m.id ASC")
     Page<MainScreenGiftCardItem> findAllOrdered(Pageable pageable);
-
-
     /**
      * Para eliminar registros por sus productIds:
      */
@@ -39,11 +37,14 @@ public interface MainScreenGiftCardItemRepository extends JpaRepository<MainScre
     @Query("DELETE FROM MainScreenGiftCardItem i WHERE i.productId IN :productIds")
     void deleteByProductIdIn(List<Long> productIds);
 
-
-    // Métodos por defecto de JpaRepository (deleteAll, findAll, etc.)
     @Override
     void deleteAll();
 
     @Override
     List<MainScreenGiftCardItem> findAll();
+
+    boolean existsByProductId(Long productId);
+
+//    @Transactional
+//    List<MainScreenGiftCardItem> findByClassification(String classification);
 }
