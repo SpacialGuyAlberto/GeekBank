@@ -1,5 +1,6 @@
 package com.geekbank.bank.repositories;
 
+import com.geekbank.bank.models.GifcardClassification;
 import com.geekbank.bank.models.MainScreenGiftCardItem;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
@@ -45,6 +46,6 @@ public interface MainScreenGiftCardItemRepository extends JpaRepository<MainScre
 
     boolean existsByProductId(Long productId);
 
-//    @Transactional
-//    List<MainScreenGiftCardItem> findByClassification(String classification);
+    @Transactional
+    List<MainScreenGiftCardItem> findByClassification(GifcardClassification classification);
 }

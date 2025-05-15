@@ -1,5 +1,6 @@
 package com.geekbank.bank.services;
 
+import com.geekbank.bank.models.GifcardClassification;
 import com.geekbank.bank.models.KinguinGiftCard;
 import com.geekbank.bank.models.MainScreenGiftCardItem;
 import com.geekbank.bank.models.MainScreenGiftCardItemDTO;
@@ -34,6 +35,19 @@ public class MainScreenGiftCardService {
         this.kinguinService = kinguinService;
     }
 
+    @Transactional
+    public List<MainScreenGiftCardItemDTO> getMainScreenGiftCardItemsByClassification(GifcardClassification classification) {
+        List<MainScreenGiftCardItem> items =  mainScreenGiftCardItemRepository.findByClassification(classification);
+
+        return items.stream().map(
+                item -> {
+                 KinguinGiftCard giftCard = kinguinService.fetchGiftCardById(String.valueOf(item.getProductId()))
+                         .orElse(null);
+                 return new MainScreenGiftCardItemDTO(giftCard, item);
+                }).toList();
+
+    }
+
     public Page<MainScreenGiftCardItemDTO> getMainScreenGiftCardItems(Pageable pageable) {
         Page<MainScreenGiftCardItem> pageOfItems = mainScreenGiftCardItemRepository.findAllOrdered(pageable);
 
@@ -60,31 +74,6 @@ public class MainScreenGiftCardService {
     }
 
 
-    public List<MainScreenGiftCardItem> addItems(List<Long> productIds) {
-
-        List<Long> existingProductIds = mainScreenGiftCardItemRepository
-                .findByProductIdIn(productIds)
-                .stream()
-                .map(MainScreenGiftCardItem::getProductId)
-                .collect(Collectors.toList());
-
-        List<Long> newProductIds = productIds.stream()
-                .distinct()
-                .filter(id -> !existingProductIds.contains(id))
-                .collect(Collectors.toList());
-
-        List<MainScreenGiftCardItem> newItems = newProductIds.stream()
-                .map(productId -> {
-                    MainScreenGiftCardItem item = new MainScreenGiftCardItem();
-                    item.setProductId(productId);
-                    return mainScreenGiftCardItemRepository.save(item);
-                })
-                .collect(Collectors.toList());
-
-        logger.info("Agregados {} nuevos elementos de tarjetas de regalo (sin repetir).", newItems.size());
-        return newItems;
-    }
-
     @Transactional
     public void removeItems(List<Long> productIds) {
         logger.debug("Intentando eliminar elementos de tarjetas de regalo con IDs de producto: {}", productIds);
@@ -98,8 +87,4 @@ public class MainScreenGiftCardService {
             logger.error("No se pudieron eliminar todos los elementos de tarjetas de regalo para los IDs de producto: {}", productIds);
         }
     }
-//    @Transactional
-//    public List<MainScreenGiftCardItem> getMainScreenGiftCardItemsByClassification(String classification) {
-//        return mainScreenGiftCardItemRepository.findByClassification(classification);
-//    }
 }

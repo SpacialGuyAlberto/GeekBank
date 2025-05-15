@@ -1,5 +1,6 @@
 package com.geekbank.bank.controllers;
 
+import com.geekbank.bank.models.GifcardClassification;
 import com.geekbank.bank.models.MainScreenGiftCardItem;
 import com.geekbank.bank.models.MainScreenGiftCardItemDTO;
 import com.geekbank.bank.repositories.MainScreenGiftCardItemRepository;
@@ -41,17 +42,16 @@ public class MainScreenGiftCardController {
         return ResponseEntity.ok(items);
     }
 
-//    @GetMapping(params = "classification")
-//    public List<MainScreenGiftCardItem> getGiftCardsByClassification(
-//            @RequestParam String classification) {
-//        return mainScreenGiftCardService.getMainScreenGiftCardItemsByClassification(classification);
-//    }
 
-//    @PostMapping
-//    public ResponseEntity<List<MainScreenGiftCardItem>> addMainScreenGiftCardItems(@RequestBody MainScreenGiftCardRequest request) {
-//        List<MainScreenGiftCardItem> addedItems = mainScreenGiftCardService.addItems(request.getProductIds());
-//        return ResponseEntity.ok(addedItems);
-//    }
+    @GetMapping(params = "classification")
+    public ResponseEntity<List<MainScreenGiftCardItemDTO>> getGiftCardsByClassification(
+            @RequestParam GifcardClassification classification) {
+
+        List<MainScreenGiftCardItemDTO> items = mainScreenGiftCardService.getMainScreenGiftCardItemsByClassification(classification);
+        return ResponseEntity.ok(items);
+    }
+
+
 
     @PostMapping
     public ResponseEntity<MainScreenGiftCardItem> add(@RequestBody MainScreenGiftCardItemDTO item) {
@@ -61,7 +61,6 @@ public class MainScreenGiftCardController {
 
         return ResponseEntity.ok(mainScreenGiftCardService.addItem(item.getMainScreenGiftCardItem()));
     }
-
 
 
     @DeleteMapping
