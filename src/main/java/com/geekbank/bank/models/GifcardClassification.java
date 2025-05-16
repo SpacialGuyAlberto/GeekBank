@@ -8,5 +8,6 @@ public enum GifcardClassification {
     EDUCATION,
     TRAVEL,
     FOOD,
-    OTHER;
+    OTHER,
+    OPEN_WORLD
 }

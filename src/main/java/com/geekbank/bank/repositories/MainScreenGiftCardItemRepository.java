@@ -27,6 +27,7 @@ public interface MainScreenGiftCardItemRepository extends JpaRepository<MainScre
     List<MainScreenGiftCardItem> findByProductIdIn(List<Long> productIds);
 
     Optional<MainScreenGiftCardItem> findById(Long id);
+    Optional<MainScreenGiftCardItem> findByProductId(Long id);
 
     @Query("SELECT m FROM MainScreenGiftCardItem m ORDER BY m.id ASC")
     Page<MainScreenGiftCardItem> findAllOrdered(Pageable pageable);
@@ -48,4 +49,6 @@ public interface MainScreenGiftCardItemRepository extends JpaRepository<MainScre
 
     @Transactional
     List<MainScreenGiftCardItem> findByClassification(GifcardClassification classification);
+
+    void deleteByProductId(Long productId);
 }

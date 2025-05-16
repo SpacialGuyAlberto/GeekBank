@@ -10,9 +10,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -75,16 +75,8 @@ public class MainScreenGiftCardService {
 
 
     @Transactional
-    public void removeItems(List<Long> productIds) {
-        logger.debug("Intentando eliminar elementos de tarjetas de regalo con IDs de producto: {}", productIds);
-
-        mainScreenGiftCardItemRepository.deleteByProductIdIn(productIds);
-
-        List<MainScreenGiftCardItem> remainingItems = mainScreenGiftCardItemRepository.findByProductIdIn(productIds);
-        if (remainingItems.isEmpty()) {
-            logger.debug("Se eliminaron correctamente los elementos de tarjetas de regalo para los IDs de producto: {}", productIds);
-        } else {
-            logger.error("No se pudieron eliminar todos los elementos de tarjetas de regalo para los IDs de producto: {}", productIds);
-        }
+    public void removeByProductId(String productId) {
+        mainScreenGiftCardItemRepository.deleteByProductId(Long.valueOf(productId));
     }
+
 }

@@ -5,6 +5,7 @@ import com.geekbank.bank.models.MainScreenGiftCardItem;
 import com.geekbank.bank.models.MainScreenGiftCardItemDTO;
 import com.geekbank.bank.repositories.MainScreenGiftCardItemRepository;
 import com.geekbank.bank.services.MainScreenGiftCardService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/main-screen-gift-cards")
@@ -51,8 +53,6 @@ public class MainScreenGiftCardController {
         return ResponseEntity.ok(items);
     }
 
-
-
     @PostMapping
     public ResponseEntity<MainScreenGiftCardItem> add(@RequestBody MainScreenGiftCardItemDTO item) {
         if (item == null) {
@@ -62,22 +62,11 @@ public class MainScreenGiftCardController {
         return ResponseEntity.ok(mainScreenGiftCardService.addItem(item.getMainScreenGiftCardItem()));
     }
 
-
-    @DeleteMapping
-    public ResponseEntity<Void> removeMainScreenGiftCardItems(@RequestBody List<Long> productIds) {
-        mainScreenGiftCardService.removeItems(productIds);
-        return ResponseEntity.noContent().build();
-    }
-
-    public static class MainScreenGiftCardRequest {
-        private List<Long> productIds;
-
-        public List<Long> getProductIds() {
-            return productIds;
-        }
-
-        public void setProductIds(List<Long> productIds) {
-            this.productIds = productIds;
-        }
+    @DeleteMapping("/{productId}")
+    @Transactional
+    public ResponseEntity<Void> removeByProductId(@PathVariable String productId) {
+        Optional<MainScreenGiftCardItem> item = mainScreenGiftCardItemRepository.findByProductId(Long.valueOf(productId));
+        item.ifPresent(mainScreenGiftCardItemRepository::delete);
+        return ResponseEntity.noContent().build(); // 204 OK
     }
 }
