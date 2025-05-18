@@ -18,6 +18,7 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -27,6 +28,7 @@ import com.geekbank.bank.support.sms.model.SmsMessage;
 import com.geekbank.bank.payment.tigo.model.UnmatchedPayment;
 
 @Service
+@Component
 public class TelegramListener implements ApplicationListener<ContextClosedEvent> {
 
     private static final String TELEGRAM_BOT_TOKEN =
@@ -37,7 +39,6 @@ public class TelegramListener implements ApplicationListener<ContextClosedEvent>
     private int lastUpdateId = 0;
     private volatile boolean running = true;
 
-    // Inyecciones de servicios/repositories que aún quieras usar
     @Autowired
     private SmsService smsService;
 

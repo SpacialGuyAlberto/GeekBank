@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 
 
 @SpringBootApplication
+
 @EnableScheduling
 @EntityScan(basePackages = "com.geekbank.bank")
 @EnableJpaRepositories(basePackages = "com.geekbank.bank")
