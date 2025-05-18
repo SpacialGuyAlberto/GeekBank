@@ -1,13 +1,12 @@
 package com.geekbank.bank.models;
 
 public enum GifcardClassification {
-    GAMES,
+    POPULARES_HN,
+    OPEN_WORLD,
+    UTILITIES,
     ENTERTAINMENT,
-    STREAMING,
-    UTILITIES ,
-    EDUCATION,
-    TRAVEL,
-    FOOD,
-    OTHER,
-    OPEN_WORLD
+    FANTASY,
+    SHOOTER,
+    ANIME,
+    OTHER;
 }
