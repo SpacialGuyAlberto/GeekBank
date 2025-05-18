@@ -1,14 +1,14 @@
 package com.geekbank.bank.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.geekbank.bank.models.CartItem;
-import com.geekbank.bank.models.CartItemWithGiftcardDTO;
-import com.geekbank.bank.models.User;
-import com.geekbank.bank.services.CartService;
-import com.geekbank.bank.services.UserService;
+import com.geekbank.bank.cart.controller.CartController;
+import com.geekbank.bank.cart.model.CartItem;
+import com.geekbank.bank.cart.dto.CartItemWithGiftcardDTO;
+import com.geekbank.bank.user.model.User;
+import com.geekbank.bank.cart.service.CartService;
+import com.geekbank.bank.user.service.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;

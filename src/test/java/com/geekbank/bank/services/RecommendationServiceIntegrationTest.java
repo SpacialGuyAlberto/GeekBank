@@ -1,12 +1,13 @@
 package com.geekbank.bank.services;
 
-import com.geekbank.bank.models.Feedback;
-import com.geekbank.bank.models.GiftCardEntity;
-import com.geekbank.bank.models.KinguinGiftCard;
-import com.geekbank.bank.models.User;
-import com.geekbank.bank.repositories.FeedBackRepository;
-import com.geekbank.bank.repositories.GiftCardRepository;
-import com.geekbank.bank.repositories.UserRepository;
+import com.geekbank.bank.recommendation.service.RecommendationService;
+import com.geekbank.bank.support.feedback.model.Feedback;
+import com.geekbank.bank.giftcard.model.GiftCardEntity;
+import com.geekbank.bank.giftcard.kinguin.model.KinguinGiftCard;
+import com.geekbank.bank.user.model.User;
+import com.geekbank.bank.support.feedback.repository.FeedBackRepository;
+import com.geekbank.bank.giftcard.repository.GiftCardRepository;
+import com.geekbank.bank.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

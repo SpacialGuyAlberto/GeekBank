@@ -1,9 +1,7 @@
 package com.geekbank.bank;
 
-import com.geekbank.bank.config.ConfigLoader;
-import com.geekbank.bank.services.TelegramListener;
+import com.geekbank.bank.payment.tigo.utilities.telegram.service.TelegramListener;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -14,8 +12,8 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 
 @SpringBootApplication
 @EnableScheduling
-@EntityScan(basePackages = {"com.geekbank.bank.models"})
-@EnableJpaRepositories(basePackages = "com.geekbank.bank.repositories")
+@EntityScan(basePackages = "com.geekbank.bank")
+@EnableJpaRepositories(basePackages = "com.geekbank.bank")
 public class GeekBankApplication  {
 
     @Autowired
@@ -46,6 +44,8 @@ public class GeekBankApplication  {
         System.setProperty("PAYPAL_CLIENT_SECRET", dotenv.get("PAYPAL_CLIENT_SECRET"));
         System.setProperty("PAYPAL_BASE_URL", dotenv.get("PAYPAL_BASE_URL"));
         System.setProperty("STRIPE_API_KEY", dotenv.get("STRIPE_API_KEY"));
+        System.setProperty("KINGUIN_ORDER_URL", dotenv.get("KINGUIN_ORDER_URL"));
+        System.setProperty("KINGUIN_API_KEY", dotenv.get("KINGUIN_API_KEY"));
 
         SpringApplication.run(GeekBankApplication.class, args);
     }

@@ -1,14 +1,14 @@
 package com.geekbank.bank.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.geekbank.bank.models.User;
-import com.geekbank.bank.models.WishedItem;
-import com.geekbank.bank.models.WishedItemGiftcardDTO;
-import com.geekbank.bank.services.UserService;
-import com.geekbank.bank.services.WishService;
+import com.geekbank.bank.giftcard.featured.wishlist.controller.WishListController;
+import com.geekbank.bank.user.model.User;
+import com.geekbank.bank.giftcard.featured.wishlist.model.WishedItem;
+import com.geekbank.bank.giftcard.featured.wishlist.dto.WishedItemGiftcardDTO;
+import com.geekbank.bank.user.service.UserService;
+import com.geekbank.bank.giftcard.featured.wishlist.service.WishService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,7 +18,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.Mockito.*;

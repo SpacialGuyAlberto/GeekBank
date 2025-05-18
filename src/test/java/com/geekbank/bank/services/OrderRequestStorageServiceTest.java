@@ -1,6 +1,7 @@
 package com.geekbank.bank.services;
 
-import com.geekbank.bank.models.OrderRequest;
+import com.geekbank.bank.order.dto.OrderRequest;
+import com.geekbank.bank.order.service.OrderRequestStorageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

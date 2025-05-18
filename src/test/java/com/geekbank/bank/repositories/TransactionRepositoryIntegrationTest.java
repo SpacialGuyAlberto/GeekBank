@@ -1,9 +1,10 @@
 package com.geekbank.bank.repositories;
 
-import com.geekbank.bank.models.Transaction;
-import com.geekbank.bank.models.TransactionStatus;
-import com.geekbank.bank.models.TransactionType;
-import com.geekbank.bank.models.User;
+import com.geekbank.bank.transaction.model.Transaction;
+import com.geekbank.bank.transaction.constants.TransactionStatus;
+import com.geekbank.bank.transaction.constants.TransactionType;
+import com.geekbank.bank.transaction.repository.TransactionRepository;
+import com.geekbank.bank.user.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,7 +14,6 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 

@@ -1,6 +1,6 @@
 package com.geekbank.bank.controllers;
 
-import com.geekbank.bank.models.GeneralGiftCard;
+import com.geekbank.bank.giftcard.controller.GiftCardController;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

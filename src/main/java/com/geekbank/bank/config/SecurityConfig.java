@@ -2,14 +2,13 @@ package com.geekbank.bank.config;
 
 import com.geekbank.bank.components.JwtAuthenticationFilter;
 import com.geekbank.bank.filters.JwtRequestFilter;
-import com.geekbank.bank.repositories.UserRepository;
-import com.geekbank.bank.services.UserDetailsServiceImpl;
+import com.geekbank.bank.user.repository.UserRepository;
+import com.geekbank.bank.user.service.UserDetailsServiceImpl;
 import com.geekbank.bank.util.JwtTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;

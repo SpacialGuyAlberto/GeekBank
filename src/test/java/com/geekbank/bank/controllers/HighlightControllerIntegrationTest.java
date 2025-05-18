@@ -1,12 +1,12 @@
 package com.geekbank.bank.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.geekbank.bank.models.HighlightItem;
-import com.geekbank.bank.models.HighlightItemWithGiftcardDTO;
-import com.geekbank.bank.services.HighlightService;
+import com.geekbank.bank.giftcard.featured.highlight.controller.HighlightController;
+import com.geekbank.bank.giftcard.featured.highlight.model.HighlightItem;
+import com.geekbank.bank.giftcard.featured.highlight.dto.HighlightItemWithGiftcardDTO;
+import com.geekbank.bank.giftcard.featured.highlight.service.HighlightService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;

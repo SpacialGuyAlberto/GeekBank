@@ -1,6 +1,7 @@
 package com.geekbank.bank.repositories;
 
-import com.geekbank.bank.models.HighlightItem;
+import com.geekbank.bank.giftcard.featured.highlight.repository.HighlightItemRepository;
+import com.geekbank.bank.giftcard.featured.highlight.model.HighlightItem;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

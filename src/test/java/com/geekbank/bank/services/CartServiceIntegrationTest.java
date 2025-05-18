@@ -1,11 +1,11 @@
 package com.geekbank.bank.services;
 
-import com.geekbank.bank.models.CartItem;
-import com.geekbank.bank.models.User;
-import com.geekbank.bank.models.KinguinGiftCard;
-import com.geekbank.bank.models.CartItemWithGiftcardDTO;
-import com.geekbank.bank.repositories.CartItemRepository;
-import com.geekbank.bank.repositories.UserRepository;
+import com.geekbank.bank.cart.service.CartService;
+import com.geekbank.bank.cart.model.CartItem;
+import com.geekbank.bank.user.model.User;
+import com.geekbank.bank.cart.dto.CartItemWithGiftcardDTO;
+import com.geekbank.bank.cart.repository.CartItemRepository;
+import com.geekbank.bank.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

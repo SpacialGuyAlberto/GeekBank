@@ -1,10 +1,10 @@
 package com.geekbank.bank;
 
-import com.geekbank.bank.models.Account;
-import com.geekbank.bank.models.AccountStatus;
-import com.geekbank.bank.models.VerificationStatus;
-import com.geekbank.bank.repositories.AccountRepository;
-import com.geekbank.bank.services.AccountService;
+import com.geekbank.bank.user.account.model.Account;
+import com.geekbank.bank.user.account.constants.AccountStatus;
+import com.geekbank.bank.payment.tigo.constants.VerificationStatus;
+import com.geekbank.bank.user.account.repository.AccountRepository;
+import com.geekbank.bank.user.account.service.AccountService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
@@ -13,7 +13,6 @@ import org.springframework.data.domain.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;

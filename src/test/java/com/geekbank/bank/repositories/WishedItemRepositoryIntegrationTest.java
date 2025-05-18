@@ -1,7 +1,9 @@
 package com.geekbank.bank.repositories;
 
-import com.geekbank.bank.models.WishedItem;
-import com.geekbank.bank.models.User;
+import com.geekbank.bank.giftcard.featured.wishlist.model.WishedItem;
+import com.geekbank.bank.giftcard.featured.wishlist.repository.WishedItemRepository;
+import com.geekbank.bank.user.model.User;
+import com.geekbank.bank.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
