@@ -1,11 +1,12 @@
 package com.geekbank.bank.services;
 
-import com.geekbank.bank.models.Account;
-import com.geekbank.bank.models.AccountStatus;
-import com.geekbank.bank.models.Roles;
-import com.geekbank.bank.models.User;
-import com.geekbank.bank.repositories.AccountRepository;
-import com.geekbank.bank.repositories.UserRepository;
+import com.geekbank.bank.user.account.model.Account;
+import com.geekbank.bank.user.account.constants.AccountStatus;
+import com.geekbank.bank.user.account.service.AccountService;
+import com.geekbank.bank.user.constants.Roles;
+import com.geekbank.bank.user.model.User;
+import com.geekbank.bank.user.account.repository.AccountRepository;
+import com.geekbank.bank.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

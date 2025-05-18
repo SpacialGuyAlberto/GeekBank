@@ -1,15 +1,15 @@
 package com.geekbank.bank.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.geekbank.bank.models.BalancePurchaseRequest;
-import com.geekbank.bank.models.Transaction;
-import com.geekbank.bank.models.TransactionType;
-import com.geekbank.bank.models.User;
-import com.geekbank.bank.repositories.UserRepository;
-import com.geekbank.bank.services.TransactionService;
+import com.geekbank.bank.balance.controller.BalanceController;
+import com.geekbank.bank.balance.dto.BalancePurchaseRequest;
+import com.geekbank.bank.transaction.model.Transaction;
+import com.geekbank.bank.transaction.constants.TransactionType;
+import com.geekbank.bank.user.model.User;
+import com.geekbank.bank.user.repository.UserRepository;
+import com.geekbank.bank.transaction.service.TransactionService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;

@@ -1,12 +1,12 @@
 package com.geekbank.bank.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.geekbank.bank.models.Feedback;
-import com.geekbank.bank.dto.FeedbackRequest;
-import com.geekbank.bank.services.FeedbackService;
+import com.geekbank.bank.support.feedback.model.Feedback;
+import com.geekbank.bank.support.feedback.dto.FeedbackRequest;
+import com.geekbank.bank.support.feedback.controller.FeedbackController;
+import com.geekbank.bank.support.feedback.service.FeedbackService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;

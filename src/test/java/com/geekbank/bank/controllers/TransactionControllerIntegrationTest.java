@@ -1,18 +1,17 @@
 package com.geekbank.bank.controllers;
 
-import com.geekbank.bank.models.Transaction;
-import com.geekbank.bank.models.TransactionStatus;
-import com.geekbank.bank.repositories.TransactionRepository;
-import com.geekbank.bank.services.OrderRequestStorageService;
-import com.geekbank.bank.services.TransactionService;
-import com.geekbank.bank.services.TransactionStorageService;
+import com.geekbank.bank.transaction.controller.TransactionController;
+import com.geekbank.bank.transaction.model.Transaction;
+import com.geekbank.bank.transaction.constants.TransactionStatus;
+import com.geekbank.bank.transaction.repository.TransactionRepository;
+import com.geekbank.bank.order.service.OrderRequestStorageService;
+import com.geekbank.bank.transaction.service.TransactionService;
+import com.geekbank.bank.transaction.service.TransactionStorageService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;

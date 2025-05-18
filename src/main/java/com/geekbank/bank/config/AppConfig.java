@@ -1,6 +1,6 @@
 package com.geekbank.bank.config;
 
-import com.geekbank.bank.models.Transaction;
+import com.geekbank.bank.transaction.model.Transaction;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;

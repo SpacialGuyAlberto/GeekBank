@@ -1,6 +1,10 @@
 package com.geekbank.bank.repositories;
 
-import com.geekbank.bank.models.*;
+import com.geekbank.bank.cart.model.CartItem;
+import com.geekbank.bank.cart.repository.CartItemRepository;
+import com.geekbank.bank.user.constants.Roles;
+import com.geekbank.bank.user.model.User;
+import com.geekbank.bank.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,7 +13,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 

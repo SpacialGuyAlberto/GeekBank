@@ -1,13 +1,13 @@
 package com.geekbank.bank.controllers;
 
-import com.geekbank.bank.models.Transaction;
-import com.geekbank.bank.models.TransactionStatus;
+import com.geekbank.bank.transaction.controller.TransactionWebSocketController;
+import com.geekbank.bank.transaction.model.Transaction;
+import com.geekbank.bank.transaction.constants.TransactionStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.test.context.ActiveProfiles;

@@ -1,14 +1,16 @@
 package com.geekbank.bank.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.geekbank.bank.models.User;
-import com.geekbank.bank.services.AccountService;
-import com.geekbank.bank.services.UserService;
+import com.geekbank.bank.payment.tigo.constants.VerificationStatus;
+import com.geekbank.bank.user.account.model.Account;
+import com.geekbank.bank.user.constants.Roles;
+import com.geekbank.bank.user.model.User;
+import com.geekbank.bank.user.account.service.AccountService;
+import com.geekbank.bank.user.controller.UserController;
+import com.geekbank.bank.user.service.UserService;
 import com.geekbank.bank.util.JwtTokenUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -27,7 +29,6 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.util.AssertionErrors.assertEquals;
 import static org.springframework.test.util.AssertionErrors.assertNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -61,7 +62,7 @@ public class UserControllerIntegrationTest {
     private PasswordEncoder passwordEncoder;
 
     // @MockBean
-    // private com.geekbank.bank.repositories.UserRepository userRepository;
+    // private com.geekbank.bank.user.repository.UserRepository userRepository;
 
     /**
      * Método auxiliar para crear un usuario de prueba.
@@ -73,7 +74,7 @@ public class UserControllerIntegrationTest {
         user.setEmail(email);
         user.setPhoneNumber(phoneNumber);
         user.setPassword("{bcrypt}$2a$10$abcdefghijklmnopqrstuv"); // Contraseña encriptada de ejemplo
-        user.setRole(com.geekbank.bank.models.Roles.CUSTOMER);
+        user.setRole(Roles.CUSTOMER);
         user.setEnabled(true);
         return user;
     }
@@ -203,7 +204,7 @@ public class UserControllerIntegrationTest {
         newUser.setEmail("charlie.brown@example.com");
         newUser.setPassword("password123"); // Contraseña en texto plano (debería ser encriptada en el servicio)
         newUser.setPhoneNumber("7778889999");
-        newUser.setRole(com.geekbank.bank.models.Roles.CUSTOMER);
+        newUser.setRole(Roles.CUSTOMER);
         newUser.setEnabled(false); // Usuario no habilitado inicialmente
 
         // Simular comportamiento del servicio
@@ -398,7 +399,7 @@ public class UserControllerIntegrationTest {
         when(userService.findByActivationToken(token)).thenReturn(Optional.of(user));
 
         // Simular servicios relacionados
-        com.geekbank.bank.models.Account account = mock(com.geekbank.bank.models.Account.class);
+        Account account = mock(Account.class);
         when(accountService.getAccountsByUserId(user.getId())).thenReturn(account);
 
         // Realizar la solicitud POST
@@ -413,7 +414,7 @@ public class UserControllerIntegrationTest {
         // Verificar que el usuario haya sido actualizado
         verify(userService, times(1)).findByActivationToken(token);
         verify(accountService, times(1)).getAccountsByUserId(user.getId());
-        verify(accountService, times(1)).changeVerificationStatus(account.getId(), com.geekbank.bank.models.VerificationStatus.VERIFIED);
+        verify(accountService, times(1)).changeVerificationStatus(account.getId(), VerificationStatus.VERIFIED);
         verify(userService, times(1)).saveUser(user); // Asumiendo que tienes un método saveUser en UserService
         assertTrue(passwordEncoder.matches(newPassword, user.getPassword()), "La contraseña debería haberse actualizado y encriptado");
         assertTrue(user.isEnabled(), "El usuario debería estar habilitado");

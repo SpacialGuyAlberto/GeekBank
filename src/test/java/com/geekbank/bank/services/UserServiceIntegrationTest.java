@@ -1,17 +1,17 @@
 package com.geekbank.bank.services;
 
 import com.geekbank.bank.config.TestConfig;
-import com.geekbank.bank.models.*;
-import com.geekbank.bank.repositories.AccountRepository;
-import com.geekbank.bank.repositories.UserRepository;
+import com.geekbank.bank.user.account.constants.AccountStatus;
+import com.geekbank.bank.user.account.model.Account;
+import com.geekbank.bank.user.account.repository.AccountRepository;
+import com.geekbank.bank.user.constants.Roles;
+import com.geekbank.bank.user.model.User;
+import com.geekbank.bank.user.repository.UserRepository;
+import com.geekbank.bank.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration;
-import org.springframework.boot.autoconfigure.sendgrid.SendGridAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;

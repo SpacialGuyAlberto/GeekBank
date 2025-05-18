@@ -1,13 +1,13 @@
 package com.geekbank.bank.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.geekbank.bank.models.User;
-import com.geekbank.bank.models.UserDetailsImpl;
-import com.geekbank.bank.services.UserService;
+import com.geekbank.bank.auth.login.controller.LoginController;
+import com.geekbank.bank.user.model.User;
+import com.geekbank.bank.user.UserDetailsImpl;
+import com.geekbank.bank.user.service.UserService;
 import com.geekbank.bank.util.JwtTokenUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;

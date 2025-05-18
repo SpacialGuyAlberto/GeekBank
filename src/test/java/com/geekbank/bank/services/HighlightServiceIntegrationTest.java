@@ -1,20 +1,20 @@
 package com.geekbank.bank.services;
 
-import com.geekbank.bank.dto.HighlightDTO;
-import com.geekbank.bank.models.HighlightItem;
-import com.geekbank.bank.models.HighlightItemWithGiftcardDTO;
-import com.geekbank.bank.repositories.HighlightItemRepository;
+import com.geekbank.bank.giftcard.featured.highlight.dto.HighlightDTO;
+import com.geekbank.bank.giftcard.featured.highlight.service.HighlightService;
+import com.geekbank.bank.giftcard.kinguin.service.KinguinService;
+import com.geekbank.bank.giftcard.featured.highlight.model.HighlightItem;
+import com.geekbank.bank.giftcard.featured.highlight.dto.HighlightItemWithGiftcardDTO;
+import com.geekbank.bank.giftcard.featured.highlight.repository.HighlightItemRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;

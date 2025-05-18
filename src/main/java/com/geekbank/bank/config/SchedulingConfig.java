@@ -1,6 +1,6 @@
 package com.geekbank.bank.config;
 
-import com.geekbank.bank.services.GiftCardSyncService;
+import com.geekbank.bank.support.sync.service.GiftCardSyncService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;

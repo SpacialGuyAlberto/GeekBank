@@ -1,6 +1,13 @@
 package com.geekbank.bank.repositories;
 
-import com.geekbank.bank.models.*;
+import com.geekbank.bank.payment.tigo.constants.VerificationStatus;
+import com.geekbank.bank.user.account.constants.AccountStatus;
+import com.geekbank.bank.user.account.constants.AccountType;
+import com.geekbank.bank.user.account.model.Account;
+import com.geekbank.bank.user.account.repository.AccountRepository;
+import com.geekbank.bank.user.constants.Roles;
+import com.geekbank.bank.user.model.User;
+import com.geekbank.bank.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -1,6 +1,6 @@
 package com.geekbank.bank.filters;
 
-import com.geekbank.bank.services.UserDetailsServiceImpl;
+import com.geekbank.bank.user.service.UserDetailsServiceImpl;
 import com.geekbank.bank.util.JwtTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;

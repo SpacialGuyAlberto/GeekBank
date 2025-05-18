@@ -1,6 +1,7 @@
 package com.geekbank.bank.repositories;
 
-import com.geekbank.bank.models.Feedback;
+import com.geekbank.bank.support.feedback.model.Feedback;
+import com.geekbank.bank.support.feedback.repository.FeedBackRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,7 +12,6 @@ import org.springframework.test.context.ActiveProfiles;
 import java.util.Date;
 import java.util.List;
 import java.util.Calendar;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 

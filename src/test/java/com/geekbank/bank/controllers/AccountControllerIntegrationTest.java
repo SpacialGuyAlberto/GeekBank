@@ -1,9 +1,10 @@
 package com.geekbank.bank.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.geekbank.bank.models.Account;
-import com.geekbank.bank.services.AccountService;
-import com.geekbank.bank.services.UserService;
+import com.geekbank.bank.user.account.model.Account;
+import com.geekbank.bank.user.account.controller.AccountController;
+import com.geekbank.bank.user.account.service.AccountService;
+import com.geekbank.bank.user.service.UserService;
 import com.geekbank.bank.util.JwtTokenUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
-import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;

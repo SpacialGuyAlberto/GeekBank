@@ -1,10 +1,10 @@
 package com.geekbank.bank.services;
 
-import com.geekbank.bank.models.User;
+import com.geekbank.bank.support.email.service.SendGridEmailService;
+import com.geekbank.bank.user.model.User;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
-import com.sendgrid.helpers.mail.objects.Email;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

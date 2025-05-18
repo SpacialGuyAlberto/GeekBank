@@ -1,7 +1,9 @@
 package com.geekbank.bank.repositories;
 
-import com.geekbank.bank.models.GiftCardEntity;
-import com.geekbank.bank.models.Feedback;
+import com.geekbank.bank.giftcard.model.GiftCardEntity;
+import com.geekbank.bank.giftcard.repository.GiftCardRepository;
+import com.geekbank.bank.support.feedback.model.Feedback;
+import com.geekbank.bank.support.feedback.repository.FeedBackRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
