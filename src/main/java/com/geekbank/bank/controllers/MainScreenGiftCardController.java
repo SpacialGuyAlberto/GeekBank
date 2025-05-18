@@ -1,8 +1,11 @@
 package com.geekbank.bank.controllers;
 
+import com.geekbank.bank.models.GifcardClassification;
 import com.geekbank.bank.models.MainScreenGiftCardItem;
 import com.geekbank.bank.models.MainScreenGiftCardItemDTO;
+import com.geekbank.bank.repositories.MainScreenGiftCardItemRepository;
 import com.geekbank.bank.services.MainScreenGiftCardService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -12,16 +15,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/main-screen-gift-cards")
 public class MainScreenGiftCardController {
 
     private final MainScreenGiftCardService mainScreenGiftCardService;
+    private final MainScreenGiftCardItemRepository mainScreenGiftCardItemRepository;
 
     @Autowired
-    public MainScreenGiftCardController(MainScreenGiftCardService mainScreenGiftCardService) {
+    public MainScreenGiftCardController(MainScreenGiftCardService mainScreenGiftCardService, MainScreenGiftCardItemRepository mainScreenGiftCardItemRepository) {
         this.mainScreenGiftCardService = mainScreenGiftCardService;
+        this.mainScreenGiftCardItemRepository = mainScreenGiftCardItemRepository;
     }
 
     @GetMapping
@@ -38,27 +44,29 @@ public class MainScreenGiftCardController {
         return ResponseEntity.ok(items);
     }
 
+
+    @GetMapping(params = "classification")
+    public ResponseEntity<List<MainScreenGiftCardItemDTO>> getGiftCardsByClassification(
+            @RequestParam GifcardClassification classification) {
+
+        List<MainScreenGiftCardItemDTO> items = mainScreenGiftCardService.getMainScreenGiftCardItemsByClassification(classification);
+        return ResponseEntity.ok(items);
+    }
+
     @PostMapping
-    public ResponseEntity<List<MainScreenGiftCardItem>> addMainScreenGiftCardItems(@RequestBody MainScreenGiftCardRequest request) {
-        List<MainScreenGiftCardItem> addedItems = mainScreenGiftCardService.addItems(request.getProductIds());
-        return ResponseEntity.ok(addedItems);
-    }
-
-    @DeleteMapping
-    public ResponseEntity<Void> removeMainScreenGiftCardItems(@RequestBody List<Long> productIds) {
-        mainScreenGiftCardService.removeItems(productIds);
-        return ResponseEntity.noContent().build();
-    }
-
-    public static class MainScreenGiftCardRequest {
-        private List<Long> productIds;
-
-        public List<Long> getProductIds() {
-            return productIds;
+    public ResponseEntity<MainScreenGiftCardItem> add(@RequestBody MainScreenGiftCardItemDTO item) {
+        if (item == null) {
+            return ResponseEntity.badRequest().body(null);
         }
 
-        public void setProductIds(List<Long> productIds) {
-            this.productIds = productIds;
-        }
+        return ResponseEntity.ok(mainScreenGiftCardService.addItem(item.getMainScreenGiftCardItem()));
+    }
+
+    @DeleteMapping("/{productId}")
+    @Transactional
+    public ResponseEntity<Void> removeByProductId(@PathVariable String productId) {
+        Optional<MainScreenGiftCardItem> item = mainScreenGiftCardItemRepository.findByProductId(Long.valueOf(productId));
+        item.ifPresent(mainScreenGiftCardItemRepository::delete);
+        return ResponseEntity.noContent().build(); // 204 OK
     }
 }
