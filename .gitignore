@@ -35,3 +35,8 @@ out/
 
 ### VS Code ###
 .vscode/
+compose.yaml
+.env
+Task
+app-error.log
+app.log
