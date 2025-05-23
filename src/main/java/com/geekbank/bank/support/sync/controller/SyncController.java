@@ -40,11 +40,6 @@ public class SyncController {
         return ResponseEntity.ok(Collections.singletonMap("isSyncing", isSyncing));
     }
 
-    @GetMapping("/insert-test")
-    public String insertTestGiftCard() {
-        giftCardSyncService.insertTestGiftCard();
-        return "GiftCard de prueba insertada.";
-    }
 
 
     @GetMapping("/total")
