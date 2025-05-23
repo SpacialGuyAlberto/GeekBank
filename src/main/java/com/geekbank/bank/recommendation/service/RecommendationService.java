@@ -274,7 +274,7 @@ public class RecommendationService {
      * @return Lista de GiftCards recomendadas basadas en popularidad.
      */
     public List<KinguinGiftCard> recommendByPopularity(int k) {
-        Pageable pageable = PageRequest.of(0, 1);
+        Pageable pageable = PageRequest.of(0, 4);
         List<GiftCardEntity> popularGiftCards = giftCardRepository.findTopKPopular(pageable);
 
         // Extraer los IDs de las GiftCards populares
