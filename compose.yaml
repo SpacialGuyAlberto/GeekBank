@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: Primary
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: LeiserHazard1996!
+    ports: ["5432:5432"]
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d Primary"]
+      interval: 5s           # ↓ más ágil
+      retries: 6
+      start_period: 0s
+
+  app:
+    image: geekbank-app:dev          # la que ya construiste
+    env_file: [.env]
+    volumes: [./.env:/app/.env:ro]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/Primary
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: LeiserHazard1996!
+    ports: ["7070:7070"]
+    depends_on: [postgres]           # sin condición (Spring Boot reintenta)
+
+volumes:
+  postgres_data:
