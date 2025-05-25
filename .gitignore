@@ -36,6 +36,8 @@ out/
 ### VS Code ###
 .vscode/
 compose.yaml
+compose.build.yaml
+dockerfile
 .env
 Task
 app-error.log
