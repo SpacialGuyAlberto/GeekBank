@@ -1,6 +1,5 @@
-package com.geekbank.bank.tournament;
+package com.geekbank.bank.tournament.models;
 
-import com.geekbank.bank.tournament.Tournament;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

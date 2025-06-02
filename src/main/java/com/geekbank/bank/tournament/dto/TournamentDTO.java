@@ -1,32 +1,25 @@
-package com.geekbank.bank.tournament;
+package com.geekbank.bank.tournament.dto;
 
 import com.geekbank.bank.tournament.player.Player;
-import jakarta.persistence.*;
+import com.geekbank.bank.user.model.User;
+import jakarta.annotation.Nullable;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.List;
 
-@Entity
+
 @Getter
 @Setter
-@NoArgsConstructor
-@Table(name = "tournaments")
-public class Tournament {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+public class TournamentDTO {
     private String name;
     private String description;
     private LocalDate startDate;
     private LocalDate endDate;
+    @Nullable
     private String status;
-
-    @ManyToMany(mappedBy = "tournaments")
+    @Nullable
     private List<Player> players;
+    private Long moderatorId;
 }
-

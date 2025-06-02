@@ -1,8 +1,7 @@
 package com.geekbank.bank.tournament.prize;
 
-import com.geekbank.bank.tournament.Tournament;
+import com.geekbank.bank.tournament.models.Tournament;
 import com.geekbank.bank.tournament.player.Player;
-import com.geekbank.bank.user.model.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

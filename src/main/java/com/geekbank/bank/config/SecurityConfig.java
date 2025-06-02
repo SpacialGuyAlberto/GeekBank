@@ -88,7 +88,8 @@ public class SecurityConfig {
                                 "/api/activation-details/**",
                                 "api/transactions/verify-unmatched-payment",
                                 "/api/paypal/**", "/api/auth/check-auth", "/api/visits/**", "/api/metrics/**",
-                                "/api/admin/payments/**", "/api/promotion/**", "/api/payments/**"
+                                "/api/admin/payments/**", "/api/promotion/**", "/api/payments/**",
+                                "/api/tournament/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
