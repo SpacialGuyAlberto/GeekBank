@@ -165,7 +165,7 @@ public class PdfGeneratorService {
     // ========================= HELPERS ================================
 
     private String hnl(double amount) {
-        return String.format(Locale.US, "L%,.2f", amount);
+        return String.format(Locale.US, "USD%,.2f", amount);
     }
 
     private String safe(String v) {
