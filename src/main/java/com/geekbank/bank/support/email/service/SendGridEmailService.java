@@ -188,7 +188,7 @@ public class SendGridEmailService {
         // Crea el contenido del email
         String finalBody = body;
         if (key != null && transaction != null) {
-            finalBody += "\n\nCompra exitosa de tus claves: " + key + "\n Tu numero de transaccion es: " + transaction.getTransactionNumber();
+            finalBody += "\n\nCompra exitosa de tus claves: " + key + "\n Tu numero de transaccion es: " + transaction.getTransactionNumber() + "\n Puedes acceder a la transaccion ingresando a https://astralisbank.com/purchase-confirmation?transactionNumber=";
         }
 
         Content content = new Content("text/html", finalBody);
