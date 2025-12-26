@@ -1,5 +1,6 @@
 package com.geekbank.bank.flashoffers.repository;
 
+import com.geekbank.bank.flashoffers.enums.FlashSaleStatus;
 import com.geekbank.bank.flashoffers.model.FlashOffer;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,9 +12,15 @@ import java.util.Optional;
 
 @Repository
 public interface FlashOfferRepository extends JpaRepository<FlashOffer, Long> {
-    @NotNull List<FlashOffer> findAll();
-    Optional<FlashOffer> findByProductId(Long productId);
-    List<FlashOffer> findByLimitDate(LocalDateTime now);
+    List<FlashOffer> findByStatus(FlashSaleStatus status);
 
+    // Flash sales expiradas
+    List<FlashOffer> findByLimitDateBefore(LocalDateTime now);
+
+    // Flash sales vigentes ahora
+    List<FlashOffer> findByCreatedAtBeforeAndLimitDateAfter(
+            LocalDateTime now1,
+            LocalDateTime now2
+    );
 }
 

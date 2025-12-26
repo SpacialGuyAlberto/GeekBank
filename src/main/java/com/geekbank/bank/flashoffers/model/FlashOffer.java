@@ -15,49 +15,43 @@ import java.util.List;
 @Getter
 @Setter
 public class FlashOffer {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "product_id")
-    private Long productId;
-
-    @Column(name = "temporary_price")
-    BigDecimal temporaryPrice;
-
-    @OneToMany
-    @JoinColumn(name = "flash_offer_id") // FK en flash_offer_product
+    @OneToMany(
+            mappedBy = "flashOffer",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
     private List<FlashOfferProduct> products = new ArrayList<>();
 
-    @Column(name = "original_price")
-    BigDecimal originalPrice;
-
     @Column(name = "created_at")
-    LocalDateTime createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "limit_date")
-    LocalDateTime limitDate;
+    private LocalDateTime limitDate;
 
-    @Column(name = "status")
     @Enumerated(EnumType.STRING)
-    FlashSaleStatus status;
+    private FlashSaleStatus status;
 
-    @Column(name = "stock_limit")
-    Integer stockLimit;
+    private Integer stockLimit;
+    private Integer userLimit;
+    private String visibility;
+    private String allowedCountries;
+    private String badge;
+    private String bannerUrl;
 
-    @Column(name = "user_limit")
-    Integer userLimit;
+    /** helper methods */
+    public void addProduct(FlashOfferProduct product) {
+        products.add(product);
+        product.setFlashOffer(this);
+    }
 
-    @Column(name = "visibility")
-    String visibility;
-
-    @Column(name = "allowed_countries")
-    String allowedCountries;
-
-    @Column(name = "badge")
-    String badge;
-
-    @Column(name = "banner_url")
-    String bannerUrl;
-
+    public void removeProduct(FlashOfferProduct product) {
+        products.remove(product);
+        product.setFlashOffer(null);
+    }
 }

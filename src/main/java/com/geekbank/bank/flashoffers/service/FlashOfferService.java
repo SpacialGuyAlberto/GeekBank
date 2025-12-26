@@ -14,53 +14,78 @@ import java.util.Optional;
 @Service
 public class FlashOfferService {
 
-    private final FlashOfferRepository repository;
-    private final FlashOfferProductRepository flashOfferProductRepository;
+    private final FlashOfferRepository flashOfferRepository;
+    private final FlashOfferProductRepository productRepository;
 
-    public FlashOfferService(FlashOfferRepository repository, FlashOfferProductRepository flashOfferProductRepository) {
-        this.repository = repository;
-        this.flashOfferProductRepository = flashOfferProductRepository;
+    public FlashOfferService(
+            FlashOfferRepository flashOfferRepository,
+            FlashOfferProductRepository productRepository
+    ) {
+        this.flashOfferRepository = flashOfferRepository;
+        this.productRepository = productRepository;
     }
+
+    /* ===================== GET ===================== */
 
     public List<FlashOffer> getAllOffers() {
-        return repository.findAll();
+        return flashOfferRepository.findAll();
     }
 
-    public Optional<FlashOffer> getOfferByProductId(Long productId) {
-        return repository.findByProductId(productId);
+    public List<FlashOfferProduct> findAllProducts() {
+        return productRepository.findAll();
     }
+
+    public FlashOffer getOffer(Long id) {
+        return flashOfferRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("FlashOffer not found"));
+    }
+
+    /* ===================== CREATE ===================== */
 
     @Transactional
     public FlashOffer createOffer(FlashOffer offer) {
         offer.setCreatedAt(LocalDateTime.now());
-        offer.getProducts().forEach(product -> {
-            flashOfferProductRepository.save(product);
-        ;});
-        return repository.save(offer);
+
+        offer.getProducts().forEach(product ->
+                product.setFlashOffer(offer)
+        );
+
+        return flashOfferRepository.save(offer);
     }
+
+    /* ===================== UPDATE ===================== */
 
     @Transactional
-    public FlashOffer updateOffer(Long id, FlashOffer offerDetails) {
-        FlashOffer offer = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Flash Offer not found with id " + id));
+    public FlashOffer updateOffer(Long id, FlashOffer updated) {
 
-        offer.setProducts(offerDetails.getProducts());
-        offer.setLimitDate(offerDetails.getLimitDate());
-        offer.setStatus(offerDetails.getStatus());
-        offer.setStockLimit(offerDetails.getStockLimit());
-        offer.setUserLimit(offerDetails.getUserLimit());
-        offer.setVisibility(offerDetails.getVisibility());
-        offer.setAllowedCountries(offerDetails.getAllowedCountries());
-        offer.setBadge(offerDetails.getBadge());
-        offer.setBannerUrl(offerDetails.getBannerUrl());
+        FlashOffer existing = getOffer(id);
 
-        return repository.save(offer);
+        existing.setLimitDate(updated.getLimitDate());
+        existing.setStatus(updated.getStatus());
+        existing.setStockLimit(updated.getStockLimit());
+        existing.setUserLimit(updated.getUserLimit());
+        existing.setVisibility(updated.getVisibility());
+        existing.setAllowedCountries(updated.getAllowedCountries());
+        existing.setBadge(updated.getBadge());
+        existing.setBannerUrl(updated.getBannerUrl());
+
+        /* 🔥 reemplazar productos */
+        existing.getProducts().clear();
+
+        updated.getProducts().forEach(product -> {
+            product.setFlashOffer(existing);
+            existing.getProducts().add(product);
+        });
+
+        return flashOfferRepository.save(existing);
     }
+
+    /* ===================== DELETE ===================== */
 
     @Transactional
     public void deleteOffer(Long id) {
-        FlashOffer offer = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Flash Offer not found with id " + id));
-        repository.delete(offer);
+        FlashOffer offer = getOffer(id);
+        flashOfferRepository.delete(offer);
     }
 }
+
