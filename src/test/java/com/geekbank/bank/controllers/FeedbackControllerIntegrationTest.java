@@ -72,7 +72,7 @@ public class FeedbackControllerIntegrationTest {
         Feedback feedback = new Feedback();
         feedback.setId(1L);
         feedback.setMessage("Test feedback message");
-        feedback.setRating(4);
+        feedback.setScore(4);
 
         when(feedbackService.createFeedback(any(FeedbackRequest.class))).thenReturn(feedback);
 

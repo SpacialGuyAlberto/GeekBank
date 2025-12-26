@@ -49,6 +49,7 @@ public class SecurityConfig {
     private final UserDetailsServiceImpl userDetailsService;
     @Autowired
     private UserRepository userRepository;
+
     public SecurityConfig(JwtTokenUtil jwtTokenUtil, UserDetailsServiceImpl userDetailsService) {
         this.jwtTokenUtil = jwtTokenUtil;
         this.userDetailsService = userDetailsService;
@@ -88,15 +89,15 @@ public class SecurityConfig {
                                 "/api/activation-details/**",
                                 "api/transactions/verify-unmatched-payment",
                                 "/api/paypal/**", "/api/auth/check-auth", "/api/visits/**", "/api/metrics/**",
-                                "/api/admin/payments/**", "/api/promotion/**", "/api/payments/**"
-                        ).permitAll()
-                        .anyRequest().authenticated()
-                )
+                                "/api/admin/payments/**", "/api/promotion/**", "/api/payments/**",
+                                "/api/flash-offers/**", "/api/combos/**")
+                        .permitAll()
+                        .anyRequest().authenticated())
 
                 // .oauth2Login(oauth2Login -> oauth2Login
-                //     .defaultSuccessUrl("/api/home", true)
-                //     .userInfoEndpoint(userInfoEndpoint ->
-                //         userInfoEndpoint.oidcUserService(oidcUserService()))
+                // .defaultSuccessUrl("/api/home", true)
+                // .userInfoEndpoint(userInfoEndpoint ->
+                // userInfoEndpoint.oidcUserService(oidcUserService()))
                 // )
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -104,10 +105,8 @@ public class SecurityConfig {
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.sendError(
                                     HttpServletResponse.SC_UNAUTHORIZED,
-                                    authException.getMessage()
-                            );
-                        })
-                )
+                                    authException.getMessage());
+                        }))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
@@ -118,10 +117,12 @@ public class SecurityConfig {
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(jwtTokenUtil, userDetailsService);
     }
+
     @Bean
     public ClientRegistrationRepository clientRegistrationRepository() {
         return new InMemoryClientRegistrationRepository(googleClientRegistration());
     }
+
     private ClientRegistration googleClientRegistration() {
         return ClientRegistration.withRegistrationId("google")
                 .clientId("445500636748-2nuqarr3morlrul9bdadefcogo7rffcn.apps.googleusercontent.com")
@@ -158,11 +159,11 @@ public class SecurityConfig {
     public OidcUserService oidcUserService() {
         return new OidcUserService();
     }
+
     @Bean
     public AuthenticationManager authenticationManager(
             UserDetailsService userDetailsService,
-            PasswordEncoder passwordEncoder
-    ) {
+            PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
         authenticationProvider.setUserDetailsService(userDetailsService);
         authenticationProvider.setPasswordEncoder(passwordEncoder);
@@ -173,10 +174,12 @@ public class SecurityConfig {
     public UserDetailsService userDetailsService() {
         return new UserDetailsServiceImpl(userRepository);
     }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
+
     @Bean
     public JwtDecoder jwtDecoder() {
         return NimbusJwtDecoder

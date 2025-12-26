@@ -29,6 +29,9 @@ public class GiftCardEntity {
     @Column(name = "price", nullable = false)
     private Double price;
 
+    @Column(name = "cost")
+    private Double cost;
+
     @Column(name = "release_date")
     private String releaseDate;
 

@@ -22,13 +22,6 @@ public class FlashOfferController {
         return ResponseEntity.ok(service.getAllOffers());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<FlashOffer> getOfferById(@PathVariable Long id) {
-        return service.getOfferById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
     @GetMapping("/product/{productId}")
     public ResponseEntity<FlashOffer> getOfferByProduct(@PathVariable Long productId) {
         return service.getOfferByProductId(productId)
@@ -42,10 +35,14 @@ public class FlashOfferController {
         return ResponseEntity.ok(created);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<FlashOffer> updateOffer(@PathVariable Long id, @RequestBody FlashOffer offer) {
+        return ResponseEntity.ok(service.updateOffer(id, offer));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOffer(@PathVariable Long id) {
         service.deleteOffer(id);
         return ResponseEntity.noContent().build();
     }
 }
-
