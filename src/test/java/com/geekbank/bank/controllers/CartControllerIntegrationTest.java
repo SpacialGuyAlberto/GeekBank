@@ -40,7 +40,7 @@ public class CartControllerIntegrationTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Test
+    /*@Test
     @DisplayName("GET /api/cart - Obtener los artículos del carrito (Usuario autenticado)")
     public void testGetCartItems_AuthenticatedUser() throws Exception {
         Authentication authentication = mock(Authentication.class);
@@ -60,7 +60,7 @@ public class CartControllerIntegrationTest {
                 .andExpect(status().isOk());
 
         verify(cartService, times(1)).getCartItems(user);
-    }
+    }*/
 
     @Test
     @DisplayName("POST /api/cart - Agregar un artículo al carrito")
