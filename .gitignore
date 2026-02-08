@@ -40,3 +40,11 @@ compose.yaml
 Task
 app-error.log
 app.log
+
+### Auto-generated Ignores ###
+.DS_Store
+Thumbs.db
+postgres-data/
+*.dump
+Primary_backup.sql
+._*

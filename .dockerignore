@@ -1,0 +1,18 @@
+# Ignore everything
+*
+
+# Allow directories and files
+!src/
+!gradle/
+!build.gradle
+!settings.gradle
+!Dockerfile
+!wait-for-it.sh
+!gradlew
+!gradlew.bat
+!.env
+
+# Explicitly ignore system files in allowed directories (just in case)
+# Explicitly ignore system files in allowed directories (just in case)
+**/._*
+**/.DS_Store

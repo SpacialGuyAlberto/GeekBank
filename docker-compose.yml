@@ -1,0 +1,49 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: geekbank-app:latest
+    container_name: geekbank-app
+    ports:
+      - "${SERVER_PORT}:7070"
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - SPRING_MAIL_HOST=${SPRING_MAIL_HOST}
+      - SPRING_MAIL_PORT=${SPRING_MAIL_PORT}
+      - SPRING_MAIL_USERNAME=${SPRING_MAIL_USERNAME}
+      - SPRING_MAIL_PASSWORD=${SPRING_MAIL_PASSWORD}
+      - SPRING_SENDGRID_API_KEY=${SPRING_SENDGRID_API_KEY}
+      - SECRET=${SECRET}
+      # OAuth2 environment variables mapping if needed, or rely on passing via ENV
+    depends_on:
+      - db
+    volumes:
+      - ./.env:/app/.env
+    networks:
+      - geekbank-network
+
+  db:
+    image: postgres:15-alpine
+    container_name: geekbank-db
+    restart: always
+    environment:
+      POSTGRES_DB: geekbank
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+    volumes:
+      # Persist data in a local folder relative to the project
+      - ./postgres-data:/var/lib/postgresql/data
+      # Initialize database with structure if needed (optional)
+      # - ./estructura.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - geekbank-network
+
+networks:
+  geekbank-network:
+    driver: bridge
