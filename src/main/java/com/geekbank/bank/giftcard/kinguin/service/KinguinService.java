@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 public class KinguinService {
 
     public static final String apiUrl = "https://gateway.kinguin.net/esa/api/v1/products";
-    public static final String apiKey = "77d96c852356b1c654a80f424d67048f";
+    public static final String apiKey = "46b571b40a9418b22112762a68273c24";
     Translator translator;
     protected static String deeplApiKey = "b9809fe3-aa7c-4802-b12b-cacef4df6e2a:fx";
     private static AtomicInteger progress = new AtomicInteger(0);
