@@ -142,13 +142,38 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.asList("https://astralisbank.com", "http://localhost:4200"));
+
+        // 1. Agregamos los orígenes exactos
+        config.setAllowedOrigins(Arrays.asList(
+                "https://astralisbank.com", // Tu dominio real
+                "http://localhost", // Tu frontend en Docker (Puerto 80)
+                "http://localhost:80", // Explicit port 80
+                "http://localhost:4200", // Tu frontend en desarrollo local (ng serve)
+                "http://127.0.0.1", // IP local alternativa
+                "http://127.0.0.1:4200",
+                "http://127.0.0.1:80",
+                frontendUrl // La variable que viene del .env
+        ));
+
         config.setAllowCredentials(true);
-        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.addAllowedOrigin(frontendUrl);
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
+
+        // 2. Headers: Es vital incluir "Authorization" para tus JWT
+        config.setAllowedHeaders(Arrays.asList(
+                "Authorization",
+                "Content-Type",
+                "Accept",
+                "X-Requested-With",
+                "Origin",
+                "Access-Control-Request-Method",
+                "Access-Control-Request-Headers"));
+
+        config.setExposedHeaders(Arrays.asList(
+                "Authorization",
+                "Access-Control-Allow-Origin",
+                "Access-Control-Allow-Credentials"));
+
+        // 3. Métodos: Permitimos todos los necesarios para un e-commerce
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
