@@ -1,0 +1,165 @@
+-- Missing tables detected during import
+-- Table: public.activation_details
+CREATE TABLE IF NOT EXISTS public.activation_details (
+    id bigint NOT NULL,
+    kinguin_id bigint,
+    text_details text,
+    video_url text,
+    CONSTRAINT activation_details_pkey PRIMARY KEY (id)
+);
+
+ALTER TABLE public.activation_details OWNER TO postgres;
+
+-- Table: public.tournaments
+CREATE TABLE IF NOT EXISTS public.tournaments (
+    id bigint NOT NULL,
+    description character varying(255),
+    end_date date,
+    name character varying(255),
+    start_date date,
+    status character varying(255),
+    moderator_id bigint,
+    CONSTRAINT tournaments_pkey PRIMARY KEY (id)
+);
+
+ALTER TABLE public.tournaments OWNER TO postgres;
+
+-- Table: public.combos
+CREATE TABLE IF NOT EXISTS public.combos (
+    id bigint NOT NULL,
+    description character varying(255),
+    image_url character varying(255),
+    is_active boolean,
+    name character varying(255),
+    price double precision,
+    CONSTRAINT combos_pkey PRIMARY KEY (id)
+);
+
+ALTER TABLE public.combos OWNER TO postgres;
+
+-- Table: public.unmatched_payments
+CREATE TABLE IF NOT EXISTS public.unmatched_payments (
+    id bigint NOT NULL,
+    amount_received double precision NOT NULL,
+    phone_number character varying(255),
+    received_at timestamp(6) without time zone,
+    reference_number character varying(255),
+    sms_message_id bigint,
+    consumed boolean,
+    created_by character varying(255),
+    differenceredeemed boolean,
+    image character varying(255),
+    image_path character varying(255),
+    updated_by character varying(255),
+    verified boolean,
+    CONSTRAINT unmatched_payments_pkey PRIMARY KEY (id)
+);
+ALTER TABLE public.unmatched_payments OWNER TO postgres;
+
+-- Table: public.combo_products
+CREATE TABLE IF NOT EXISTS public.combo_products (
+    combo_id bigint NOT NULL,
+    product_id bigint NOT NULL
+);
+ALTER TABLE public.combo_products OWNER TO postgres;
+
+-- Table: public.main_screen_gift_card_item
+CREATE TABLE IF NOT EXISTS public.main_screen_gift_card_item (
+    id bigint NOT NULL,
+    created_at timestamp without time zone,
+    product_id bigint,
+    classification character varying(255),
+    CONSTRAINT main_screen_gift_card_item_pkey PRIMARY KEY (id)
+);
+ALTER TABLE public.main_screen_gift_card_item OWNER TO postgres;
+
+-- Table: public.orders
+CREATE TABLE IF NOT EXISTS public.orders (
+    id bigint NOT NULL,
+    amount double precision,
+    created_at timestamp without time zone,
+    email character varying(255),
+    game_user_id bigint,
+    guest_id character varying(255),
+    manual boolean,
+    order_request_id bigint,
+    phone_number character varying(255),
+    ref_number character varying(255),
+    send_key_tosms boolean,
+    user_id bigint,
+    transaction_id bigint,
+    CONSTRAINT orders_pkey PRIMARY KEY (id)
+);
+ALTER TABLE public.orders OWNER TO postgres;
+
+-- Table: public.orders_products
+CREATE TABLE IF NOT EXISTS public.orders_products (
+    orders_id bigint NOT NULL,
+    products_id bigint NOT NULL
+);
+ALTER TABLE public.orders_products OWNER TO postgres;
+
+-- Table: public.promotion
+CREATE TABLE IF NOT EXISTS public.promotion (
+    id bigint NOT NULL,
+    code character varying(255),
+    discount_porcentage double precision,
+    user_id bigint,
+    CONSTRAINT promotion_pkey PRIMARY KEY (id)
+);
+ALTER TABLE public.promotion OWNER TO postgres;
+
+-- Table: public.visits
+CREATE TABLE IF NOT EXISTS public.visits (
+    id bigint NOT NULL,
+    session_id character varying(255),
+    timestamp timestamp without time zone,
+    CONSTRAINT visits_pkey PRIMARY KEY (id)
+);
+ALTER TABLE public.visits OWNER TO postgres;
+
+-- Fix missing columns in public.gift_cards
+ALTER TABLE public.gift_cards ADD COLUMN IF NOT EXISTS cover_image character varying(255);
+ALTER TABLE public.gift_cards ADD COLUMN IF NOT EXISTS developers character varying(500);
+ALTER TABLE public.gift_cards ADD COLUMN IF NOT EXISTS genres character varying(500);
+ALTER TABLE public.gift_cards ADD COLUMN IF NOT EXISTS publishers character varying(500);
+ALTER TABLE public.gift_cards ADD COLUMN IF NOT EXISTS tags character varying(500);
+ALTER TABLE public.gift_cards ADD COLUMN IF NOT EXISTS cost double precision;
+
+-- Fix missing columns and types in public.users
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS affiliate_link character varying(255);
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS commission_rate double precision;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS promo_code character varying(255);
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS game_player_id character varying(255);
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS game_player_name character varying(255);
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS team_name character varying(255);
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS dtype character varying(255);
+
+-- Fix role type mismatch (schema has varchar, data has integer)
+-- We need to drop the default if exists or constraints if any likely to conflict, but mostly just type change
+ALTER TABLE public.users ALTER COLUMN role TYPE integer USING (CASE WHEN role~E'^\\d+$' THEN role::integer ELSE 0 END);
+
+-- Fix missing columns in public.highlight_item
+ALTER TABLE public.highlight_item ADD COLUMN IF NOT EXISTS image_url character varying(255);
+ALTER TABLE public.highlight_item ADD COLUMN IF NOT EXISTS price double precision;
+ALTER TABLE public.highlight_item ADD COLUMN IF NOT EXISTS title character varying(255);
+
+-- Fix missing columns in public.transaction
+ALTER TABLE public.transaction ADD COLUMN IF NOT EXISTS commission_earned double precision;
+ALTER TABLE public.transaction ADD COLUMN IF NOT EXISTS discount_applied double precision;
+ALTER TABLE public.transaction ADD COLUMN IF NOT EXISTS exchange_rate double precision;
+ALTER TABLE public.transaction ADD COLUMN IF NOT EXISTS external_order_id character varying(255);
+ALTER TABLE public.transaction ADD COLUMN IF NOT EXISTS keys character varying(255);
+ALTER TABLE public.transaction ADD COLUMN IF NOT EXISTS affiliate_id bigint;
+ALTER TABLE public.transaction ADD COLUMN IF NOT EXISTS amount_hnl double precision;
+ALTER TABLE public.transaction ADD COLUMN IF NOT EXISTS amount_usd double precision;
+ALTER TABLE public.transaction ADD COLUMN IF NOT EXISTS game_user_id bigint;
+ALTER TABLE public.transaction ADD COLUMN IF NOT EXISTS guest_id character varying(255);
+ALTER TABLE public.transaction ADD COLUMN IF NOT EXISTS is_manual boolean;
+ALTER TABLE public.transaction ADD COLUMN IF NOT EXISTS order_request_number character varying(255);
+ALTER TABLE public.transaction ADD COLUMN IF NOT EXISTS temp_pin character varying(255);
+
+-- Fix constraints for legacy/missing columns
+ALTER TABLE public.transaction ALTER COLUMN amount DROP NOT NULL;
+
+
