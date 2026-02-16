@@ -28,8 +28,6 @@ public class HighlightController {
         return ResponseEntity.ok(highlights);
     }
 
-
-
     @PostMapping()
     public ResponseEntity<List<HighlightItem>> addHighlights(@RequestBody List<HighlightItem> highlightItems) {
         List<HighlightItem> addedHighlights = highlightService.addHighlightItems(highlightItems);

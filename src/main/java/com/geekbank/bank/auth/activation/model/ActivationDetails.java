@@ -1,9 +1,13 @@
 package com.geekbank.bank.auth.activation.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "activation_details")
+@Getter
+@Setter
 public class ActivationDetails {
 
     @Id
@@ -26,39 +30,6 @@ public class ActivationDetails {
         this.id = id;
         this.kinguinId = kinguinId;
         this.videoUrl = videoUrl;
-        this.textDetails = textDetails;
-    }
-
-    // Getters y Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getKinguinId() {
-        return kinguinId;
-    }
-
-    public void setKinguinId(Long kinguinId) {
-        this.kinguinId = kinguinId;
-    }
-
-    public String getVideoUrl() {
-        return videoUrl;
-    }
-
-    public void setVideoUrl(String videoUrl) {
-        this.videoUrl = videoUrl;
-    }
-
-    public String getTextDetails() {
-        return textDetails;
-    }
-
-    public void setTextDetails(String textDetails) {
         this.textDetails = textDetails;
     }
 
