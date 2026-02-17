@@ -1,10 +1,8 @@
 package com.geekbank.bank.order.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+@Data
 public class OrderResponse {
     private String orderId;
     private double totalPrice;

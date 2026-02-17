@@ -2,11 +2,15 @@ package com.geekbank.bank.payment.tigo.model;
 
 import com.geekbank.bank.support.sms.model.SmsMessage;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "unmatched_payments")
+@Getter
+@Setter
 public class UnmatchedPayment {
 
     @Id
@@ -30,30 +34,6 @@ public class UnmatchedPayment {
     @OneToOne
     @JoinColumn(name = "sms_message_id")
     private SmsMessage smsMessage;
-
-    public byte[] getImage() {
-        return image;
-    }
-
-    public void setImage(byte[] image) {
-        this.image = image;
-    }
-
-    public String getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public String getUpdatedBy() {
-        return updatedBy;
-    }
-
-    public void setUpdatedBy(String updatedBy) {
-        this.updatedBy = updatedBy;
-    }
 
     @Lob
     @Column(name = "image", nullable = true)
@@ -84,74 +64,5 @@ public class UnmatchedPayment {
         this.referenceNumber = referenceNumber;
         this.receivedAt = receivedAt;
         this.smsMessage = smsMessage;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    public double getAmountReceived() {
-        return amountReceived;
-    }
-
-    public void setAmountReceived(double amountReceived) {
-        this.amountReceived = amountReceived;
-    }
-
-    public String getReferenceNumber() {
-        return referenceNumber;
-    }
-
-    public void setReferenceNumber(String referenceNumber) {
-        this.referenceNumber = referenceNumber;
-    }
-
-    public LocalDateTime getReceivedAt() {
-        return receivedAt;
-    }
-
-    public void setReceivedAt(LocalDateTime receivedAt) {
-        this.receivedAt = receivedAt;
-    }
-
-    public SmsMessage getSmsMessage() {
-        return smsMessage;
-    }
-
-    public void setSmsMessage(SmsMessage smsMessage) {
-        this.smsMessage = smsMessage;
-    }
-    public boolean isConsumed() {
-        return consumed;
-    }
-
-    public void setConsumed(boolean consumed) {
-        this.consumed = consumed;
-    }
-    public boolean isDifferenceRedeemed() {
-        return differenceRedeemed;
-    }
-
-    public void setDifferenceRedeemed(boolean differenceRedeemed) {
-        this.differenceRedeemed = differenceRedeemed;
-    }
-    public boolean isVerified() {
-        return verified;
-    }
-
-    public void setVerified(boolean verified) {
-        this.verified = verified;
     }
 }

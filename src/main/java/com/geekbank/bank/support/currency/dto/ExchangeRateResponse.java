@@ -1,5 +1,9 @@
 package com.geekbank.bank.support.currency.dto;
 
+
+import lombok.Data;
+
+@Data
 public class ExchangeRateResponse {
     private double exchangeRate;
 
@@ -10,11 +14,4 @@ public class ExchangeRateResponse {
         this.exchangeRate = exchangeRate;
     }
 
-    public double getExchangeRate() {
-        return exchangeRate;
-    }
-
-    public void setExchangeRate(double exchangeRate) {
-        this.exchangeRate = exchangeRate;
-    }
 }

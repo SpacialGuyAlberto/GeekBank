@@ -1,9 +1,11 @@
 package com.geekbank.bank.payment.tigo.dto;
 
 import com.geekbank.bank.payment.tigo.model.UnmatchedPayment;
+import lombok.Data;
 
 import java.util.List;
 
+@Data
 public class UnmatchedPaymentResponseDto {
 
     private UnmatchedPayment unmatchedPayment;
@@ -24,53 +26,5 @@ public class UnmatchedPaymentResponseDto {
 
     public UnmatchedPaymentResponseDto() {
 
-    }
-
-    public UnmatchedPayment getUnmatchedPayment() {
-        return unmatchedPayment;
-    }
-
-    public void setUnmatchedPayment(UnmatchedPayment unmatchedPayment) {
-        this.unmatchedPayment = unmatchedPayment;
-    }
-
-    public double getReceivedAmount() {
-        return receivedAmount;
-    }
-
-    public void setReceivedAmount(double receivedAmount) {
-        this.receivedAmount = receivedAmount;
-    }
-
-    public double getExpectedAmount() {
-        return expectedAmount;
-    }
-
-    public void setExpectedAmount(double expectedAmount) {
-        this.expectedAmount = expectedAmount;
-    }
-
-    public double getDifference() {
-        return difference;
-    }
-
-    public void setDifference(double difference) {
-        this.difference = difference;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public List<String> getOptions() {
-        return options;
-    }
-
-    public void setOptions(List<String> options) {
-        this.options = options;
     }
 }
