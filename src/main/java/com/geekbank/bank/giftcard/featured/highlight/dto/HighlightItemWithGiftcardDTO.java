@@ -16,4 +16,7 @@ public class HighlightItemWithGiftcardDTO {
         this.giftcard = giftcard;
     }
 
+    public HighlightItemWithGiftcardDTO() {
+    }
+
 }

@@ -39,11 +39,11 @@ public class UserController {
 
     @Autowired
     public UserController(UserService userService,
-                          AuthenticationManager authenticationManager, AccountService accountService,
-                          JwtTokenUtil jwtTokenUtil,
-                          JwtDecoder jwtDecoder,
-                          PasswordEncoder passwordEncoder,
-                          UserRepository userRepository) {
+            AuthenticationManager authenticationManager, AccountService accountService,
+            JwtTokenUtil jwtTokenUtil,
+            JwtDecoder jwtDecoder,
+            PasswordEncoder passwordEncoder,
+            UserRepository userRepository) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
         this.accountService = accountService;
@@ -55,7 +55,7 @@ public class UserController {
 
     @GetMapping("/{userId}")
     public ResponseEntity<Optional<User>> getUserById(@PathVariable long userId) {
-        Optional<User> user = userService.getUserById(userId);
+        Optional<User> user = userService.findById(userId);
         return user.isPresent() ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
 
@@ -69,7 +69,7 @@ public class UserController {
 
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.findAllUsers();
+        List<User> users = userService.findAll();
         return ResponseEntity.ok(users);
     }
 
@@ -90,10 +90,10 @@ public class UserController {
     }
 
     @PostMapping("/update-user-details")
-    public ResponseEntity<Map<String, String>> updateUserDetails(@RequestBody userInfoRequest userInfoRequest){
+    public ResponseEntity<Map<String, String>> updateUserDetails(@RequestBody userInfoRequest userInfoRequest) {
         try {
-            Authentication authenticationRequest =
-                    new UsernamePasswordAuthenticationToken(userInfoRequest.getEmail(), userInfoRequest.getPassword());
+            Authentication authenticationRequest = new UsernamePasswordAuthenticationToken(userInfoRequest.getEmail(),
+                    userInfoRequest.getPassword());
             Authentication authenticationResponse = authenticationManager.authenticate(authenticationRequest);
 
             UserDetails userDetails = (UserDetails) authenticationResponse.getPrincipal();
@@ -123,11 +123,14 @@ public class UserController {
 
             return ResponseEntity.ok(response);
         } catch (AuthenticationException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Error de autenticación: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Error de autenticación: " + e.getMessage()));
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Error al encontrar usuario: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Error al encontrar usuario: " + e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Error interno al actualizar los detalles del usuario: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error interno al actualizar los detalles del usuario: " + e.getMessage()));
         }
     }
 
@@ -140,7 +143,7 @@ public class UserController {
         if (userOptional.isPresent()) {
             User user = userOptional.get();
             Optional<Account> optionalAccount = accountService.getAccountsByUserId(user.getId());
-            if (!optionalAccount.isPresent()){
+            if (!optionalAccount.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 
             }
@@ -180,26 +183,37 @@ public class UserController {
 
     }
 
-
     public static class userInfoRequest {
         private String name;
         private String email;
         private String password;
         private String phoneNumber;
 
+        public String getName() {
+            return this.name;
+        }
 
-        public String getName(){ return this.name; }
-        public void setName(String name){
+        public void setName(String name) {
             this.name = name;
         }
 
-        public String getEmail(){ return email; }
-        public void setEmail(String email ){ this.email = email; }
+        public String getEmail() {
+            return email;
+        }
 
-        public String getPhoneNumber(){ return this.phoneNumber; }
-        public String getPassword(){return this.password; }
+        public void setEmail(String email) {
+            this.email = email;
+        }
 
-        public void setPhoneNumber(String phoneNumber ){
+        public String getPhoneNumber() {
+            return this.phoneNumber;
+        }
+
+        public String getPassword() {
+            return this.password;
+        }
+
+        public void setPhoneNumber(String phoneNumber) {
             this.phoneNumber = phoneNumber;
         }
 
@@ -207,6 +221,5 @@ public class UserController {
             this.password = password;
         }
     }
-
 
 }

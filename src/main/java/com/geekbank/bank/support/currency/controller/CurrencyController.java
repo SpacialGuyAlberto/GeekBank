@@ -1,15 +1,17 @@
-// src/main/java/com/geekbank/bank/controllers/CurrencyController.java
-
 package com.geekbank.bank.support.currency.controller;
 
+import com.geekbank.bank.core.controller.BaseController;
+import com.geekbank.bank.core.response.ApiResponse;
+import com.geekbank.bank.support.currency.dto.ExchangeRateResponse;
 import com.geekbank.bank.support.currency.service.CurrencyService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/currency")
-public class CurrencyController {
+public class CurrencyController extends BaseController {
 
     private final CurrencyService currencyService;
 
@@ -18,24 +20,8 @@ public class CurrencyController {
     }
 
     @GetMapping("/exchange-rate")
-    public ExchangeRateResponse getExchangeRateUSDtoHNL() {
+    public ResponseEntity<ApiResponse<ExchangeRateResponse>> getExchangeRateUSDtoHNL() {
         double rate = currencyService.getExchangeRateUSDtoHNL();
-        return new ExchangeRateResponse(rate);
-    }
-
-    public static class ExchangeRateResponse {
-        private double exchangeRate;
-
-        public ExchangeRateResponse(double exchangeRate) {
-            this.exchangeRate = exchangeRate;
-        }
-
-        public double getExchangeRate() {
-            return exchangeRate;
-        }
-
-        public void setExchangeRate(double exchangeRate) {
-            this.exchangeRate = exchangeRate;
-        }
+        return success(new ExchangeRateResponse(rate));
     }
 }

@@ -1,0 +1,167 @@
+package com.geekbank.bank.controllers;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.geekbank.bank.auth.login.controller.LoginController;
+import com.geekbank.bank.auth.login.dto.LoginRequest;
+import com.geekbank.bank.auth.login.dto.ResetPasswordRequest;
+import com.geekbank.bank.auth.service.AuthService;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@WebMvcTest(LoginController.class)
+@ActiveProfiles("test")
+public class LoginControllerIntegrationTest {
+
+        @Autowired
+        private MockMvc mockMvc;
+
+        @MockBean
+        private AuthService authService;
+
+        private final ObjectMapper objectMapper = new ObjectMapper();
+
+        @Test
+        @DisplayName("POST /api/auth/login - Login exitoso")
+        public void testLogin_Success() throws Exception {
+                String email = "test.user@example.com";
+                String password = "securePassword";
+                String token = "jwtToken";
+                String userId = "1";
+
+                LoginRequest loginRequest = new LoginRequest();
+                loginRequest.setEmail(email);
+                loginRequest.setPassword(password);
+
+                Map<String, String> authResponse = new HashMap<>();
+                authResponse.put("token", token);
+                authResponse.put("userId", userId);
+
+                when(authService.login(any(LoginRequest.class))).thenReturn(authResponse);
+
+                mockMvc.perform(post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(loginRequest)))
+                                .andExpect(status().isOk())
+                                .andExpect(header().exists("Set-Cookie"))
+                                .andExpect(jsonPath("$.userId").value(userId));
+
+                verify(authService, times(1)).login(any(LoginRequest.class));
+        }
+
+        @Test
+        @DisplayName("POST /api/auth/login - Login fallido (Credenciales incorrectas)")
+        public void testLogin_BadCredentials() throws Exception {
+                String email = "wrong.user@example.com";
+                String password = "wrongPassword";
+
+                LoginRequest loginRequest = new LoginRequest();
+                loginRequest.setEmail(email);
+                loginRequest.setPassword(password);
+
+                when(authService.login(any(LoginRequest.class)))
+                                .thenThrow(new BadCredentialsException("Bad credentials"));
+
+                mockMvc.perform(post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(loginRequest)))
+                                .andExpect(status().isUnauthorized()) // GlobalExceptionHandler should handle this
+                                .andExpect(jsonPath("$.error").value("Credenciales invalidas"));
+
+                verify(authService, times(1)).login(any(LoginRequest.class));
+        }
+
+        @Test
+        @DisplayName("POST /api/auth/reset-password - Restablecimiento de contraseña exitoso")
+        public void testResetPassword_Success() throws Exception {
+                String email = "test.user@example.com";
+                String oldPassword = "oldPassword";
+                String newPassword = "newPassword";
+                String token = "jwtToken";
+                String userId = "1";
+
+                ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
+                resetPasswordRequest.setEmail(email);
+                resetPasswordRequest.setOldPassword(oldPassword);
+                resetPasswordRequest.setNewPassword(newPassword);
+
+                Map<String, String> responseMap = new HashMap<>();
+                responseMap.put("token", token);
+                responseMap.put("userId", userId);
+
+                when(authService.resetPassword(any(ResetPasswordRequest.class))).thenReturn(responseMap);
+
+                mockMvc.perform(post("/api/auth/reset-password")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(resetPasswordRequest)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.token").value(token))
+                                .andExpect(jsonPath("$.userId").value(userId));
+
+                verify(authService, times(1)).resetPassword(any(ResetPasswordRequest.class));
+        }
+
+        @Test
+        @DisplayName("POST /api/auth/reset-password - Restablecimiento de contraseña fallido (Credenciales incorrectas)")
+        public void testResetPassword_BadCredentials() throws Exception {
+                String email = "test.user@example.com";
+                String oldPassword = "wrongOldPassword";
+                String newPassword = "newPassword";
+
+                ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
+                resetPasswordRequest.setEmail(email);
+                resetPasswordRequest.setOldPassword(oldPassword);
+                resetPasswordRequest.setNewPassword(newPassword);
+
+                when(authService.resetPassword(any(ResetPasswordRequest.class)))
+                                .thenThrow(new BadCredentialsException("Bad credentials"));
+
+                mockMvc.perform(post("/api/auth/reset-password")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(resetPasswordRequest)))
+                                .andExpect(status().isUnauthorized())
+                                .andExpect(jsonPath("$.error").value("Credenciales inválidas"));
+
+                verify(authService, times(1)).resetPassword(any(ResetPasswordRequest.class));
+        }
+
+        @Test
+        @DisplayName("POST /api/auth/google-login - Login con Google exitoso")
+        public void testGoogleLogin_Success() throws Exception {
+                String googleToken = "googleToken";
+                String jwtToken = "jwtToken";
+                Long userId = 1L;
+
+                Map<String, Object> authResponse = new HashMap<>();
+                authResponse.put("token", jwtToken);
+                authResponse.put("userId", userId);
+
+                when(authService.googleLogin(googleToken)).thenReturn(authResponse);
+
+                Map<String, String> requestBody = new HashMap<>();
+                requestBody.put("token", googleToken);
+
+                mockMvc.perform(post("/api/auth/google-login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(requestBody)))
+                                .andExpect(status().isOk())
+                                .andExpect(header().exists("Set-Cookie"))
+                                .andExpect(jsonPath("$.userId").value(userId.intValue()));
+
+                verify(authService, times(1)).googleLogin(googleToken);
+        }
+}

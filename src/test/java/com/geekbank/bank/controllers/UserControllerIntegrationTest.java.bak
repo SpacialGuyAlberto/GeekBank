@@ -1,0 +1,127 @@
+package com.geekbank.bank.controllers;
+
+import com.geekbank.bank.user.account.model.Account;
+import com.geekbank.bank.payment.tigo.constants.VerificationStatus;
+import com.geekbank.bank.user.controller.UserController;
+import com.geekbank.bank.user.account.service.AccountService;
+import com.geekbank.bank.user.model.User;
+import com.geekbank.bank.user.service.UserService;
+import com.geekbank.bank.util.JwtTokenUtil;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.Arrays;
+import java.util.Optional;
+
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(UserController.class)
+@ActiveProfiles("test")
+public class UserControllerIntegrationTest {
+
+        @Autowired
+        private MockMvc mockMvc;
+
+        @MockBean
+        private UserService userService;
+
+        @MockBean
+        private AuthenticationManager authenticationManager;
+
+        @MockBean
+        private AccountService accountService;
+
+        @MockBean
+        private JwtTokenUtil jwtTokenUtil;
+
+        @MockBean
+        private JwtDecoder jwtDecoder;
+
+        @MockBean
+        private PasswordEncoder passwordEncoder;
+
+        @MockBean
+        private com.geekbank.bank.user.repository.UserRepository userRepository;
+
+        @Test
+        @WithMockUser
+        @DisplayName("GET /api/users/{userId} - Success")
+        public void testGetUserById_Success() throws Exception {
+                Long userId = 1L;
+                User testUser = new User();
+                testUser.setId(userId);
+                testUser.setName("Test User");
+                testUser.setEmail("test@example.com");
+
+                when(userService.findById(userId)).thenReturn(Optional.of(testUser));
+
+                mockMvc.perform(get("/api/users/{userId}", userId)
+                                .contentType(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id", is(userId.intValue())))
+                                .andExpect(jsonPath("$.name", is(testUser.getName())))
+                                .andExpect(jsonPath("$.email", is(testUser.getEmail())));
+
+                verify(userService).findById(userId);
+        }
+
+        @Test
+        @WithMockUser
+        @DisplayName("GET /api/users/{userId} - Not Found")
+        public void testGetUserById_NotFound() throws Exception {
+                Long userId = 1L;
+                when(userService.findById(userId)).thenReturn(Optional.empty());
+
+                mockMvc.perform(get("/api/users/{userId}", userId)
+                                .contentType(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isNotFound());
+
+                verify(userService).findById(userId);
+        }
+
+        @Test
+        @WithMockUser
+        @DisplayName("GET /api/users - Success")
+        public void testGetAllUsers_Success() throws Exception {
+                User user1 = new User();
+                user1.setId(1L);
+                user1.setName("User 1");
+
+                User user2 = new User();
+                user2.setId(2L);
+                user2.setName("User 2");
+
+                when(userService.findAll()).thenReturn(Arrays.asList(user1, user2));
+
+                mockMvc.perform(get("/api/users")
+                                .contentType(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$", hasSize(2)))
+                                .andExpect(jsonPath("$[0].name", is("User 1")))
+                                .andExpect(jsonPath("$[1].name", is("User 2")));
+
+                verify(userService).findAll();
+        }
+
+        // ... other tests ...
+}

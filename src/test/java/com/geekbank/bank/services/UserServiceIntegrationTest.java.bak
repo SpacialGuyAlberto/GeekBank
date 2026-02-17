@@ -1,0 +1,83 @@
+package com.geekbank.bank.services;
+
+import com.geekbank.bank.config.TestConfig;
+import com.geekbank.bank.user.model.User;
+import com.geekbank.bank.user.repository.UserRepository;
+import com.geekbank.bank.user.service.UserService;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
+import java.util.List;
+import java.util.Collections;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@SpringBootTest
+@ActiveProfiles("test")
+@Transactional
+@Import(TestConfig.class)
+public class UserServiceIntegrationTest {
+
+    @Autowired
+    private UserService userService;
+
+    @MockBean
+    private UserRepository userRepository;
+
+    @Test
+    @DisplayName("Find user by ID - Success")
+    public void testFindById_Success() {
+        Long userId = 1L;
+        User user = new User();
+        user.setId(userId);
+        user.setEmail("test@example.com");
+
+        when(userRepository.findByIdWithAccount(userId)).thenReturn(Optional.of(user));
+
+        Optional<User> foundUser = userService.findById(userId);
+
+        assertTrue(foundUser.isPresent());
+        assertEquals(userId, foundUser.get().getId());
+        verify(userRepository, times(1)).findByIdWithAccount(userId);
+    }
+
+    @Test
+    @DisplayName("Find all users - Success")
+    public void testFindAll_Success() {
+        User user = new User();
+        user.setId(1L);
+        when(userRepository.findAllWithAccount()).thenReturn(Collections.singletonList(user));
+
+        List<User> users = userService.findAll();
+
+        assertNotNull(users);
+        assertFalse(users.isEmpty());
+        assertEquals(1, users.size());
+        verify(userRepository, times(1)).findAllWithAccount();
+    }
+
+    @Test
+    @DisplayName("Save user - Success")
+    public void testSave_Success() {
+        User user = new User();
+        user.setEmail("new@example.com");
+
+        when(userRepository.save(any(User.class))).thenReturn(user);
+
+        User savedUser = userService.save(user);
+
+        assertNotNull(savedUser);
+        verify(userRepository, times(1)).save(any(User.class));
+    }
+}
