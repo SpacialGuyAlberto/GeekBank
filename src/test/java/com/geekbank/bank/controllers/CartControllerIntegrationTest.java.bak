@@ -5,7 +5,7 @@ import com.geekbank.bank.cart.controller.CartController;
 import com.geekbank.bank.cart.model.CartItem;
 import com.geekbank.bank.cart.dto.CartItemWithGiftcardDTO;
 import com.geekbank.bank.user.model.User;
-import com.geekbank.bank.cart.service.CartService;
+import com.geekbank.bank.cart.service.CartServiceImpl;
 import com.geekbank.bank.user.service.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

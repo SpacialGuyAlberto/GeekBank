@@ -1,6 +1,6 @@
 package com.geekbank.bank.services;
 
-import com.geekbank.bank.cart.service.CartService;
+import com.geekbank.bank.cart.service.CartServiceImpl;
 import com.geekbank.bank.cart.model.CartItem;
 import com.geekbank.bank.user.model.User;
 import com.geekbank.bank.cart.dto.CartItemWithGiftcardDTO;
@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CartServiceIntegrationTest {
 
     @Autowired
-    private CartService cartService;
+    private CartServiceImpl cartService;
 
     @Autowired
     private CartItemRepository cartItemRepository;

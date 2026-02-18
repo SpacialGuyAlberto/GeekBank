@@ -3,9 +3,8 @@ package com.geekbank.bank.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.geekbank.bank.cart.controller.CartController;
 import com.geekbank.bank.cart.model.CartItem;
-import com.geekbank.bank.cart.dto.CartItemWithGiftcardDTO;
+import com.geekbank.bank.cart.service.CartServiceImpl;
 import com.geekbank.bank.user.model.User;
-import com.geekbank.bank.cart.service.CartService;
 import com.geekbank.bank.user.service.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,7 +16,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Map;
 
@@ -33,7 +31,7 @@ public class CartControllerIntegrationTest {
     private MockMvc mockMvc;
 
     @MockBean
-    private CartService cartService;
+    private CartServiceImpl cartService;
 
     @MockBean
     private UserService userService;
