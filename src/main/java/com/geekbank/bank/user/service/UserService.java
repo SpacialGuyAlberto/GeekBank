@@ -72,7 +72,7 @@ public class UserService implements BaseService<User, Long> {
         return userRepository.findByEmail(email);
     }
 
-    public void registerUser(User user) {
+    public User registerUser(User user) {
 
         user.setEnabled(false);
         String token = UUID.randomUUID().toString();
@@ -97,6 +97,7 @@ public class UserService implements BaseService<User, Long> {
         } catch (Exception e) {
             logger.error("Failed to bro oksend activation email to user: {}", user.getEmail(), e);
         }
+        return user;
     }
 
     public void registerUserByAdmin(User user) {

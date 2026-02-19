@@ -113,7 +113,7 @@ public class TelegramListener implements ApplicationListener<ContextClosedEvent>
         running = false;
     }
 
-    void processResponse(String response) {
+    public void processResponse(String response) {
         try {
             JSONObject jsonResponse = new JSONObject(response);
             JSONArray resultArray = jsonResponse.getJSONArray("result");

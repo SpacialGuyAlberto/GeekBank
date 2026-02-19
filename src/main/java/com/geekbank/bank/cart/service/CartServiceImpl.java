@@ -1,5 +1,7 @@
 package com.geekbank.bank.cart.service;
 
+import com.geekbank.bank.cart.dto.AddCartItemRequest;
+import com.geekbank.bank.cart.dto.UpdateCartItemQuantityRequest;
 import com.geekbank.bank.cart.model.CartItem;
 import com.geekbank.bank.user.model.User;
 import com.geekbank.bank.giftcard.kinguin.model.KinguinGiftCard;
@@ -43,17 +45,17 @@ public class CartServiceImpl implements CartService<CartItemWithGiftcardDTO, Use
                 .collect(Collectors.toList());
     }
 
-    public CartItem addCartItem(User user, Long productId, int quantity, double price) {
-        CartItem existingCartItem = cartItemRepository.findByUserAndProductId(user, productId);
+    public CartItem addCartItem(User user, AddCartItemRequest request) {
+        CartItem existingCartItem = cartItemRepository.findByUserAndProductId(user, request.getProductId());
 
         if (existingCartItem != null) {
-            existingCartItem.setQuantity(existingCartItem.getQuantity() + quantity);
+            existingCartItem.setQuantity(existingCartItem.getQuantity() + request.getQuantity());
         } else {
             existingCartItem = new CartItem();
-            existingCartItem.setPrice(price);
+            existingCartItem.setPrice(request.getPrice());
             existingCartItem.setUser(user);
-            existingCartItem.setProductId(productId);
-            existingCartItem.setQuantity(quantity);
+            existingCartItem.setProductId(request.getProductId());
+            existingCartItem.setQuantity(request.getQuantity());
         }
         return cartItemRepository.save(existingCartItem);
     }
@@ -80,8 +82,9 @@ public class CartServiceImpl implements CartService<CartItemWithGiftcardDTO, Use
         }
     }
 
-    public void updateCartItemQuantity(Long productId, int quantity, User user) {
-        logger.debug("Updating quantity of product ID: {} to {}", productId, quantity);
-        cartItemRepository.updateQuantityByProductIdAndUser(productId, quantity, user);
+    public void updateCartItemQuantity(UpdateCartItemQuantityRequest request, User user) {
+        logger.debug("Updating quantity of product ID: {} to {}", request.getProductId(), request.getQuantity());
+        cartItemRepository.updateQuantityByProductIdAndUser(request.getProductId(), request.getQuantity(), user);
     }
+    
 }
