@@ -37,22 +37,24 @@ public class CartController {
     }
 
     @PostMapping
-    public ResponseEntity<CartItem> addCartItem(Authentication authentication, @RequestBody AddCartItemRequest request) {
+    public ResponseEntity<CartItem> addCartItem(Authentication authentication,
+            @RequestBody AddCartItemRequest request) {
         User user = userService.findByEmail(authentication.getName()).orElse(null);
         if (user == null) {
             return ResponseEntity.status(401).build();
         }
 
-        return ResponseEntity.ok(cartService.addCartItem(user, request.getProductId(), request.getQuantity(), request.getPrice()));
+        return ResponseEntity.ok(cartService.addCartItem(user, request));
     }
 
     @PutMapping()
-    public ResponseEntity<Void> updateCartItemQuantity(Authentication authentication, @RequestBody UpdateCartItemQuantityRequest request ) {
+    public ResponseEntity<Void> updateCartItemQuantity(Authentication authentication,
+            @RequestBody UpdateCartItemQuantityRequest request) {
         User user = userService.findByEmail(authentication.getName()).orElse(null);
         if (user == null) {
             return ResponseEntity.status(401).build();
         }
-        cartService.updateCartItemQuantity(request.getProductId(), request.getQuantity(), user);
+        cartService.updateCartItemQuantity(request, user);
         return ResponseEntity.ok().build();
     }
 

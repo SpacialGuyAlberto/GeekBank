@@ -27,7 +27,6 @@ public class CartServiceImpl implements CartService<CartItemWithGiftcardDTO, Use
 
     @Autowired
 
-
     public CartServiceImpl(CartItemRepository cartItemRepository, KinguinService kinguinService) {
         this.cartItemRepository = cartItemRepository;
         this.kinguinService = kinguinService;
@@ -38,8 +37,8 @@ public class CartServiceImpl implements CartService<CartItemWithGiftcardDTO, Use
         List<CartItem> cartItems = cartItemRepository.findByUser(user);
         return cartItems.stream()
                 .map(cartItem -> {
-                    KinguinGiftCard giftcard = kinguinService.fetchGiftCardById(String.valueOf(cartItem.getProductId()))
-                            .orElse(null);
+                    KinguinGiftCard giftcard = kinguinService
+                            .fetchGiftCardById(String.valueOf(cartItem.getProductId()));
                     return new CartItemWithGiftcardDTO(cartItem, giftcard);
                 })
                 .collect(Collectors.toList());
@@ -86,5 +85,5 @@ public class CartServiceImpl implements CartService<CartItemWithGiftcardDTO, Use
         logger.debug("Updating quantity of product ID: {} to {}", request.getProductId(), request.getQuantity());
         cartItemRepository.updateQuantityByProductIdAndUser(request.getProductId(), request.getQuantity(), user);
     }
-    
+
 }
