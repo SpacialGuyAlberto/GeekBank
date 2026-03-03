@@ -163,6 +163,7 @@ public class SecurityConfig {
                 "Content-Type",
                 "Accept",
                 "X-Requested-With",
+                "X-Api-Key",
                 "Origin",
                 "Access-Control-Request-Method",
                 "Access-Control-Request-Headers"));
