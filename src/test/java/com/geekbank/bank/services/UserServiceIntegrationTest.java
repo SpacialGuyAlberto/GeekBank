@@ -54,7 +54,7 @@ public class UserServiceIntegrationTest {
         user.setPhoneNumber("1234567890");
         user.setRole(Roles.CUSTOMER);
 
-        User createdUser = userService.createUser(user);
+        User createdUser = userService.registerUser(user);
 
         assertNotNull(createdUser.getId(), "El ID del usuario creado no debería ser nulo");
         assertEquals("testuser@example.com", createdUser.getEmail(), "El email del usuario debería coincidir");
@@ -118,24 +118,4 @@ public class UserServiceIntegrationTest {
         assertFalse(activationResult, "La activación debería fallar con un token inválido");
     }
 
-    @Test
-    @DisplayName("Actualizar usuario existente")
-    public void testUpdateUser() {
-        User user = new User();
-        user.setEmail("updateuser@example.com");
-        user.setName("Update User");
-        user.setPassword("{bcrypt}$2a$10$...");
-        user.setPhoneNumber("1112223333");
-        user.setRole(Roles.CUSTOMER);
-        user.setEnabled(true);
-        User savedUser = userService.createUser(user);
-
-        savedUser.setName("Updated Name");
-        savedUser.setPhoneNumber("4445556666");
-
-        User updatedUser = userService.updateUser(savedUser);
-
-        assertEquals("Updated Name", updatedUser.getName(), "El nombre del usuario debería haberse actualizado");
-        assertEquals("4445556666", updatedUser.getPhoneNumber(), "El número de teléfono debería haberse actualizado");
-    }
 }

@@ -8,6 +8,8 @@ import com.geekbank.bank.user.account.repository.AccountRepository;
 import com.geekbank.bank.user.model.User;
 import com.geekbank.bank.user.repository.UserRepository;
 import com.geekbank.bank.user.account.service.AccountService;
+import com.geekbank.bank.common.exceptions.ResourceNotFoundException;
+import com.geekbank.bank.core.service.BaseService;
 import com.geekbank.bank.support.email.service.SendGridEmailService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +23,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class UserService {
+public class UserService implements BaseService<User, Long> {
 
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
@@ -32,7 +34,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserService(UserRepository userRepository, AccountService accountService, AccountRepository accountRepository, SendGridEmailService emailService, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, AccountService accountService,
+            AccountRepository accountRepository, SendGridEmailService emailService, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.accountService = accountService;
         this.accountRepository = accountRepository;
@@ -40,25 +43,36 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public User createUser(User user) {
+    @Override
+    public List<User> findAll() {
+        return userRepository.findAllWithAccount();
+    }
+
+    @Override
+    public Optional<User> findById(Long id) {
+        return userRepository.findByIdWithAccount(id);
+    }
+
+    @Override
+    public User save(User user) {
         return userRepository.save(user);
     }
 
+    @Override
+    public void deleteById(Long id) {
+        userRepository.deleteById(id);
+    }
 
-    public List<User> findAllUsers() {
-        return userRepository.findAllWithAccount();
+    @Override
+    public boolean existsById(Long id) {
+        return userRepository.existsById(id);
     }
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 
-
-    public Optional<User> getUserById(long userId) {
-        return userRepository.findByIdWithAccount(userId);
-    }
-
-    public void registerUser(User user) {
+    public User registerUser(User user) {
 
         user.setEnabled(false);
         String token = UUID.randomUUID().toString();
@@ -83,6 +97,7 @@ public class UserService {
         } catch (Exception e) {
             logger.error("Failed to bro oksend activation email to user: {}", user.getEmail(), e);
         }
+        return user;
     }
 
     public void registerUserByAdmin(User user) {
@@ -105,7 +120,7 @@ public class UserService {
         accountService.createAccount(account);
 
         try {
-//            emailService.sendActivationEmail(user.getEmail(), token);
+            // emailService.sendActivationEmail(user.getEmail(), token);
             logger.info("Sent email to user: {}", user.getEmail());
         } catch (Exception e) {
             logger.error("Failed to bro oksend activation email to user: {}", user.getEmail(), e);
@@ -115,7 +130,6 @@ public class UserService {
     public boolean activateUser(String token) {
         logger.info("Activating user with token: {}", token);
         Optional<User> userOptional = userRepository.findByActivationToken(token);
-
 
         if (userOptional.isPresent()) {
             User user = userOptional.get();
@@ -135,7 +149,6 @@ public class UserService {
         }
     }
 
-
     private void changeAccountStatusToActive(User user) {
         Account account = accountRepository.findFirstByUserId(user.getId());
 
@@ -151,20 +164,14 @@ public class UserService {
 
     @Transactional
     public User updateUser(User user) {
-        if (userRepository.existsById(user.getId())) {
-            return userRepository.save(user);
+        if (existsById(user.getId())) {
+            return save(user);
         } else {
-            throw new RuntimeException("Usuario no encontrado");
+            throw new ResourceNotFoundException("Usuario no encontrado");
         }
     }
 
     public Optional<User> findByActivationToken(String token) {
         return userRepository.findByActivationToken(token);
     }
-
-    public void saveUser(User user) {
-        userRepository.save(user);
-    }
-
-
 }

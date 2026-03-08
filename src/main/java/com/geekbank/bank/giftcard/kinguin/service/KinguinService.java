@@ -49,7 +49,6 @@ public class KinguinService {
     @Autowired
     private GiftCardRepository giftCardRepository;
 
-
     public List<KinguinGiftCard> applyGlobalMargin(List<KinguinGiftCard> giftCards) {
         for (KinguinGiftCard card : giftCards) {
             double finalPrice = pricingService.calculateSellingPrice(card.getPrice());
@@ -101,7 +100,6 @@ public class KinguinService {
                 currentPage++;
                 logger.debug("Página {}: {} GiftCards obtenidas.", currentPage, giftCards.size());
 
-
                 try {
                     Thread.sleep(200);
                 } catch (InterruptedException e) {
@@ -115,8 +113,6 @@ public class KinguinService {
         logger.info("Total de GiftCards obtenidas: {}", allGiftCards.size());
         return allGiftCards;
     }
-
-
 
     private String truncate(String value, int maxLength) {
         if (value != null && value.length() > maxLength) {
@@ -141,13 +137,13 @@ public class KinguinService {
         return synchronizedGiftCards;
     }
 
-
     public List<KinguinGiftCard> fetchGiftCards(int page) {
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Api-Key", apiKey);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        ResponseEntity<JsonNode> response = restTemplate.exchange(apiUrl + "?page=" + page, HttpMethod.GET, entity, JsonNode.class);
+        ResponseEntity<JsonNode> response = restTemplate.exchange(apiUrl + "?page=" + page, HttpMethod.GET, entity,
+                JsonNode.class);
         JsonNode products = response.getBody();
 
         List<KinguinGiftCard> giftCards = new ArrayList<>();
@@ -158,19 +154,12 @@ public class KinguinService {
             }
         }
 
+        // Relaxed region filtering to include Global (4) and Worldwide (11)
         giftCards.removeIf(
-                giftcard -> giftcard.getRegionId() != 3
-        );
+                giftcard -> giftcard.getRegionId() != 3 && giftcard.getRegionId() != 4 && giftcard.getRegionId() != 11);
 
-//        giftCards.removeIf(
-//                giftcard -> giftcard.getRegionId() != 3
-//                        && giftcard.getRegionId() != 4
-//                        && giftcard.getRegionId() != 11
-//
-//        );
         return giftCards;
     }
-
 
     public Map<Long, KinguinGiftCard> fetchGiftCardsByIds(List<Long> productIds) {
         return productIds.parallelStream()
@@ -199,15 +188,9 @@ public class KinguinService {
         }
 
         giftCards.sort(Comparator.comparingDouble(KinguinGiftCard::getPrice));
+        // Relaxed region filtering
         giftCards.removeIf(
-                giftcard -> giftcard.getRegionId() != 3
-        );
-//        giftCards.removeIf(
-//                giftcard -> giftcard.getRegionId() != 3
-//                        && giftcard.getRegionId() != 4
-//                        && giftcard.getRegionId() != 11
-//
-//        );
+                giftcard -> giftcard.getRegionId() != 3 && giftcard.getRegionId() != 4 && giftcard.getRegionId() != 11);
 
         return giftCards;
     }
@@ -222,7 +205,12 @@ public class KinguinService {
 
         for (Map.Entry<String, String> entry : filters.entrySet()) {
             if (entry.getValue() != null && !entry.getValue().isEmpty()) {
-                urlBuilder.append(entry.getKey())
+                String key = entry.getKey();
+                // Map 'genre' to 'genres[]' for Kinguin API compatibility
+                if ("genre".equals(key)) {
+                    key = "genres[]";
+                }
+                urlBuilder.append(key)
                         .append("=")
                         .append(entry.getValue())
                         .append("&");
@@ -240,7 +228,7 @@ public class KinguinService {
         if (products != null) {
             JsonNode productsSection = products.path("results");
             for (JsonNode product : productsSection) {
-                    giftCards.add(mapJsonToGiftCard(product));
+                giftCards.add(mapJsonToGiftCard(product));
             }
 
             DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
@@ -268,19 +256,12 @@ public class KinguinService {
             });
         }
 
+        // Relaxed region filtering
         giftCards.removeIf(
-                giftcard -> giftcard.getRegionId() != 3
-        );
+                giftcard -> giftcard.getRegionId() != 3 && giftcard.getRegionId() != 4 && giftcard.getRegionId() != 11);
 
-//            giftCards.removeIf(
-//                    giftcard -> giftcard.getRegionId() != 3
-//                    && giftcard.getRegionId() != 4
-//                    && giftcard.getRegionId() != 11
-//
-//            );
-            return giftCards;
-        }
-
+        return giftCards;
+    }
 
     @SneakyThrows
     @Cacheable("giftCards")
@@ -289,7 +270,8 @@ public class KinguinService {
         headers.set("X-Api-Key", apiKey);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        ResponseEntity<JsonNode> response = restTemplate.exchange(apiUrl + "/" + id, HttpMethod.GET, entity, JsonNode.class);
+        ResponseEntity<JsonNode> response = restTemplate.exchange(apiUrl + "/" + id, HttpMethod.GET, entity,
+                JsonNode.class);
         JsonNode product = response.getBody();
 
         if (product != null) {
@@ -302,7 +284,6 @@ public class KinguinService {
         return null;
     }
 
-
     public String translateText(String text) throws DeepLException, InterruptedException {
         translator = new Translator(deeplApiKey);
         TextResult result = translator.translateText(text, "EN", "ES");
@@ -314,9 +295,7 @@ public class KinguinService {
         KinguinGiftCard giftCard = new KinguinGiftCard();
         giftCard.setName(product.path("name").asText());
 
-
         giftCard.setDescription(product.path("description").asText());
-
 
         giftCard.setCoverImage(product.path("coverImage").asText());
         giftCard.setCoverImageOriginal(product.path("coverImageOriginal").asText());

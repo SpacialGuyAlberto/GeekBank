@@ -1,0 +1,41 @@
+﻿> Task :clean
+
+> Task :generateJava
+Schema location C:\Users\LuisAlberto\Documents\personal\e-commerce\GeekBank\src\main\resources\graphql-client does not exist
+Schema is empty
+
+> Task :compileJava
+.\gradlew.bat : Hinweis: Einige 
+Eingabedateien verwenden oder ³berschreiben 
+eine veraltete API.
+In Zeile:1 Zeichen:1
++ .\gradlew.bat clean compileJava 
+--console=plain *>&1 | Out-File -File ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: 
+    (Hinweis: Einige... veraltete API.:Str  
+  ing) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommand 
+   Error
+ 
+Hinweis: Wiederholen Sie die Kompilierung 
+mit -Xlint:deprecation, um Details zu 
+erhalten.
+Hinweis: C:\Users\LuisAlberto\Documents\pers
+onal\e-commerce\GeekBank\src\main\java\com\g
+eekbank\bank\support\currency\service\Curren
+cyService.java verwendet nicht gepr³fte 
+oder unsichere Vorgõnge.
+Hinweis: Wiederholen Sie die Kompilierung 
+mit -Xlint:unchecked, um Details zu 
+erhalten.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.7/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 16s
+3 actionable tasks: 3 executed

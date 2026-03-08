@@ -1,9 +1,14 @@
 package com.geekbank.bank.auth.login.controller;
 
-import com.geekbank.bank.user.model.User;
-import com.geekbank.bank.user.UserDetailsImpl;
-import com.geekbank.bank.user.service.UserService;
+import com.geekbank.bank.auth.login.dto.LoginRequest;
+import com.geekbank.bank.auth.login.dto.ResetPasswordRequest;
+import com.geekbank.bank.auth.service.AuthService;
+import com.geekbank.bank.core.controller.BaseController;
+import com.geekbank.bank.core.response.ApiResponse;
+import com.geekbank.bank.core.security.SecurityConstants;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
@@ -11,18 +16,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import com.geekbank.bank.util.JwtTokenUtil;
-import jakarta.servlet.http.Cookie;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -31,141 +27,47 @@ import java.util.Map;
 @Order(1)
 @RestController
 @RequestMapping("/api/auth")
-public class LoginController {
-    private final AuthenticationManager authenticationManager;
-    private final JwtTokenUtil jwtTokenUtil;
-    private final UserService userService;
-    private final JwtDecoder jwtDecoder;
-    private final PasswordEncoder passwordEncoder;
+public class LoginController extends BaseController {
+
+    private final AuthService authService;
 
     @Autowired
-    public LoginController(AuthenticationManager authenticationManager, JwtTokenUtil jwtTokenUtil, UserService userService, JwtDecoder jwtDecoder, PasswordEncoder passwordEncoder) {
-        this.authenticationManager = authenticationManager;
-        this.jwtTokenUtil = jwtTokenUtil;
-        this.userService = userService;
-        this.jwtDecoder = jwtDecoder;
-        this.passwordEncoder = passwordEncoder;
+    public LoginController(AuthService authService) {
+        this.authService = authService;
     }
 
-//    @PostMapping("/login")
-//    public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequest loginRequest) {
-//        Authentication authenticationRequest =
-//                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword());
-//        try {
-//            Authentication authenticationResponse = authenticationManager.authenticate(authenticationRequest);
-//            UserDetails userDetails = (UserDetails) authenticationResponse.getPrincipal();
-//            String jwtToken = jwtTokenUtil.generateToken(userDetails);
-//
-//            User user = userService.findByEmail(loginRequest.getEmail()).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-//
-//
-//
-//
-//            Map<String, String> response = new HashMap<>();
-//            response.put("token", jwtToken);
-//            response.put("userId", String.valueOf(user.getId()));
-//
-//            return (ResponseEntity<Map<String, String>>) ResponseEntity.ok(response);
-//        } catch (BadCredentialsException e) {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Credenciales invalidas"));
-//        }
-//    }
-
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
-        Authentication authenticationRequest =
-                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword());
-        try {
-            Authentication authenticationResponse = authenticationManager.authenticate(authenticationRequest);
-            UserDetails userDetails = (UserDetails) authenticationResponse.getPrincipal();
-            String jwtToken = jwtTokenUtil.generateToken(userDetails);
+    public ResponseEntity<ApiResponse<Map<String, String>>> login(@Valid @RequestBody LoginRequest loginRequest,
+            HttpServletResponse response) {
+        Map<String, String> authResponse = authService.login(loginRequest);
+        String jwtToken = authResponse.get("token");
+        authResponse.remove("token");
 
-            User user = userService.findByEmail(loginRequest.getEmail()).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        createJwtCookie(response, jwtToken);
 
-            ResponseCookie jwtCookie = ResponseCookie.from("jwtToken", jwtToken)
-                    .httpOnly(true)
-                    .secure(false)
-                    .path("/")
-                    .maxAge(Duration.ofDays(1))
-                    .sameSite("Lax")
-                    .build();
-
-            response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
-
-            Map<String, String> responseBody = new HashMap<>();
-            responseBody.put("userId", String.valueOf(user.getId()));
-            return ResponseEntity.ok(responseBody);
-        } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Credenciales inválidas"));
-        }
+        return success(authResponse);
     }
 
     @GetMapping("/check-auth")
-    public ResponseEntity<Map<String, Boolean>> checkAuth() {
+    public ResponseEntity<ApiResponse<Map<String, Boolean>>> checkAuth() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        boolean isAuthenticated = authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken);
+        boolean isAuthenticated = authentication != null && authentication.isAuthenticated()
+                && !(authentication instanceof AnonymousAuthenticationToken);
         Map<String, Boolean> response = new HashMap<>();
         response.put("authenticated", isAuthenticated);
-        return ResponseEntity.ok(response);
+        return success(response);
     }
 
-
     @PostMapping("/validate-password")
-    public ResponseEntity<Map<String, String>> validatePassword(@RequestBody LoginRequest loginRequest) {
-        Authentication authenticationRequest =
-                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword());
-        try {
-            Authentication authenticationResponse = authenticationManager.authenticate(authenticationRequest);
-            UserDetails userDetails = (UserDetails) authenticationResponse.getPrincipal();
-            String jwtToken = jwtTokenUtil.generateToken(userDetails);
-
-            User user = userService.findByEmail(loginRequest.getEmail()).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-            Map<String, String> response = new HashMap<>();
-            response.put("token", jwtToken);
-            response.put("userId", String.valueOf(user.getId()));
-
-            return (ResponseEntity<Map<String, String>>) ResponseEntity.ok(response);
-        } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Credenciales invalidas"));
-        }
+    public ResponseEntity<ApiResponse<Map<String, String>>> validatePassword(
+            @Valid @RequestBody LoginRequest loginRequest) {
+        return success(authService.validatePassword(loginRequest));
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody ResetPasswordRequest resetPasswordRequest) {
-        try {
-            Authentication authenticationRequest =
-                    new UsernamePasswordAuthenticationToken(resetPasswordRequest.getEmail(), resetPasswordRequest.getOldPassword());
-            Authentication authenticationResponse = authenticationManager.authenticate(authenticationRequest);
-
-            UserDetails userDetails = (UserDetails) authenticationResponse.getPrincipal();
-            User user = userService.findByEmail(resetPasswordRequest.getEmail())
-                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-            if (!user.isEnabled()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Usuario no habilitado"));
-            }
-
-            if (passwordEncoder.matches(resetPasswordRequest.getNewPassword(), user.getPassword())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "La nueva contraseña no puede ser igual a la anterior"));
-            }
-
-            user.setPassword(passwordEncoder.encode(resetPasswordRequest.getNewPassword()));
-            userService.updateUser(user);  // Asegúrate de tener este método implementado en tu UserService
-
-            String jwtToken = jwtTokenUtil.generateToken(userDetails);
-
-            Map<String, String> response = new HashMap<>();
-            response.put("token", jwtToken);
-            response.put("userId", String.valueOf(user.getId()));
-
-            return ResponseEntity.ok(response);
-
-        } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Credenciales inválidas"));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Ocurrió un error al restablecer la contraseña"));
-        }
+    public ResponseEntity<ApiResponse<Map<String, String>>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
+        return success(authService.resetPassword(resetPasswordRequest));
     }
 
     @GetMapping("/login")
@@ -174,90 +76,37 @@ public class LoginController {
     }
 
     @PostMapping("/google-login")
-    public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> tokenData, HttpServletResponse response) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> googleLogin(@RequestBody Map<String, String> tokenData,
+            HttpServletResponse response) {
         String token = tokenData.get("token");
-        Jwt decodedToken = jwtDecoder.decode(token);
+        Map<String, Object> authResponse = authService.googleLogin(token);
+        String jwtToken = (String) authResponse.get("token");
 
-        String email = decodedToken.getClaim("email");
-        User user = userService.findByEmail(email).orElseGet(() -> {
-            User newUser = new User();
-            newUser.setEmail(email);
-            newUser.setName(decodedToken.getClaim("name"));
-            newUser.setPassword("");
-            userService.createUser(newUser);
-            return newUser;
-        });
+        createJwtCookie(response, jwtToken);
 
-        UserDetailsImpl userDetails = new UserDetailsImpl(user);
-        String jwtToken = jwtTokenUtil.generateToken(userDetails);
-
-        // Crear y configurar la cookie JWT
-        ResponseCookie jwtCookie = ResponseCookie.from("jwtToken", jwtToken)
-                .httpOnly(true)
-                .secure(true) // Cambiar a 'true' en producción
-                .path("/")
-                .maxAge(Duration.ofDays(1))
-                .sameSite("Lax")
-                .build();
-
-        response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
-
-        Map<String, Object> responseBody = new HashMap<>();
-        responseBody.put("userId", user.getId());
-        return ResponseEntity.ok(responseBody);
+        return success(authResponse);
     }
-
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletResponse response) {
-        Cookie jwtCookie = new Cookie("jwtToken", null);
+        Cookie jwtCookie = new Cookie(SecurityConstants.JWT_COOKIE_NAME, null);
         jwtCookie.setHttpOnly(true);
         jwtCookie.setSecure(false);
-        jwtCookie.setPath("/");
-        jwtCookie.setMaxAge(0); // Eliminar la cookie
+        jwtCookie.setPath(SecurityConstants.COOKIE_PATH);
+        jwtCookie.setMaxAge(0);
         response.addCookie(jwtCookie);
         return ResponseEntity.ok().build();
     }
 
-    public static class LoginRequest {
-        private String email;
-        private String password;
+    private void createJwtCookie(HttpServletResponse response, String jwtToken) {
+        ResponseCookie jwtCookie = ResponseCookie.from(SecurityConstants.JWT_COOKIE_NAME, jwtToken)
+                .httpOnly(true)
+                .secure(false)
+                .path(SecurityConstants.COOKIE_PATH)
+                .maxAge(Duration.ofDays(SecurityConstants.EXPIRATION_DAYS))
+                .sameSite(SecurityConstants.SAME_SITE)
+                .build();
 
-        public String getEmail() {
-            return email;
-        }
-
-        public void setEmail(String email) {
-            this.email = email;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public void setPassword(String password) {
-            this.password = password;
-        }
-    }
-
-    public static class ResetPasswordRequest {
-        private String email;
-        private String oldPassword;
-        private String newPassword;
-
-        public String getEmail(){ return email; }
-        public String getOldPassword() {return oldPassword; }
-        public String getNewPassword() {return newPassword; }
-
-        public void setEmail( String email){
-            this.email = email;
-        }
-
-        public void setOldPassword(String oldPassword) {
-            this.oldPassword = oldPassword;
-        }
-        public void setNewPassword(String newPassword) {
-            this.newPassword = newPassword;
-        }
+        response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
     }
 }

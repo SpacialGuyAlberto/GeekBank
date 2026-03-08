@@ -36,16 +36,33 @@ public class HighlightServiceIntegrationTest {
 
     @BeforeEach
     public void setUp() {
+
         highlightItemRepository.deleteAll();
+
     }
 
     @Test
     @DisplayName("Agregar nuevos highlights y verificar que se guarden correctamente")
     public void testAddHighlightItems() {
-        List<Long> productIds = Arrays.asList(1L, 2L, 3L);
-        List<HighlightDTO> highlightRequest = Arrays.asList();
 
-        List<HighlightItem> addedHighlights = highlightService.addHighlightItems(highlightRequest);
+        List<Long> Ids = Arrays.asList(1L, 2L, 3L);
+        List<Long> productIds = Arrays.asList(1L, 2L, 3L);
+        List<String> imageUrls = Arrays.asList("https://www.google.com", "https://www.google.com");
+        List<String> titles = Arrays.asList("Google", "Google", "Google");
+        List<Double> pricesList = Arrays.asList(1.1, 2.2, 3.3);
+        List<HighlightItem> highlightItems = Arrays.asList();
+
+        for (int i = 0; i < productIds.size(); i++) {
+            HighlightItem highlightItem = new HighlightItem();
+            highlightItem.setId(Ids.get(i));
+            highlightItem.setTitle(titles.get(i));
+            highlightItem.setPrice(pricesList.get(i));
+            highlightItem.setImageUrl(imageUrls.get(i));
+            highlightItem.setProductId(productIds.get(i));
+            highlightItems.add(highlightItem);
+        }
+
+        List<HighlightItem> addedHighlights = highlightService.addHighlightItems(highlightItems);
 
         assertEquals(3, addedHighlights.size(), "Deberían haberse guardado tres elementos destacados");
         addedHighlights.forEach(highlightItem -> assertTrue(productIds.contains(highlightItem.getProductId()), "El ID de producto debería coincidir"));
@@ -63,29 +80,10 @@ public class HighlightServiceIntegrationTest {
         when(kinguinService.fetchGiftCardById(anyString()))
                 .thenReturn(null);  // Devuelve null en lugar de Optional.empty()
 
-        List<HighlightItemWithGiftcardDTO> highlightsWithGiftcards = highlightService.getHighlightsByProductIds();
+        List<HighlightItem> highlightsWithGiftcards = highlightService.fetchHighlights();
 
         assertEquals(1, highlightsWithGiftcards.size(), "Debería haber un highlight en la lista");
-        assertEquals(1L, highlightsWithGiftcards.get(0).getHighlightItem().getProductId(), "El ID de producto del highlight debería coincidir");
-        assertNull(highlightsWithGiftcards.get(0).getGiftcard(), "El giftcard debería ser nulo si no se encuentra en el servicio externo");
+        assertEquals(1L, highlightsWithGiftcards.get(0).getProductId(), "El ID de producto del highlight debería coincidir");
     }
 
-    @Test
-    @DisplayName("Eliminar highlights por IDs de productos")
-    public void testRemoveHighlightItems() {
-        // Agregar elementos destacados
-        List<Long> productIds = Arrays.asList(1L, 2L, 3L);
-        List<HighlightDTO> highlightRequest = Arrays.asList();
-        highlightService.addHighlightItems(highlightRequest);
-
-        // Verificar que existen antes de eliminarlos
-        assertEquals(3, highlightItemRepository.count(), "Deberían haber tres elementos destacados antes de la eliminación");
-
-        // Ejecutar la eliminación
-        highlightService.removeHighlightItems(productIds);
-
-        // Verificar que se hayan eliminado
-        List<HighlightItem> remainingItems = highlightItemRepository.findByProductIdIn(productIds);
-        assertTrue(remainingItems.isEmpty(), "No deberían quedar elementos destacados después de la eliminación");
-    }
 }

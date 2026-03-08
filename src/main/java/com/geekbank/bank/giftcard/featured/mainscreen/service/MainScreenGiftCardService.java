@@ -29,32 +29,31 @@ public class MainScreenGiftCardService {
     private final KinguinService kinguinService;
 
     private static final Logger logger = LoggerFactory.getLogger(MainScreenGiftCardService.class);
+
     @Autowired
-    public MainScreenGiftCardService(MainScreenGiftCardItemRepository mainScreenGiftCardItemRepository, KinguinService kinguinService) {
+    public MainScreenGiftCardService(MainScreenGiftCardItemRepository mainScreenGiftCardItemRepository,
+            KinguinService kinguinService) {
         this.mainScreenGiftCardItemRepository = mainScreenGiftCardItemRepository;
         this.kinguinService = kinguinService;
     }
 
     @Transactional
-    public List<MainScreenGiftCardItemDTO> getMainScreenGiftCardItemsByClassification(GifcardClassification classification) {
-        List<MainScreenGiftCardItem> items =  mainScreenGiftCardItemRepository.findByClassification(classification);
+    public List<MainScreenGiftCardItemDTO> getMainScreenGiftCardItemsByClassification(
+            GifcardClassification classification) {
+        List<MainScreenGiftCardItem> items = mainScreenGiftCardItemRepository.findByClassification(classification);
 
-        return items.stream().map(
-                item -> {
-                 KinguinGiftCard giftCard = kinguinService.fetchGiftCardById(String.valueOf(item.getProductId()))
-                         .orElse(null);
-                 return new MainScreenGiftCardItemDTO(giftCard, item);
-                }).toList();
+        return items.stream().map(item -> {
+            KinguinGiftCard giftCard = kinguinService.fetchGiftCardById(String.valueOf(item.getProductId()));
+            return new MainScreenGiftCardItemDTO(giftCard, item);
+        }).toList();
 
     }
 
     public Page<MainScreenGiftCardItemDTO> getMainScreenGiftCardItems(Pageable pageable) {
         Page<MainScreenGiftCardItem> pageOfItems = mainScreenGiftCardItemRepository.findAllOrdered(pageable);
 
-
         return pageOfItems.map(item -> {
-            KinguinGiftCard giftcard = kinguinService.fetchGiftCardById(String.valueOf(item.getProductId()))
-                    .orElse(null);
+            KinguinGiftCard giftcard = kinguinService.fetchGiftCardById(String.valueOf(item.getProductId()));
             return new MainScreenGiftCardItemDTO(giftcard, item);
         });
     }
@@ -63,7 +62,7 @@ public class MainScreenGiftCardService {
         System.out.println("productId: " + item.getProductId()); // debe mostrar un valor
 
         Assert.notNull(item, "Item must not be null");
-        item.setProductId((long)item.getProductId());
+        item.setProductId((long) item.getProductId());
         Assert.notNull(item.getProductId(), "productId must not be null");
 
         if (mainScreenGiftCardItemRepository.existsByProductId(item.getProductId())) {
@@ -72,7 +71,6 @@ public class MainScreenGiftCardService {
 
         return mainScreenGiftCardItemRepository.save(item);
     }
-
 
     @Transactional
     public void removeByProductId(String productId) {

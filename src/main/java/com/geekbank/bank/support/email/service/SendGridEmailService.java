@@ -24,7 +24,7 @@ public class SendGridEmailService {
     private String domainUrl;
 
     public void sendActivationEmail(String to, String token) {
-        Email from = new Email("info@astralisbank.com"); // Cambia esto a tu email
+        Email from = new Email("lalbertomurillo1996@gmail.com"); // Cambia esto a tu email
         Email toEmail = new Email(to);
         String subject = "Email de activación";
         String activationLink = domainUrl + "/activate?token=" + token;

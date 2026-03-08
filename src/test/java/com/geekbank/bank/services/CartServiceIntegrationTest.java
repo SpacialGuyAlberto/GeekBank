@@ -1,6 +1,7 @@
 package com.geekbank.bank.services;
 
-import com.geekbank.bank.cart.service.CartService;
+import com.geekbank.bank.cart.dto.AddCartItemRequest;
+import com.geekbank.bank.cart.service.CartServiceImpl;
 import com.geekbank.bank.cart.model.CartItem;
 import com.geekbank.bank.user.model.User;
 import com.geekbank.bank.cart.dto.CartItemWithGiftcardDTO;
@@ -22,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CartServiceIntegrationTest {
 
     @Autowired
-    private CartService cartService;
+    private CartServiceImpl cartService;
 
     @Autowired
     private CartItemRepository cartItemRepository;
@@ -36,6 +37,11 @@ public class CartServiceIntegrationTest {
     public void setUp() {
         cartItemRepository.deleteAll();
         userRepository.deleteAll();
+        AddCartItemRequest request = null;
+        request.setQuantity(2);
+        request.setPrice(56.2);
+        request.setProductId(1L);
+
 
         // Crear un usuario para usar en las pruebas
         testUser = new User();
@@ -43,6 +49,7 @@ public class CartServiceIntegrationTest {
         testUser.setName("Test User");
         testUser.setPassword("{bcrypt}$2a$10$...");
         userRepository.save(testUser);
+
     }
 
     @Test
@@ -51,7 +58,12 @@ public class CartServiceIntegrationTest {
         Long productId = 1L;
         int quantity = 2;
 
-        CartItem addedItem = cartService.addCartItem(testUser, productId, quantity);
+        AddCartItemRequest request = null;
+        request.setQuantity(2);
+        request.setPrice(56.2);
+        request.setProductId(1L);
+
+        CartItem addedItem = cartService.addCartItem(testUser,request.getProductId(), request.getQuantity(), request.getPrice());
 
         assertNotNull(addedItem.getId(), "El artículo del carrito debería tener un ID después de guardarse");
         assertEquals(testUser.getId(), addedItem.getUser().getId(), "El artículo debería estar asociado con el usuario correcto");
@@ -63,7 +75,12 @@ public class CartServiceIntegrationTest {
     @DisplayName("Obtener artículos del carrito para un usuario")
     public void testGetCartItems() {
         // Agregar un artículo al carrito
-        cartService.addCartItem(testUser, 1L, 2);
+        AddCartItemRequest request = null;
+        request.setQuantity(2);
+        request.setPrice(56.2);
+        request.setProductId(1L);
+
+        CartItem addedItem = cartService.addCartItem(testUser,request.getProductId(), request.getQuantity(), request.getPrice());
 
         List<CartItemWithGiftcardDTO> cartItems = cartService.getCartItems(testUser);
 
@@ -79,7 +96,12 @@ public class CartServiceIntegrationTest {
         int initialQuantity = 2;
         int updatedQuantity = 5;
 
-        cartService.addCartItem(testUser, productId, initialQuantity);
+        AddCartItemRequest request = null;
+        request.setQuantity(2);
+        request.setPrice(56.2);
+        request.setProductId(1L);
+
+        CartItem addedItem = cartService.addCartItem(testUser,request.getProductId(), request.getQuantity(), request.getPrice());
         cartService.updateCartItemQuantity(productId, updatedQuantity, testUser);
 
         CartItem updatedItem = cartItemRepository.findByUserAndProductId(testUser, productId);
@@ -90,8 +112,12 @@ public class CartServiceIntegrationTest {
     @DisplayName("Eliminar todos los artículos del carrito de un usuario")
     public void testRemoveAllCartItems() {
         // Agregar varios artículos al carrito
-        cartService.addCartItem(testUser, 1L, 2);
-        cartService.addCartItem(testUser, 2L, 3);
+        AddCartItemRequest request = null;
+        request.setQuantity(2);
+        request.setPrice(56.2);
+        request.setProductId(1L);
+
+        CartItem addedItem = cartService.addCartItem(testUser,request.getProductId(), request.getQuantity(), request.getPrice());
 
         cartService.removeAllCartItems(testUser);
 
@@ -103,7 +129,12 @@ public class CartServiceIntegrationTest {
     @DisplayName("Eliminar un artículo específico del carrito")
     public void testRemoveCartItem() {
         // Agregar un artículo al carrito
-        CartItem cartItem = cartService.addCartItem(testUser, 1L, 2);
+        AddCartItemRequest request = null;
+        request.setQuantity(2);
+        request.setPrice(56.2);
+        request.setProductId(1L);
+
+        CartItem cartItem = cartService.addCartItem(testUser,request.getProductId(), request.getQuantity(), request.getPrice());
 
         cartService.removeCartItem(cartItem.getId());
 

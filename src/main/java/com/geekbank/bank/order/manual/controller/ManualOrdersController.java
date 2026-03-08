@@ -17,10 +17,6 @@ public class ManualOrdersController {
 
     @Autowired
     private ManualOrderService manualOrderService;
-    @Autowired
-    private OrderService orderService;
-    private Orders order;
-    private Transaction transaction;
 
     @PostMapping("/run/{transactionNumber}")
     public ResponseEntity<String> runManualOrder(@PathVariable String transactionNumber) {
