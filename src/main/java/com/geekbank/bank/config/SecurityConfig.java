@@ -45,6 +45,16 @@ public class SecurityConfig {
 
     @Value("${DOMAIN_ORIGIN_URL}")
     private String frontendUrl;
+
+    @Value("${spring.security.oauth2.client.registration.google.client-id}")
+    private String googleClientId;
+
+    @Value("${spring.security.oauth2.client.registration.google.client-secret}")
+    private String googleClientSecret;
+
+    @Value("${spring.security.oauth2.client.registration.google.redirect-uri}")
+    private String googleRedirectUri;
+
     private final JwtTokenUtil jwtTokenUtil;
     private final UserDetailsServiceImpl userDetailsService;
     @Autowired
@@ -63,34 +73,15 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/ws/**",
                                 "/api/auth/**",
-                                "/api/transactions/{transactionId}",
-                                "/api/transactions/cancel/**",
-                                "/api/auth/registerUser", "/api/auth/check-auth",
-                                "/api/auth/registerUserByAdmin", "/api/auth/activate",
-                                "/api/auth/validate-password", "/api/auth/login",
-                                "/api/auth/google-login", "/api/auth/logout",
-                                "/api/auth/reset-password", "/api/accounts/**",
-                                "/api/accounts/apply-balance/", "/api/home",
-                                "/api/gift-cards/**", "/api/kinguin-gift-cards/**",
-                                "/api/users/**", "/api/public/**", "/api/cart",
-                                "/api/cart/**", "/api/telegram/**", "/api/kinguin/**",
-                                "/api/users/user-details", "/api/users/${userId}",
-                                "/api/orders", "/api/orders/**", "/api/highlights/**",
-                                "/api/highlights", "/api/users/update-user-details",
-                                "/api/users/**", "/api/transactions", "/api/transactions/**",
-                                "/api/transactions/cancel/**", "/api/wish-list",
-                                "/api/wish-list/**", "/api/wish-list/${wishedItemId}",
-                                "/api/feedbacks/**", "/api/recommendations/**",
-                                "/api/recommendations/user/${userId}", "/api/sync/**",
-                                "/api/freefire/**", "/api/freefire/products",
-                                "/api/currency", "/api/recommendations/content-based/**",
-                                "/api/manual-orders/**", "/api/main-screen-gift-cards/**",
-                                "api/transactions/verifyPayment",
-                                "/api/activation-details/**",
-                                "api/transactions/verify-unmatched-payment",
-                                "/api/paypal/**", "/api/auth/check-auth", "/api/visits/**", "/api/metrics/**",
-                                "/api/admin/payments/**", "/api/promotion/**", "/api/payments/**",
-                                "/api/flash-offers/**", "/api/combos/**")
+                                "/api/home",
+                                "/api/gift-cards/**",
+                                "/api/kinguin-gift-cards/**",
+                                "/api/public/**",
+                                "/api/highlights/**",
+                                "/api/highlights",
+                                "/api/currency",
+                                "/api/flash-offers/**",
+                                "/api/combos/**")
                         .permitAll()
                         .anyRequest().authenticated())
 
@@ -125,11 +116,11 @@ public class SecurityConfig {
 
     private ClientRegistration googleClientRegistration() {
         return ClientRegistration.withRegistrationId("google")
-                .clientId("445500636748-2nuqarr3morlrul9bdadefcogo7rffcn.apps.googleusercontent.com")
-                .clientSecret("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")
+                .clientId(googleClientId)
+                .clientSecret(googleClientSecret)
                 .scope("openid", "profile", "email")
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri("{baseUrl}/login/oauth2/code/{registrationId}")
+                .redirectUri(googleRedirectUri)
                 .authorizationUri("https://accounts.google.com/o/oauth2/auth")
                 .tokenUri("https://oauth2.googleapis.com/token")
                 .userInfoUri("https://openidconnect.googleapis.com/v1/userinfo")
@@ -143,16 +134,12 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // 1. Agregamos los orígenes exactos
-        config.setAllowedOrigins(Arrays.asList(
-                "https://geekyfriki.com", // Tu dominio real
-                "http://localhost", // Tu frontend en Docker (Puerto 80)
-                "http://localhost:80", // Explicit port 80
-                "http://localhost:4200", // Tu frontend en desarrollo local (ng serve)
-                "http://127.0.0.1", // IP local alternativa
-                "http://127.0.0.1:4200",
-                "http://127.0.0.1:80",
-                frontendUrl // La variable que viene del .env
+        // 1. Agregamos los orígenes permitidos de forma robusta
+        config.setAllowedOriginPatterns(Arrays.asList(
+                "https://geekyfriki.com", // Dominio principal
+                "http://localhost*",      // Localhost con cualquier puerto
+                "http://127.0.0.1*",      // IP local con cualquier puerto
+                frontendUrl != null ? frontendUrl : "http://localhost:4200"
         ));
 
         config.setAllowCredentials(true);
