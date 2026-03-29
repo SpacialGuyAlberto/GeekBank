@@ -145,7 +145,7 @@ public class SecurityConfig {
 
         // 1. Agregamos los orígenes exactos
         config.setAllowedOrigins(Arrays.asList(
-                "https://astralisbank.com", // Tu dominio real
+                "https://geekyfriki.com", // Tu dominio real
                 "http://localhost", // Tu frontend en Docker (Puerto 80)
                 "http://localhost:80", // Explicit port 80
                 "http://localhost:4200", // Tu frontend en desarrollo local (ng serve)
