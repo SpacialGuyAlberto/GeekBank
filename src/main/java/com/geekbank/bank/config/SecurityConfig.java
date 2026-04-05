@@ -75,7 +75,7 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/api/home",
                                 "/api/gift-cards/**",
-                                "/api/kinguin-gift-cards/**",
+                                "/api/kinguin/**",
                                 "/api/public/**",
                                 "/api/highlights/**",
                                 "/api/highlights",
