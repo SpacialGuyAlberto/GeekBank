@@ -1,7 +1,6 @@
 package com.geekbank.bank.transaction.service;
 
 import com.geekbank.bank.metrics.sales.service.SalesMetricsService;
-import com.geekbank.bank.order.manual.controller.ManualVerificationWebSocketController;
 import com.geekbank.bank.giftcard.repository.GiftCardRepository;
 import com.geekbank.bank.order.dto.OrderRequest;
 import com.geekbank.bank.order.dto.OrderResponse;
@@ -15,8 +14,8 @@ import com.geekbank.bank.support.email.service.SendGridEmailService;
 import com.geekbank.bank.support.receipt.utils.PdfGeneratorService;
 import com.geekbank.bank.support.sms.model.SmsMessage;
 import com.geekbank.bank.support.sms.repository.SmsMessageRepository;
-import com.geekbank.bank.transaction.controller.TransactionWebSocketController;
 import com.geekbank.bank.user.admin.controller.WebSocketController;
+import com.geekbank.bank.order.manual.controller.ManualVerificationWebSocketController;
 import com.geekbank.bank.common.exceptions.InsufficientBalanceException;
 import com.geekbank.bank.common.exceptions.ResourceNotFoundException;
 import com.geekbank.bank.transaction.constants.TransactionStatus;
@@ -29,9 +28,11 @@ import com.geekbank.bank.user.account.repository.AccountRepository;
 import com.geekbank.bank.user.model.User;
 import com.geekbank.bank.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.geekbank.bank.support.notification.service.NotificationService;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -51,19 +52,10 @@ public class TransactionService {
     private TransactionStorageService transactionStorageService;
 
     @Autowired
-    private WebSocketController webSocketController;
-
-    @Autowired
     private SmsMessageRepository smsMessageRepository;
 
     @Autowired
     private final SendGridEmailService emailService;
-
-    @Autowired
-    private GiftCardRepository giftCardRepository;
-
-    @Autowired
-    private TransactionWebSocketController transactionWebSocketController;
 
     @Autowired
     private UserRepository userRepository;
@@ -81,7 +73,7 @@ public class TransactionService {
     private UnmatchedPaymentRepository unmatchedPaymentRepository;
 
     @Autowired
-    private ManualVerificationWebSocketController manualVerificationWebSocketController;
+    private NotificationService notificationService;
 
     @Autowired
     private PricingService pricingService;
@@ -89,15 +81,11 @@ public class TransactionService {
     @Autowired
     private SalesMetricsService salesMetricsService;
 
-    @Autowired
-    private PdfGeneratorService pdfGeneratorService;
+    @Value("${admin.notification.email:enkiluzlbel@gmail.com}")
+    private String adminNotificationEmail;
 
     private static final long EXPIRATION_MINUTES = 3;
 
-    private PriorityBlockingQueue<Transaction> manualVerificationQueue = new PriorityBlockingQueue<>(
-            100,
-            Comparator.comparing(Transaction::getTimestamp)
-    );
 
     public TransactionService(SendGridEmailService emailService) {
         this.emailService = emailService;
@@ -346,7 +334,7 @@ public class TransactionService {
         //    orderService.placeOrder(orderRequest, savedTransaction);
 
         // Notificamos al front
-        webSocketController.notifyTransactionStatus(
+        notificationService.notifyTransactionStatus(
                 phoneNumber,
                 TransactionStatus.COMPLETED.name(),
                 "Compra realizada exitosamente utilizando tu balance.",
@@ -370,7 +358,6 @@ public class TransactionService {
         }
 
         double orderAmount = orderRequest.getAmount();
-        double amountReceived = unmatchedPayment.getAmountReceived();
 
         TransactionType transactionType = TransactionType.PURCHASE;
         if (orderRequest.getProducts() != null && !orderRequest.getProducts().isEmpty()) {
@@ -440,10 +427,10 @@ public class TransactionService {
             System.out.println(orderResponse);
         } else {
             processManualTransaction(savedTransaction);
-            this.emailService.sendNotificationEmail("enkiluzlbel@gmail.com");
+            this.emailService.sendNotificationEmail(adminNotificationEmail);
         }
         
-        webSocketController.sendTransactionStatus(savedTransaction.getStatus());
+        notificationService.sendTransactionStatus(savedTransaction.getStatus());
         return savedTransaction;
     }
 
@@ -531,10 +518,10 @@ public class TransactionService {
             System.out.println(orderResponse);
         } else {
             processManualTransaction(savedTransaction);
-            this.emailService.sendNotificationEmail("enkiluzlbel@gmail.com");
+            this.emailService.sendNotificationEmail(adminNotificationEmail);
         }
 
-        webSocketController.sendTransactionStatus(savedTransaction.getStatus());
+        notificationService.sendTransactionStatus(savedTransaction.getStatus());
         return savedTransaction;
     }
 
@@ -575,7 +562,7 @@ public class TransactionService {
                 updateTransactionStatus(transactionInDB.getId(), TransactionStatus.AWAITING_MANUAL_PROCESSING,
                         "El pago está hecho. Su transacción debe ser procesada manualmente.");
                 transactionStorageService.addManualTransaction(transactionInDB);
-                webSocketController.notifyTransactionStatus(
+                notificationService.notifyTransactionStatus(
                         phoneNumber,
                         TransactionStatus.AWAITING_MANUAL_PROCESSING.name(),
                         "Pendiente de procesamiento manual.",
@@ -583,7 +570,7 @@ public class TransactionService {
                 );
 
                 if (Boolean.TRUE.equals(transactionInDB.getManual())) {
-                    manualVerificationWebSocketController.sendManualVerificationTransaction(transactionInDB);
+                    notificationService.sendManualVerificationTransaction(transactionInDB);
                 }
 
                 System.out.println("Transacción manual agregada a la lista de espera. Transaction ID: " + transactionInDB.getTransactionNumber());
@@ -687,7 +674,7 @@ public class TransactionService {
         transactionStorageService.removeAmountReceived(phoneNumber);
         orderRequestStorageService.removeOrderRequest(phoneNumber);
 
-        webSocketController.notifyTransactionStatus(
+        notificationService.notifyTransactionStatus(
                 phoneNumber,
                 "COMPLETED",
                 "Your transaction was successfully completed.",
@@ -700,7 +687,7 @@ public class TransactionService {
      */
     private void handleVerificationError(String phoneNumber, String errorMessage) {
         System.err.println("Error al verificar la transacción: " + errorMessage);
-        webSocketController.notifyTransactionStatus(phoneNumber, "FAILED", errorMessage, null);
+        notificationService.notifyTransactionStatus(phoneNumber, "FAILED", errorMessage, null);
     }
 
     /**
@@ -718,7 +705,7 @@ public class TransactionService {
         transaction.setStatus(newStatus);
         transactionRepository.save(transaction);
 
-        webSocketController.notifyTransactionStatus(
+        notificationService.notifyTransactionStatus(
                 transaction.getPhoneNumber(),
                 newStatus.name(),
                 message,
@@ -738,8 +725,7 @@ public class TransactionService {
      * Procesa transacción manual: la agrega a una cola y notifica por WebSocket.
      */
     public void processManualTransaction(Transaction transaction) {
-        manualVerificationQueue.offer(transaction);
-        manualVerificationWebSocketController.sendManualVerificationTransaction(transaction);
+        notificationService.sendManualVerificationTransaction(transaction);
     }
 
     // --------------------------------------------------------------
