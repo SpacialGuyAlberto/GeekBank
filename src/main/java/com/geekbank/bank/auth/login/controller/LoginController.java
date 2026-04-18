@@ -45,6 +45,8 @@ public class LoginController extends BaseController {
 
         createJwtCookie(response, jwtToken);
 
+
+
         return success(authResponse);
     }
 
@@ -103,7 +105,7 @@ public class LoginController extends BaseController {
                 .httpOnly(true)
                 .secure(false)
                 .path(SecurityConstants.COOKIE_PATH)
-                .maxAge(Duration.ofDays(SecurityConstants.EXPIRATION_DAYS))
+                .maxAge(3600)
                 .sameSite(SecurityConstants.SAME_SITE)
                 .build();
 

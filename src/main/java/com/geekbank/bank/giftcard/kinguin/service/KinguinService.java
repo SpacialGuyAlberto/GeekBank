@@ -7,8 +7,8 @@ import com.geekbank.bank.giftcard.kinguin.model.KinguinGiftCard;
 import com.geekbank.bank.giftcard.model.GiftCardEntity;
 import com.geekbank.bank.giftcard.repository.GiftCardRepository;
 import com.geekbank.bank.support.currency.PricingService;
-import com.geekbank.bank.user.service.UserService;
 import lombok.SneakyThrows;
+import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,16 +31,21 @@ import java.util.stream.Collectors;
 @Service
 public class KinguinService {
 
+    @Value("${KINGUIN_API_KEY}")
+    private String apiKey;
+
     public static final String apiUrl = "https://gateway.kinguin.net/esa/api/v1/products";
-    public static final String apiKey = "46b571b40a9418b22112762a68273c24";
+
+    @Value("${DEEPL_API_KEY:b9809fe3-aa7c-4802-b12b-cacef4df6e2a:fx}")
+    private String deeplApiKey;
+
     Translator translator;
-    protected static String deeplApiKey = "b9809fe3-aa7c-4802-b12b-cacef4df6e2a:fx";
     private static AtomicInteger progress = new AtomicInteger(0);
     private static boolean isSyncing = false;
     private static int totalGiftCards = 0;
     private static int synchronizedGiftCards = 0;
     private final RestTemplate restTemplate = new RestTemplate();
-    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+    private static final Logger logger = LoggerFactory.getLogger(KinguinService.class);
 
     @Autowired
     private PricingService pricingService;
@@ -142,23 +147,31 @@ public class KinguinService {
         headers.set("X-Api-Key", apiKey);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        ResponseEntity<JsonNode> response = restTemplate.exchange(apiUrl + "?page=" + page, HttpMethod.GET, entity,
-                JsonNode.class);
-        JsonNode products = response.getBody();
+        try {
+            ResponseEntity<JsonNode> response = restTemplate.exchange(apiUrl + "?page=" + page, HttpMethod.GET, entity,
+                    JsonNode.class);
+            JsonNode products = response.getBody();
 
-        List<KinguinGiftCard> giftCards = new ArrayList<>();
-        if (products != null) {
-            JsonNode productsSection = products.path("results");
-            for (JsonNode product : productsSection) {
-                giftCards.add(mapJsonToGiftCard(product));
+            List<KinguinGiftCard> giftCards = new ArrayList<>();
+            if (products != null) {
+                JsonNode productsSection = products.path("results");
+                for (JsonNode product : productsSection) {
+                    giftCards.add(mapJsonToGiftCard(product));
+                }
             }
+
+            // Relaxed region filtering to include Global (4) and Worldwide (11)
+            giftCards.removeIf(
+                    giftcard -> giftcard.getRegionId() != 3 && giftcard.getRegionId() != 4 && giftcard.getRegionId() != 11);
+
+            return giftCards;
+        } catch (org.springframework.web.client.HttpClientErrorException.Conflict e) {
+            logger.error("Error 409 Conflict al obtener GiftCards (página {}): {}", page, e.getResponseBodyAsString());
+            return new ArrayList<>();
+        } catch (Exception e) {
+            logger.error("Error al obtener GiftCards (página {}): {}", page, e.getMessage());
+            return new ArrayList<>();
         }
-
-        // Relaxed region filtering to include Global (4) and Worldwide (11)
-        giftCards.removeIf(
-                giftcard -> giftcard.getRegionId() != 3 && giftcard.getRegionId() != 4 && giftcard.getRegionId() != 11);
-
-        return giftCards;
     }
 
     public Map<Long, KinguinGiftCard> fetchGiftCardsByIds(List<Long> productIds) {
@@ -175,24 +188,32 @@ public class KinguinService {
         headers.set("X-Api-Key", apiKey);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        String searchUrl = apiUrl + "?name=" + name + "&limit=500";
-        ResponseEntity<JsonNode> response = restTemplate.exchange(searchUrl, HttpMethod.GET, entity, JsonNode.class);
-        JsonNode products = response.getBody();
+        try {
+            String searchUrl = apiUrl + "?name=" + name + "&limit=500";
+            ResponseEntity<JsonNode> response = restTemplate.exchange(searchUrl, HttpMethod.GET, entity, JsonNode.class);
+            JsonNode products = response.getBody();
 
-        List<KinguinGiftCard> giftCards = new ArrayList<>();
-        if (products != null) {
-            JsonNode productsSection = products.path("results");
-            for (JsonNode product : productsSection) {
-                giftCards.add(mapJsonToGiftCard(product));
+            List<KinguinGiftCard> giftCards = new ArrayList<>();
+            if (products != null) {
+                JsonNode productsSection = products.path("results");
+                for (JsonNode product : productsSection) {
+                    giftCards.add(mapJsonToGiftCard(product));
+                }
             }
+
+            giftCards.sort(Comparator.comparingDouble(KinguinGiftCard::getPrice));
+            // Relaxed region filtering
+            giftCards.removeIf(
+                    giftcard -> giftcard.getRegionId() != 3 && giftcard.getRegionId() != 4 && giftcard.getRegionId() != 11);
+
+            return giftCards;
+        } catch (org.springframework.web.client.HttpClientErrorException.Conflict e) {
+            logger.error("Error 409 Conflict en búsqueda Kinguin (nombre: {}): {}", name, e.getResponseBodyAsString());
+            return new ArrayList<>();
+        } catch (Exception e) {
+            logger.error("Error en búsqueda Kinguin (nombre: {}): {}", name, e.getMessage());
+            return new ArrayList<>();
         }
-
-        giftCards.sort(Comparator.comparingDouble(KinguinGiftCard::getPrice));
-        // Relaxed region filtering
-        giftCards.removeIf(
-                giftcard -> giftcard.getRegionId() != 3 && giftcard.getRegionId() != 4 && giftcard.getRegionId() != 11);
-
-        return giftCards;
     }
 
     public List<KinguinGiftCard> fetchFilteredGiftCards(Map<String, String> filters) {
@@ -230,8 +251,6 @@ public class KinguinService {
             for (JsonNode product : productsSection) {
                 giftCards.add(mapJsonToGiftCard(product));
             }
-
-            DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
 
             giftCards.sort((g1, g2) -> {
                 try {

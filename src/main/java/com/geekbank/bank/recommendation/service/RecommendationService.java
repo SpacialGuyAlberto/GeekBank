@@ -12,6 +12,7 @@ import com.geekbank.bank.user.model.User;
 import com.geekbank.bank.user.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,10 +32,9 @@ import java.util.concurrent.CompletableFuture;
 
 
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import static com.geekbank.bank.giftcard.kinguin.service.KinguinService.apiKey;
+// import static com.geekbank.bank.giftcard.kinguin.service.KinguinService.apiKey;
 
 @Service
 public class RecommendationService {
@@ -56,8 +56,9 @@ public class RecommendationService {
     private final KinguinService kinguinService;
 
     private static final Logger logger = LoggerFactory.getLogger(RecommendationService.class);
-
-    private final Map<Long, KinguinGiftCard> kinguinCache = new ConcurrentHashMap<>();
+    
+    @Value("${KINGUIN_API_KEY}")
+    private String apiKey;
 
 
     public RecommendationService(KinguinService kinguinService) {
@@ -124,7 +125,6 @@ public class RecommendationService {
         Map<Long, Map<Long, Double>> userRatings = new HashMap<>();
         for (Feedback feedback : allFeedbacks) {
             try {
-                Long uid = feedback.getUserId();
                 Long gid = feedback.getGiftCardId();
                 double score = feedback.getScore();
 
@@ -134,7 +134,7 @@ public class RecommendationService {
                     continue; // Omitir este feedback
                 }
 
-                userRatings.computeIfAbsent(uid, k1 -> new HashMap<>()).put(gid, score);
+                userRatings.computeIfAbsent(feedback.getUserId(), k1 -> new HashMap<>()).put(gid, score);
             } catch (Exception e) {
                 logger.error("Error al procesar feedback: {}", feedback, e);
             }
@@ -156,7 +156,6 @@ public class RecommendationService {
         Map<Long, Map<Long, Integer>> freq = new HashMap<>();
 
         for (Map.Entry<Long, Map<Long, Double>> userEntry : userRatings.entrySet()) {
-            Long uid = userEntry.getKey();
             Map<Long, Double> ratings = userEntry.getValue();
 
             for (Map.Entry<Long, Double> e1 : ratings.entrySet()) {
@@ -252,7 +251,6 @@ public class RecommendationService {
 
 
                 if (optionalGiftCard.isPresent()) {
-                    GiftCardEntity entity = optionalGiftCard.get();
                     recommendedGiftCards.add(kGiftCard);
                     logger.debug("GiftCard obtenida: {}", kGiftCard.getKinguinId());
                 } else {
@@ -441,34 +439,6 @@ public class RecommendationService {
         return list;
     }
 
-
-    /**
-     * Convierte un GiftCardEntity a KinguinGiftCard.
-     *
-     * @param entity Entidad de GiftCard desde la base de datos.
-     * @return Objeto KinguinGiftCard listo para ser enviado al cliente.
-     */
-    private KinguinGiftCard convertToKinguinGiftCard(GiftCardEntity entity) {
-        KinguinGiftCard kGiftCard = new KinguinGiftCard();
-        kGiftCard.setKinguinId(entity.getKinguinId().intValue());
-        kGiftCard.setProductId(entity.getProductId());
-        kGiftCard.setDescription(entity.getDescription());
-        kGiftCard.setPrice(entity.getPrice());
-
-        kGiftCard.setPlatform(entity.getPlatform());
-        kGiftCard.setQty(entity.getQty());
-
-        kGiftCard.setRegionalLimitations(entity.getRegionalLimitations());
-        kGiftCard.setRegionId(entity.getRegionId());
-        kGiftCard.setActivationDetails(entity.getActivationDetails());
-        kGiftCard.setOriginalName(entity.getOriginalName());
-        kGiftCard.setOffersCount(entity.getOffersCount());
-        kGiftCard.setTotalQty(entity.getTotalQty());
-        kGiftCard.setAgeRating(entity.getAgeRating());
-        // Asigna otros campos según sea necesario
-
-        return kGiftCard;
-    }
 
     // Definición única y sin duplicados del conjunto STOP_WORDS
     private static final Set<String> STOP_WORDS;
