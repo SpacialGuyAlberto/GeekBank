@@ -160,9 +160,10 @@ public class KinguinService {
                 }
             }
 
+            logger.info("Fetched {} gift cards before region filtering (page {})", giftCards.size(), page);
             // Relaxed region filtering to include Global (4) and Worldwide (11)
-            giftCards.removeIf(
-                    giftcard -> giftcard.getRegionId() != 3 && giftcard.getRegionId() != 4 && giftcard.getRegionId() != 11);
+            // giftCards.removeIf(
+            //         giftcard -> giftcard.getRegionId() != 3 && giftcard.getRegionId() != 4 && giftcard.getRegionId() != 11);
 
             return giftCards;
         } catch (org.springframework.web.client.HttpClientErrorException.Conflict e) {
@@ -201,10 +202,11 @@ public class KinguinService {
                 }
             }
 
+            logger.info("Search for '{}' returned {} results before filtering", name, giftCards.size());
             giftCards.sort(Comparator.comparingDouble(KinguinGiftCard::getPrice));
             // Relaxed region filtering
-            giftCards.removeIf(
-                    giftcard -> giftcard.getRegionId() != 3 && giftcard.getRegionId() != 4 && giftcard.getRegionId() != 11);
+            // giftCards.removeIf(
+            //         giftcard -> giftcard.getRegionId() != 3 && giftcard.getRegionId() != 4 && giftcard.getRegionId() != 11);
 
             return giftCards;
         } catch (org.springframework.web.client.HttpClientErrorException.Conflict e) {
