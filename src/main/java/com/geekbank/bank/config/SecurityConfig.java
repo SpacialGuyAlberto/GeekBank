@@ -81,7 +81,8 @@ public class SecurityConfig {
                                 "/api/highlights",
                                 "/api/currency",
                                 "/api/flash-offers/**",
-                                "/api/combos/**")
+                                "/api/combos/**",
+                                "/api/main-screen-gift-cards/**")
                         .permitAll()
                         .anyRequest().authenticated())
 
