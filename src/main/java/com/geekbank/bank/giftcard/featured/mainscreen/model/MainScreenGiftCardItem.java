@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Setter
+@Table(name = "main_screen_gift_card_item")
 public class MainScreenGiftCardItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
